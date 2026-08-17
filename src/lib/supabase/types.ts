@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
@@ -274,6 +272,396 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      manual_pages: {
+        Row: {
+          chapter_title: string | null
+          id: string
+          manual_version_id: string
+          page_no: number
+          page_title: string | null
+          replacement_file_path: string | null
+          status: string
+        }
+        Insert: {
+          chapter_title?: string | null
+          id?: string
+          manual_version_id: string
+          page_no: number
+          page_title?: string | null
+          replacement_file_path?: string | null
+          status?: string
+        }
+        Update: {
+          chapter_title?: string | null
+          id?: string
+          manual_version_id?: string
+          page_no?: number
+          page_title?: string | null
+          replacement_file_path?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_pages_manual_version_id_fkey"
+            columns: ["manual_version_id"]
+            isOneToOne: false
+            referencedRelation: "manual_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_scopes: {
+        Row: {
+          area_id: string | null
+          company_id: string | null
+          id: string
+          manual_id: string
+          scope_type: string
+          store_id: string | null
+        }
+        Insert: {
+          area_id?: string | null
+          company_id?: string | null
+          id?: string
+          manual_id: string
+          scope_type: string
+          store_id?: string | null
+        }
+        Update: {
+          area_id?: string | null
+          company_id?: string | null
+          id?: string
+          manual_id?: string
+          scope_type?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_scopes_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_scopes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_scopes_manual_id_fkey"
+            columns: ["manual_id"]
+            isOneToOne: false
+            referencedRelation: "manuals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_scopes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          manual_id: string
+          original_file_path: string
+          published_at: string | null
+          update_reason: string | null
+          version_no: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manual_id: string
+          original_file_path: string
+          published_at?: string | null
+          update_reason?: string | null
+          version_no: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manual_id?: string
+          original_file_path?: string
+          published_at?: string | null
+          update_reason?: string | null
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_versions_manual_id_fkey"
+            columns: ["manual_id"]
+            isOneToOne: false
+            referencedRelation: "manuals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manuals: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          id: string
+          is_deleted: boolean
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          id?: string
+          is_deleted?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          id?: string
+          is_deleted?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manuals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manuals_current_version_fkey"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "manual_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_reads: {
+        Row: {
+          id: string
+          notice_id: string
+          read_at: string
+          store_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          notice_id: string
+          read_at?: string
+          store_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          notice_id?: string
+          read_at?: string
+          store_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_reads_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "portal_notices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_reads_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_scopes: {
+        Row: {
+          area_id: string | null
+          company_id: string | null
+          id: string
+          notice_id: string
+          scope_type: string
+          store_id: string | null
+        }
+        Insert: {
+          area_id?: string | null
+          company_id?: string | null
+          id?: string
+          notice_id: string
+          scope_type: string
+          store_id?: string | null
+        }
+        Update: {
+          area_id?: string | null
+          company_id?: string | null
+          id?: string
+          notice_id?: string
+          scope_type?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_scopes_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_scopes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_scopes_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "portal_notices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_scopes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_notices: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          display_end_at: string | null
+          display_start_at: string
+          external_url: string | null
+          id: string
+          importance: string
+          is_deleted: boolean
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          display_end_at?: string | null
+          display_start_at?: string
+          external_url?: string | null
+          id?: string
+          importance?: string
+          is_deleted?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          display_end_at?: string | null
+          display_start_at?: string
+          external_url?: string | null
+          id?: string
+          importance?: string
+          is_deleted?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_notices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processing_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          job_type: string
+          progress_percent: number
+          retry_count: number
+          started_at: string | null
+          status: string
+          target_id: string
+          target_table: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type: string
+          progress_percent?: number
+          retry_count?: number
+          started_at?: string | null
+          status?: string
+          target_id: string
+          target_table: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string
+          progress_percent?: number
+          retry_count?: number
+          started_at?: string | null
+          status?: string
+          target_id?: string
+          target_table?: string
+        }
+        Relationships: []
       }
       roles: {
         Row: {
