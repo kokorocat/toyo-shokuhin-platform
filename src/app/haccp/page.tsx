@@ -7,6 +7,7 @@ import {
   recordCorrectiveAction,
   approveToday,
 } from "./actions";
+import { SubmitButton } from "./SubmitButton";
 
 const CATEGORY_LABELS: Record<string, string> = {
   refrigerator: "冷蔵",
@@ -39,23 +40,102 @@ export default async function HaccpPage({
   }
 
   const supabase = await createClient();
-
-  const { data: checkPoints } = await supabase
-    .from("haccp_check_points")
-    .select("id, name, category, unit, min_value, max_value")
-    .eq("store_id", ctx.store.id)
-    .eq("status", "active")
-    .order("display_order");
+  const storeId = ctx.store.id;
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
+  const todayDateStr = new Date().toISOString().slice(0, 10);
 
-  const { data: todayRecords } = await supabase
-    .from("haccp_temperature_records")
-    .select("check_point_id, value, is_out_of_range, recorded_at")
-    .eq("store_id", ctx.store.id)
-    .gte("recorded_at", todayStart.toISOString())
-    .order("recorded_at", { ascending: false });
+  // 12個の独立したクエリを並列実行(以前は直列実行でページ読み込みが遅くなっていた)
+  const [
+    { data: checkPoints },
+    { data: todayRecords },
+    { data: hygieneItems },
+    { data: todayHygieneRecords },
+    { data: hygieneHistory },
+    { data: history },
+    { data: correctiveActions },
+    { data: flaggedTemperatureRecords },
+    { data: flaggedHygieneRecords },
+    { data: correctiveHistory },
+    { data: todayApproval },
+    { data: approvalHistory },
+  ] = await Promise.all([
+    supabase
+      .from("haccp_check_points")
+      .select("id, name, category, unit, min_value, max_value")
+      .eq("store_id", storeId)
+      .eq("status", "active")
+      .order("display_order"),
+    supabase
+      .from("haccp_temperature_records")
+      .select("check_point_id, value, is_out_of_range, recorded_at")
+      .eq("store_id", storeId)
+      .gte("recorded_at", todayStart.toISOString())
+      .order("recorded_at", { ascending: false }),
+    supabase
+      .from("haccp_hygiene_items")
+      .select("id, name")
+      .eq("store_id", storeId)
+      .eq("status", "active")
+      .order("display_order"),
+    supabase
+      .from("haccp_hygiene_records")
+      .select("item_id, is_ok, checked_at")
+      .eq("store_id", storeId)
+      .gte("checked_at", todayStart.toISOString())
+      .order("checked_at", { ascending: false }),
+    supabase
+      .from("haccp_hygiene_records")
+      .select("id, is_ok, checked_at, note, haccp_hygiene_items(name)")
+      .eq("store_id", storeId)
+      .order("checked_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("haccp_temperature_records")
+      .select("id, value, is_out_of_range, recorded_at, note, haccp_check_points(name)")
+      .eq("store_id", storeId)
+      .order("recorded_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("haccp_corrective_actions")
+      .select("temperature_record_id, hygiene_record_id")
+      .eq("store_id", storeId),
+    supabase
+      .from("haccp_temperature_records")
+      .select("id, value, recorded_at, haccp_check_points(name, unit)")
+      .eq("store_id", storeId)
+      .eq("is_out_of_range", true)
+      .order("recorded_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("haccp_hygiene_records")
+      .select("id, checked_at, haccp_hygiene_items(name)")
+      .eq("store_id", storeId)
+      .eq("is_ok", false)
+      .order("checked_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("haccp_corrective_actions")
+      .select(
+        "id, cause, action_taken, created_at, temperature_record_id, hygiene_record_id, haccp_temperature_records(haccp_check_points(name)), haccp_hygiene_records(haccp_hygiene_items(name))"
+      )
+      .eq("store_id", storeId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("haccp_daily_approvals")
+      .select("id, approved_at, note")
+      .eq("store_id", storeId)
+      .eq("approved_date", todayDateStr)
+      .maybeSingle(),
+    supabase
+      .from("haccp_daily_approvals")
+      .select("id, approved_date, approved_at, note")
+      .eq("store_id", storeId)
+      .order("approved_date", { ascending: false })
+      .limit(10),
+  ]);
 
   const latestByCheckPoint = new Map<string, { value: number; is_out_of_range: boolean }>();
   for (const r of todayRecords ?? []) {
@@ -64,20 +144,6 @@ export default async function HaccpPage({
     }
   }
 
-  const { data: hygieneItems } = await supabase
-    .from("haccp_hygiene_items")
-    .select("id, name")
-    .eq("store_id", ctx.store.id)
-    .eq("status", "active")
-    .order("display_order");
-
-  const { data: todayHygieneRecords } = await supabase
-    .from("haccp_hygiene_records")
-    .select("item_id, is_ok, checked_at")
-    .eq("store_id", ctx.store.id)
-    .gte("checked_at", todayStart.toISOString())
-    .order("checked_at", { ascending: false });
-
   const latestByHygieneItem = new Map<string, { is_ok: boolean }>();
   for (const r of todayHygieneRecords ?? []) {
     if (!latestByHygieneItem.has(r.item_id)) {
@@ -85,25 +151,7 @@ export default async function HaccpPage({
     }
   }
 
-  const { data: hygieneHistory } = await supabase
-    .from("haccp_hygiene_records")
-    .select("id, is_ok, checked_at, note, haccp_hygiene_items(name)")
-    .eq("store_id", ctx.store.id)
-    .order("checked_at", { ascending: false })
-    .limit(20);
-
-  const { data: history } = await supabase
-    .from("haccp_temperature_records")
-    .select("id, value, is_out_of_range, recorded_at, note, haccp_check_points(name)")
-    .eq("store_id", ctx.store.id)
-    .order("recorded_at", { ascending: false })
-    .limit(20);
-
   // 是正・対応管理: 範囲外/NGの記録のうち、まだ是正処置が記録されていないものを抽出
-  const { data: correctiveActions } = await supabase
-    .from("haccp_corrective_actions")
-    .select("temperature_record_id, hygiene_record_id")
-    .eq("store_id", ctx.store.id);
   const resolvedTemperatureIds = new Set(
     (correctiveActions ?? []).map((a) => a.temperature_record_id).filter(Boolean)
   );
@@ -111,53 +159,12 @@ export default async function HaccpPage({
     (correctiveActions ?? []).map((a) => a.hygiene_record_id).filter(Boolean)
   );
 
-  const { data: flaggedTemperatureRecords } = await supabase
-    .from("haccp_temperature_records")
-    .select("id, value, recorded_at, haccp_check_points(name, unit)")
-    .eq("store_id", ctx.store.id)
-    .eq("is_out_of_range", true)
-    .order("recorded_at", { ascending: false })
-    .limit(30);
-
-  const { data: flaggedHygieneRecords } = await supabase
-    .from("haccp_hygiene_records")
-    .select("id, checked_at, haccp_hygiene_items(name)")
-    .eq("store_id", ctx.store.id)
-    .eq("is_ok", false)
-    .order("checked_at", { ascending: false })
-    .limit(30);
-
   const unresolvedTemperature = (flaggedTemperatureRecords ?? []).filter(
     (r) => !resolvedTemperatureIds.has(r.id)
   );
   const unresolvedHygiene = (flaggedHygieneRecords ?? []).filter(
     (r) => !resolvedHygieneIds.has(r.id)
   );
-
-  const { data: correctiveHistory } = await supabase
-    .from("haccp_corrective_actions")
-    .select(
-      "id, cause, action_taken, created_at, temperature_record_id, hygiene_record_id, haccp_temperature_records(haccp_check_points(name)), haccp_hygiene_records(haccp_hygiene_items(name))"
-    )
-    .eq("store_id", ctx.store.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  // 承認・レビュー: 本日分の承認状況
-  const todayDateStr = new Date().toISOString().slice(0, 10);
-  const { data: todayApproval } = await supabase
-    .from("haccp_daily_approvals")
-    .select("id, approved_at, note")
-    .eq("store_id", ctx.store.id)
-    .eq("approved_date", todayDateStr)
-    .maybeSingle();
-
-  const { data: approvalHistory } = await supabase
-    .from("haccp_daily_approvals")
-    .select("id, approved_date, approved_at, note")
-    .eq("store_id", ctx.store.id)
-    .order("approved_date", { ascending: false })
-    .limit(10);
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
@@ -265,12 +272,12 @@ export default async function HaccpPage({
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <button
-            type="submit"
+          <SubmitButton
             className="w-full rounded-md bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+            pendingText="記録中..."
           >
             記録する
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -371,22 +378,22 @@ export default async function HaccpPage({
             />
           </div>
           <div className="flex gap-2">
-            <button
-              type="submit"
+            <SubmitButton
               name="is_ok"
               value="true"
               className="flex-1 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              pendingText="記録中..."
             >
               OK
-            </button>
-            <button
-              type="submit"
+            </SubmitButton>
+            <SubmitButton
               name="is_ok"
               value="false"
               className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              pendingText="記録中..."
             >
               NG
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </section>
@@ -462,12 +469,12 @@ export default async function HaccpPage({
                   required
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 />
-                <button
-                  type="submit"
+                <SubmitButton
                   className="rounded-md bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
+                  pendingText="記録中..."
                 >
                   是正処置を記録
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}
@@ -492,12 +499,12 @@ export default async function HaccpPage({
                   required
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 />
-                <button
-                  type="submit"
+                <SubmitButton
                   className="rounded-md bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
+                  pendingText="記録中..."
                 >
                   是正処置を記録
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}
@@ -553,12 +560,12 @@ export default async function HaccpPage({
               placeholder="コメント(任意)"
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
-            <button
-              type="submit"
+            <SubmitButton
               className="w-full rounded-md bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+              pendingText="承認中..."
             >
               本日分を承認する
-            </button>
+            </SubmitButton>
           </form>
         )}
       </section>

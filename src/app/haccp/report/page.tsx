@@ -23,22 +23,22 @@ export default async function HaccpReportPage() {
   const supabase = await createClient();
   const since30 = daysAgoIso(30);
 
-  const { data: tempRecords } = await supabase
-    .from("haccp_temperature_records")
-    .select("id, recorded_at, is_out_of_range")
-    .eq("store_id", ctx.store.id)
-    .gte("recorded_at", since30);
-
-  const { data: hygieneRecords } = await supabase
-    .from("haccp_hygiene_records")
-    .select("id, checked_at, is_ok")
-    .eq("store_id", ctx.store.id)
-    .gte("checked_at", since30);
-
-  const { count: openActionsCount } = await supabase
-    .from("haccp_corrective_actions")
-    .select("id", { count: "exact", head: true })
-    .eq("store_id", ctx.store.id);
+  const [{ data: tempRecords }, { data: hygieneRecords }, { count: openActionsCount }] = await Promise.all([
+    supabase
+      .from("haccp_temperature_records")
+      .select("id, recorded_at, is_out_of_range")
+      .eq("store_id", ctx.store.id)
+      .gte("recorded_at", since30),
+    supabase
+      .from("haccp_hygiene_records")
+      .select("id, checked_at, is_ok")
+      .eq("store_id", ctx.store.id)
+      .gte("checked_at", since30),
+    supabase
+      .from("haccp_corrective_actions")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", ctx.store.id),
+  ]);
 
   const totalTemp = tempRecords?.length ?? 0;
   const outOfRangeTemp = tempRecords?.filter((r) => r.is_out_of_range).length ?? 0;

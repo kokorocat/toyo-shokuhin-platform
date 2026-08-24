@@ -25,28 +25,28 @@ export default async function HaccpPrintPage({
 
   const supabase = await createClient();
 
-  const { data: tempRecords } = await supabase
-    .from("haccp_temperature_records")
-    .select("value, is_out_of_range, recorded_at, note, haccp_check_points(name, unit)")
-    .eq("store_id", ctx.store.id)
-    .gte("recorded_at", dayStart)
-    .lte("recorded_at", dayEnd)
-    .order("recorded_at");
-
-  const { data: hygieneRecords } = await supabase
-    .from("haccp_hygiene_records")
-    .select("is_ok, checked_at, note, haccp_hygiene_items(name)")
-    .eq("store_id", ctx.store.id)
-    .gte("checked_at", dayStart)
-    .lte("checked_at", dayEnd)
-    .order("checked_at");
-
-  const { data: approval } = await supabase
-    .from("haccp_daily_approvals")
-    .select("approved_at, note, user_profiles(display_name)")
-    .eq("store_id", ctx.store.id)
-    .eq("approved_date", targetDate)
-    .maybeSingle();
+  const [{ data: tempRecords }, { data: hygieneRecords }, { data: approval }] = await Promise.all([
+    supabase
+      .from("haccp_temperature_records")
+      .select("value, is_out_of_range, recorded_at, note, haccp_check_points(name, unit)")
+      .eq("store_id", ctx.store.id)
+      .gte("recorded_at", dayStart)
+      .lte("recorded_at", dayEnd)
+      .order("recorded_at"),
+    supabase
+      .from("haccp_hygiene_records")
+      .select("is_ok, checked_at, note, haccp_hygiene_items(name)")
+      .eq("store_id", ctx.store.id)
+      .gte("checked_at", dayStart)
+      .lte("checked_at", dayEnd)
+      .order("checked_at"),
+    supabase
+      .from("haccp_daily_approvals")
+      .select("approved_at, note, user_profiles(display_name)")
+      .eq("store_id", ctx.store.id)
+      .eq("approved_date", targetDate)
+      .maybeSingle(),
+  ]);
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-6 py-8 print:px-0 print:py-0">
