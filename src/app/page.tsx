@@ -8,6 +8,15 @@ const SYSTEM_LABELS: Record<string, string> = {
   recipe: "レシピ閲覧",
 };
 
+// 店舗スコープを持たないロール向けのラベル(company_admin/area_adminは会社・エリア単位のスコープを
+// 別途持つが、いずれも特定の店舗には紐付かないため、店舗紐付け前提のヘッダー表示を分岐する)
+const NO_STORE_ROLE_LABELS: Record<string, { badge: string; heading: string }> = {
+  super_admin: { badge: "全権限管理者アカウント", heading: "店舗スコープなし(全社・全エリア管理権限)" },
+  company_admin: { badge: "会社管理者アカウント", heading: "店舗スコープなし(会社全体の管理権限)" },
+  area_admin: { badge: "エリア管理者アカウント", heading: "店舗スコープなし(エリア内の管理権限)" },
+  system_maintenance: { badge: "システム保守アカウント", heading: "店舗スコープなし" },
+};
+
 export default async function PortalHomePage() {
   const ctx = await getPortalContext();
 
@@ -23,13 +32,26 @@ export default async function PortalHomePage() {
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
       <header className="mb-6 flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-500">
-            {ctx.company?.name ?? "会社未設定"}
-            {ctx.area ? ` ／ ${ctx.area.name}` : ""}
-          </p>
-          <h1 className="text-lg font-bold text-slate-900">
-            {ctx.store ? `${ctx.store.name}（${ctx.store.storeCode}）` : "店舗未設定"}
-          </h1>
+          {ctx.store ? (
+            <>
+              <p className="text-xs text-slate-500">
+                {ctx.company?.name ?? "会社未設定"}
+                {ctx.area ? ` ／ ${ctx.area.name}` : ""}
+              </p>
+              <h1 className="text-lg font-bold text-slate-900">
+                {ctx.store.name}（{ctx.store.storeCode}）
+              </h1>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-slate-500">
+                {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.badge ?? "管理者アカウント"}
+              </p>
+              <h1 className="text-lg font-bold text-slate-900">
+                {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.heading ?? "店舗スコープなし"}
+              </h1>
+            </>
+          )}
           <p className="mt-1 text-xs text-slate-400">{ctx.displayName} さん</p>
         </div>
         <form action={signOut}>

@@ -25,16 +25,18 @@ export async function getPortalContext(): Promise<PortalContext | null> {
     .eq("id", user.id)
     .single();
 
-  // 代表となる店舗スコープを1件取得(店舗利用者を想定。複数店舗を持つ管理者は別画面で切替)
-  const { data: scope } = await supabase
+  // このユーザーの全アクセススコープを取得。store_idを持つ行があれば店舗コンテキストに使う。
+  // super_adminはstore_idを持たない行のみのため、店舗コンテキストがなくてもroleCodeは取得できるようにする。
+  const { data: scopes } = await supabase
     .from("user_access_scopes")
     .select(
       "role_id, roles(code), store_id, stores(id, name, store_code, area_id, company_id, areas(id, name), companies(id, name))"
     )
-    .eq("user_id", user.id)
-    .not("store_id", "is", null)
-    .limit(1)
-    .maybeSingle();
+    .eq("user_id", user.id);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const storeScope = (scopes as any[])?.find((s) => s.store_id) ?? null;
+  const scope = storeScope ?? scopes?.[0] ?? null;
 
   const { data: systems } = await supabase
     .from("system_applications")
@@ -51,7 +53,7 @@ export async function getPortalContext(): Promise<PortalContext | null> {
     .eq("user_id", user.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const store = scope?.stores as any;
+  const store = storeScope?.stores as any;
 
   return {
     userId: user.id,
