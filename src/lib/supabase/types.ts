@@ -273,6 +273,127 @@ export type Database = {
           },
         ]
       }
+      haccp_check_points: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          display_order: number
+          id: string
+          max_value: number | null
+          min_value: number | null
+          name: string
+          status: string
+          store_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          company_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          name: string
+          status?: string
+          store_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          name?: string
+          status?: string
+          store_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_check_points_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_check_points_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_temperature_records: {
+        Row: {
+          check_point_id: string
+          created_at: string
+          id: string
+          is_out_of_range: boolean
+          note: string | null
+          recorded_at: string
+          recorded_by: string
+          recorded_on: string
+          store_id: string
+          value: number
+        }
+        Insert: {
+          check_point_id: string
+          created_at?: string
+          id?: string
+          is_out_of_range?: boolean
+          note?: string | null
+          recorded_at?: string
+          recorded_by: string
+          recorded_on?: string
+          store_id: string
+          value: number
+        }
+        Update: {
+          check_point_id?: string
+          created_at?: string
+          id?: string
+          is_out_of_range?: boolean
+          note?: string | null
+          recorded_at?: string
+          recorded_by?: string
+          recorded_on?: string
+          store_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_temperature_records_check_point_id_fkey"
+            columns: ["check_point_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_check_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_temperature_records_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_temperature_records_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manual_pages: {
         Row: {
           chapter_title: string | null

@@ -3,7 +3,6 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { signOut } from "@/app/login/actions";
 
 const SYSTEM_LABELS: Record<string, string> = {
-  haccp: "HACCP管理",
   ordering: "販促物受発注",
   recipe: "レシピ閲覧",
 };
@@ -80,6 +79,31 @@ export default async function PortalHomePage() {
       </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {(() => {
+          const haccpSys = ctx.systems.find((s) => s.code === "haccp");
+          const haccpDisabled = !haccpSys || haccpSys.status !== "active" || !ctx.store;
+          const haccpReason = !haccpSys
+            ? "未設定"
+            : haccpSys.status !== "active"
+              ? "停止中"
+              : !ctx.store
+                ? "店舗スコープが必要です"
+                : "";
+
+          return haccpDisabled ? (
+            <div className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 p-4 text-center opacity-60">
+              <p className="text-sm font-semibold text-slate-500">HACCP管理</p>
+              <p className="mt-1 text-xs text-slate-400">{haccpReason}</p>
+            </div>
+          ) : (
+            <Link
+              href="/haccp"
+              className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm hover:border-blue-300"
+            >
+              <p className="text-sm font-semibold text-slate-800">HACCP管理</p>
+            </Link>
+          );
+        })()}
         {Object.entries(SYSTEM_LABELS).map(([code, label]) => {
           const sys = ctx.systems.find((s) => s.code === code);
           const disabled = !sys || sys.status !== "active" || !sys.base_url;
