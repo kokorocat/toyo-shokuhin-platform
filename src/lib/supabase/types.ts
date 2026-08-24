@@ -394,6 +394,112 @@ export type Database = {
           },
         ]
       }
+      haccp_hygiene_items: {
+        Row: {
+          company_id: string
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_hygiene_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_hygiene_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_hygiene_records: {
+        Row: {
+          checked_at: string
+          checked_by: string
+          checked_on: string
+          created_at: string
+          id: string
+          is_ok: boolean
+          item_id: string
+          note: string | null
+          store_id: string
+        }
+        Insert: {
+          checked_at?: string
+          checked_by: string
+          checked_on?: string
+          created_at?: string
+          id?: string
+          is_ok: boolean
+          item_id: string
+          note?: string | null
+          store_id: string
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string
+          checked_on?: string
+          created_at?: string
+          id?: string
+          is_ok?: boolean
+          item_id?: string
+          note?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_hygiene_records_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_hygiene_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_hygiene_records_checked_by_fkey"
+            columns: ["checked_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_hygiene_records_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manual_pages: {
         Row: {
           chapter_title: string | null
