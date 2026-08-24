@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
-import { recordTemperatureCheck, recordHygieneCheck } from "./actions";
+import {
+  recordTemperatureCheck,
+  recordHygieneCheck,
+  recordCorrectiveAction,
+  approveToday,
+} from "./actions";
 
 const CATEGORY_LABELS: Record<string, string> = {
   refrigerator: "冷蔵",
@@ -94,6 +99,66 @@ export default async function HaccpPage({
     .order("recorded_at", { ascending: false })
     .limit(20);
 
+  // 是正・対応管理: 範囲外/NGの記録のうち、まだ是正処置が記録されていないものを抽出
+  const { data: correctiveActions } = await supabase
+    .from("haccp_corrective_actions")
+    .select("temperature_record_id, hygiene_record_id")
+    .eq("store_id", ctx.store.id);
+  const resolvedTemperatureIds = new Set(
+    (correctiveActions ?? []).map((a) => a.temperature_record_id).filter(Boolean)
+  );
+  const resolvedHygieneIds = new Set(
+    (correctiveActions ?? []).map((a) => a.hygiene_record_id).filter(Boolean)
+  );
+
+  const { data: flaggedTemperatureRecords } = await supabase
+    .from("haccp_temperature_records")
+    .select("id, value, recorded_at, haccp_check_points(name, unit)")
+    .eq("store_id", ctx.store.id)
+    .eq("is_out_of_range", true)
+    .order("recorded_at", { ascending: false })
+    .limit(30);
+
+  const { data: flaggedHygieneRecords } = await supabase
+    .from("haccp_hygiene_records")
+    .select("id, checked_at, haccp_hygiene_items(name)")
+    .eq("store_id", ctx.store.id)
+    .eq("is_ok", false)
+    .order("checked_at", { ascending: false })
+    .limit(30);
+
+  const unresolvedTemperature = (flaggedTemperatureRecords ?? []).filter(
+    (r) => !resolvedTemperatureIds.has(r.id)
+  );
+  const unresolvedHygiene = (flaggedHygieneRecords ?? []).filter(
+    (r) => !resolvedHygieneIds.has(r.id)
+  );
+
+  const { data: correctiveHistory } = await supabase
+    .from("haccp_corrective_actions")
+    .select(
+      "id, cause, action_taken, created_at, temperature_record_id, hygiene_record_id, haccp_temperature_records(haccp_check_points(name)), haccp_hygiene_records(haccp_hygiene_items(name))"
+    )
+    .eq("store_id", ctx.store.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // 承認・レビュー: 本日分の承認状況
+  const todayDateStr = new Date().toISOString().slice(0, 10);
+  const { data: todayApproval } = await supabase
+    .from("haccp_daily_approvals")
+    .select("id, approved_at, note")
+    .eq("store_id", ctx.store.id)
+    .eq("approved_date", todayDateStr)
+    .maybeSingle();
+
+  const { data: approvalHistory } = await supabase
+    .from("haccp_daily_approvals")
+    .select("id, approved_date, approved_at, note")
+    .eq("store_id", ctx.store.id)
+    .order("approved_date", { ascending: false })
+    .limit(10);
+
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
       <div className="mb-4">
@@ -101,7 +166,17 @@ export default async function HaccpPage({
           ← 店舗ポータルTOPに戻る
         </Link>
       </div>
-      <h1 className="mb-1 text-lg font-bold text-slate-900">HACCP管理 - 温度点検</h1>
+      <div className="mb-1 flex items-center justify-between">
+        <h1 className="text-lg font-bold text-slate-900">HACCP管理</h1>
+        <div className="flex gap-3 text-xs">
+          <Link href="/haccp/report" className="text-blue-700 underline">
+            分析レポート
+          </Link>
+          <Link href="/haccp/print" className="text-blue-700 underline">
+            帳票出力(印刷)
+          </Link>
+        </div>
+      </div>
       <p className="mb-4 text-xs text-slate-500">
         {ctx.store.name}（{ctx.store.storeCode}）
       </p>
@@ -345,6 +420,161 @@ export default async function HaccpPage({
               <p className="mt-1 text-xs text-slate-400">
                 {new Date(h.checked_at).toLocaleString("ja-JP")}
                 {h.note ? ` / ${h.note}` : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <hr className="my-8 border-slate-200" />
+
+      <h2 className="mb-1 text-base font-bold text-slate-900">是正・対応管理</h2>
+      <p className="mb-4 text-xs text-slate-500">範囲外・NGとなった記録への原因分析・是正処置</p>
+
+      <section className="mb-6">
+        <h3 className="mb-2 text-sm font-semibold text-slate-800">
+          対応が必要な記録({unresolvedTemperature.length + unresolvedHygiene.length}件)
+        </h3>
+        {unresolvedTemperature.length === 0 && unresolvedHygiene.length === 0 && (
+          <p className="text-sm text-slate-500">現在、未対応の範囲外・NG記録はありません。</p>
+        )}
+        <ul className="space-y-3">
+          {unresolvedTemperature.map((r) => (
+            <li key={`t-${r.id}`} className="rounded-lg border border-red-300 bg-red-50 p-3 shadow-sm">
+              <p className="mb-2 text-sm font-medium text-slate-800">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                温度点検: {(r.haccp_check_points as any)?.name ?? "-"}({r.value}
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(r.haccp_check_points as any)?.unit ?? "℃"}) - {new Date(r.recorded_at).toLocaleString("ja-JP")}
+              </p>
+              <form action={recordCorrectiveAction} className="space-y-2">
+                <input type="hidden" name="store_id" value={ctx.store!.id} />
+                <input type="hidden" name="temperature_record_id" value={r.id} />
+                <input
+                  name="cause"
+                  placeholder="原因(例: ドアの開閉頻度が高かった)"
+                  required
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+                <input
+                  name="action_taken"
+                  placeholder="対応内容(例: 設定温度を確認し再測定、正常値を確認)"
+                  required
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="rounded-md bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
+                >
+                  是正処置を記録
+                </button>
+              </form>
+            </li>
+          ))}
+          {unresolvedHygiene.map((r) => (
+            <li key={`h-${r.id}`} className="rounded-lg border border-red-300 bg-red-50 p-3 shadow-sm">
+              <p className="mb-2 text-sm font-medium text-slate-800">
+                衛生チェック: {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(r.haccp_hygiene_items as any)?.name ?? "-"} - {new Date(r.checked_at).toLocaleString("ja-JP")}
+              </p>
+              <form action={recordCorrectiveAction} className="space-y-2">
+                <input type="hidden" name="store_id" value={ctx.store!.id} />
+                <input type="hidden" name="hygiene_record_id" value={r.id} />
+                <input
+                  name="cause"
+                  placeholder="原因"
+                  required
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+                <input
+                  name="action_taken"
+                  placeholder="対応内容"
+                  required
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="rounded-md bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-900"
+                >
+                  是正処置を記録
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mb-6">
+        <h3 className="mb-2 text-sm font-semibold text-slate-800">是正処置の記録(直近10件)</h3>
+        {(!correctiveHistory || correctiveHistory.length === 0) && (
+          <p className="text-sm text-slate-500">まだ記録がありません。</p>
+        )}
+        <ul className="space-y-2">
+          {correctiveHistory?.map((c) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const cc = c as any;
+            const sourceName =
+              cc.haccp_temperature_records?.haccp_check_points?.name ??
+              cc.haccp_hygiene_records?.haccp_hygiene_items?.name ??
+              "-";
+            return (
+              <li key={c.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <p className="text-sm font-medium text-slate-800">{sourceName}</p>
+                <p className="mt-1 text-xs text-slate-600">原因: {c.cause}</p>
+                <p className="text-xs text-slate-600">対応: {c.action_taken}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {new Date(c.created_at).toLocaleString("ja-JP")}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <hr className="my-8 border-slate-200" />
+
+      <h2 className="mb-1 text-base font-bold text-slate-900">承認・レビュー</h2>
+      <p className="mb-4 text-xs text-slate-500">店舗責任者による当日分の記録確認・承認</p>
+
+      <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        {todayApproval ? (
+          <p className="text-sm text-green-700">
+            本日分は承認済みです({new Date(todayApproval.approved_at).toLocaleString("ja-JP")})
+            {todayApproval.note ? ` / ${todayApproval.note}` : ""}
+          </p>
+        ) : (
+          <form action={approveToday} className="space-y-3">
+            <input type="hidden" name="store_id" value={ctx.store.id} />
+            <p className="text-sm text-slate-600">
+              本日の点検・衛生チェック記録を確認し、問題なければ承認してください。
+            </p>
+            <input
+              name="note"
+              placeholder="コメント(任意)"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="w-full rounded-md bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+            >
+              本日分を承認する
+            </button>
+          </form>
+        )}
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-sm font-semibold text-slate-800">承認履歴(直近10件)</h3>
+        {(!approvalHistory || approvalHistory.length === 0) && (
+          <p className="text-sm text-slate-500">まだ承認記録がありません。</p>
+        )}
+        <ul className="space-y-2">
+          {approvalHistory?.map((a) => (
+            <li key={a.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="text-sm font-medium text-slate-800">{a.approved_date}</p>
+              <p className="mt-1 text-xs text-slate-400">
+                {new Date(a.approved_at).toLocaleString("ja-JP")}
+                {a.note ? ` / ${a.note}` : ""}
               </p>
             </li>
           ))}

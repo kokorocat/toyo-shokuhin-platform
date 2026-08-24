@@ -500,6 +500,99 @@ export type Database = {
           },
         ]
       }
+      haccp_corrective_actions: {
+        Row: {
+          action_taken: string
+          cause: string
+          created_at: string
+          created_by: string
+          hygiene_record_id: string | null
+          id: string
+          status: string
+          store_id: string
+          temperature_record_id: string | null
+        }
+        Insert: {
+          action_taken: string
+          cause: string
+          created_at?: string
+          created_by: string
+          hygiene_record_id?: string | null
+          id?: string
+          status?: string
+          store_id: string
+          temperature_record_id?: string | null
+        }
+        Update: {
+          action_taken?: string
+          cause?: string
+          created_at?: string
+          created_by?: string
+          hygiene_record_id?: string | null
+          id?: string
+          status?: string
+          store_id?: string
+          temperature_record_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_corrective_actions_hygiene_record_id_fkey"
+            columns: ["hygiene_record_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_hygiene_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_corrective_actions_temperature_record_id_fkey"
+            columns: ["temperature_record_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_temperature_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_corrective_actions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_daily_approvals: {
+        Row: {
+          approved_at: string
+          approved_by: string
+          approved_date: string
+          id: string
+          note: string | null
+          store_id: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by: string
+          approved_date?: string
+          id?: string
+          note?: string | null
+          store_id: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string
+          approved_date?: string
+          id?: string
+          note?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_daily_approvals_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manual_pages: {
         Row: {
           chapter_title: string | null

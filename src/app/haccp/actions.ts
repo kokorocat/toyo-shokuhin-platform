@@ -36,6 +36,68 @@ export async function recordTemperatureCheck(formData: FormData) {
   redirect("/haccp");
 }
 
+export async function recordCorrectiveAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const storeId = String(formData.get("store_id") ?? "");
+  const temperatureRecordId = String(formData.get("temperature_record_id") ?? "").trim();
+  const hygieneRecordId = String(formData.get("hygiene_record_id") ?? "").trim();
+  const cause = String(formData.get("cause") ?? "").trim();
+  const actionTaken = String(formData.get("action_taken") ?? "").trim();
+
+  if (!storeId || !cause || !actionTaken || (!temperatureRecordId && !hygieneRecordId)) {
+    redirect(`/haccp?error=${encodeURIComponent("原因と対応内容を入力してください")}`);
+  }
+
+  const { error } = await supabase.from("haccp_corrective_actions").insert({
+    store_id: storeId,
+    temperature_record_id: temperatureRecordId || null,
+    hygiene_record_id: hygieneRecordId || null,
+    cause,
+    action_taken: actionTaken,
+    created_by: user.id,
+  });
+
+  if (error) {
+    redirect(`/haccp?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/haccp");
+  redirect("/haccp");
+}
+
+export async function approveToday(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const storeId = String(formData.get("store_id") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+
+  if (!storeId) {
+    redirect(`/haccp?error=${encodeURIComponent("店舗情報が取得できませんでした")}`);
+  }
+
+  const { error } = await supabase.from("haccp_daily_approvals").insert({
+    store_id: storeId,
+    note: note || null,
+    approved_by: user.id,
+  });
+
+  if (error) {
+    redirect(`/haccp?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/haccp");
+  redirect("/haccp");
+}
+
 export async function recordHygieneCheck(formData: FormData) {
   const supabase = await createClient();
   const {
