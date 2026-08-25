@@ -7,9 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   public: {
     Tables: {
       areas: {
@@ -151,6 +148,41 @@ export type Database = {
           },
         ]
       }
+      bulk_orders: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          store_count: number
+          target_description: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          store_count?: number
+          target_description?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          store_count?: number
+          target_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           company_code: string
@@ -273,68 +305,26 @@ export type Database = {
           },
         ]
       }
-      haccp_keypoint_responses: {
+      haccp_employee_items: {
         Row: {
-          company_id: string
-          created_at: string
-          id: string
-          recorded_by: string
-          store_id: string
-          target_date: string
-          version: number
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          id?: string
-          recorded_by: string
-          store_id: string
-          target_date: string
-          version?: number
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          id?: string
-          recorded_by?: string
-          store_id?: string
-          target_date?: string
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "haccp_keypoint_responses_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "haccp_keypoint_responses_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      haccp_keypoint_items: {
-        Row: {
-          checked: boolean
+          action_taken: string | null
+          answer: string
           id: string
           item_code: string
           note: string | null
           response_id: string
         }
         Insert: {
-          checked?: boolean
+          action_taken?: string | null
+          answer: string
           id?: string
           item_code: string
           note?: string | null
           response_id: string
         }
         Update: {
-          checked?: boolean
+          action_taken?: string | null
+          answer?: string
           id?: string
           item_code?: string
           note?: string | null
@@ -342,45 +332,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_keypoint_items_response_id_fkey"
+            foreignKeyName: "haccp_employee_items_response_id_fkey"
             columns: ["response_id"]
             isOneToOne: false
-            referencedRelation: "haccp_keypoint_responses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      haccp_temperature_labels: {
-        Row: {
-          id: string
-          judgment: string | null
-          label_type: string
-          measured_value: number | null
-          note: string | null
-          response_id: string
-        }
-        Insert: {
-          id?: string
-          judgment?: string | null
-          label_type: string
-          measured_value?: number | null
-          note?: string | null
-          response_id: string
-        }
-        Update: {
-          id?: string
-          judgment?: string | null
-          label_type?: string
-          measured_value?: number | null
-          note?: string | null
-          response_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "haccp_temperature_labels_response_id_fkey"
-            columns: ["response_id"]
-            isOneToOne: false
-            referencedRelation: "haccp_keypoint_responses"
+            referencedRelation: "haccp_employee_responses"
             referencedColumns: ["id"]
           },
         ]
@@ -441,6 +396,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "haccp_employee_responses_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "haccp_employee_responses_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -449,37 +411,37 @@ export type Database = {
           },
         ]
       }
-      haccp_employee_items: {
+      haccp_inspection_items: {
         Row: {
           action_taken: string | null
           answer: string
           id: string
-          item_code: string
-          note: string | null
-          response_id: string
+          inspection_id: string
+          question_code: string
+          reason: string | null
         }
         Insert: {
           action_taken?: string | null
           answer: string
           id?: string
-          item_code: string
-          note?: string | null
-          response_id: string
+          inspection_id: string
+          question_code: string
+          reason?: string | null
         }
         Update: {
           action_taken?: string | null
           answer?: string
           id?: string
-          item_code?: string
-          note?: string | null
-          response_id?: string
+          inspection_id?: string
+          question_code?: string
+          reason?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_employee_items_response_id_fkey"
-            columns: ["response_id"]
+            foreignKeyName: "haccp_inspection_items_inspection_id_fkey"
+            columns: ["inspection_id"]
             isOneToOne: false
-            referencedRelation: "haccp_employee_responses"
+            referencedRelation: "haccp_inspections"
             referencedColumns: ["id"]
           },
         ]
@@ -539,6 +501,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "haccp_inspections_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "haccp_inspections_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -547,85 +516,121 @@ export type Database = {
           },
         ]
       }
-      haccp_inspection_items: {
+      haccp_keypoint_items: {
         Row: {
-          action_taken: string | null
-          answer: string
+          checked: boolean
           id: string
-          inspection_id: string
-          question_code: string
-          reason: string | null
+          item_code: string
+          note: string | null
+          response_id: string
         }
         Insert: {
-          action_taken?: string | null
-          answer: string
+          checked?: boolean
           id?: string
-          inspection_id: string
-          question_code: string
-          reason?: string | null
+          item_code: string
+          note?: string | null
+          response_id: string
         }
         Update: {
-          action_taken?: string | null
-          answer?: string
+          checked?: boolean
           id?: string
-          inspection_id?: string
-          question_code?: string
-          reason?: string | null
+          item_code?: string
+          note?: string | null
+          response_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_inspection_items_inspection_id_fkey"
-            columns: ["inspection_id"]
+            foreignKeyName: "haccp_keypoint_items_response_id_fkey"
+            columns: ["response_id"]
             isOneToOne: false
-            referencedRelation: "haccp_inspections"
+            referencedRelation: "haccp_keypoint_responses"
             referencedColumns: ["id"]
           },
         ]
       }
-      store_holidays: {
+      haccp_keypoint_responses: {
         Row: {
           company_id: string
           created_at: string
-          holiday_date: string
           id: string
-          reason: string | null
-          registered_by: string
-          status: string
+          recorded_by: string
           store_id: string
+          target_date: string
+          version: number
         }
         Insert: {
           company_id: string
           created_at?: string
-          holiday_date: string
           id?: string
-          reason?: string | null
-          registered_by: string
-          status?: string
+          recorded_by: string
           store_id: string
+          target_date: string
+          version?: number
         }
         Update: {
           company_id?: string
           created_at?: string
-          holiday_date?: string
           id?: string
-          reason?: string | null
-          registered_by?: string
-          status?: string
+          recorded_by?: string
           store_id?: string
+          target_date?: string
+          version?: number
         }
         Relationships: [
           {
-            foreignKeyName: "store_holidays_company_id_fkey"
+            foreignKeyName: "haccp_keypoint_responses_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "store_holidays_store_id_fkey"
+            foreignKeyName: "haccp_keypoint_responses_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_keypoint_responses_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_temperature_labels: {
+        Row: {
+          id: string
+          judgment: string | null
+          label_type: string
+          measured_value: number | null
+          note: string | null
+          response_id: string
+        }
+        Insert: {
+          id?: string
+          judgment?: string | null
+          label_type: string
+          measured_value?: number | null
+          note?: string | null
+          response_id: string
+        }
+        Update: {
+          id?: string
+          judgment?: string | null
+          label_type?: string
+          measured_value?: number | null
+          note?: string | null
+          response_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_temperature_labels_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_keypoint_responses"
             referencedColumns: ["id"]
           },
         ]
@@ -679,6 +684,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_confirmations_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -985,6 +997,195 @@ export type Database = {
           },
         ]
       }
+      order_lines: {
+        Row: {
+          created_at: string
+          detail: Json
+          id: string
+          lot_size_snapshot: number
+          memo: string | null
+          order_id: string
+          product_id: string | null
+          product_name_snapshot: string
+          product_type_snapshot: string
+          quantity: number
+          subtotal: number
+          unit_price_snapshot: number
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          lot_size_snapshot?: number
+          memo?: string | null
+          order_id: string
+          product_id?: string | null
+          product_name_snapshot: string
+          product_type_snapshot: string
+          quantity: number
+          subtotal: number
+          unit_price_snapshot: number
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          lot_size_snapshot?: number
+          memo?: string | null
+          order_id?: string
+          product_id?: string | null
+          product_name_snapshot?: string
+          product_type_snapshot?: string
+          quantity?: number
+          subtotal?: number
+          unit_price_snapshot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_histories: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_histories_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          billed: boolean
+          bulk_order_id: string | null
+          cancel_reason: string | null
+          company_id: string
+          created_at: string
+          delivered_on: string | null
+          delivery_date: string | null
+          id: string
+          memo: string | null
+          order_number: string
+          ordered_by: string
+          shipped_on: string | null
+          shipping_address: string | null
+          shipping_fee: number
+          shipping_method: string | null
+          status: string
+          store_id: string
+          total_amount: number
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          billed?: boolean
+          bulk_order_id?: string | null
+          cancel_reason?: string | null
+          company_id: string
+          created_at?: string
+          delivered_on?: string | null
+          delivery_date?: string | null
+          id?: string
+          memo?: string | null
+          order_number: string
+          ordered_by: string
+          shipped_on?: string | null
+          shipping_address?: string | null
+          shipping_fee?: number
+          shipping_method?: string | null
+          status?: string
+          store_id: string
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billed?: boolean
+          bulk_order_id?: string | null
+          cancel_reason?: string | null
+          company_id?: string
+          created_at?: string
+          delivered_on?: string | null
+          delivery_date?: string | null
+          id?: string
+          memo?: string | null
+          order_number?: string
+          ordered_by?: string
+          shipped_on?: string | null
+          shipping_address?: string | null
+          shipping_fee?: number
+          shipping_method?: string | null
+          status?: string
+          store_id?: string
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_bulk_order_id_fkey"
+            columns: ["bulk_order_id"]
+            isOneToOne: false
+            referencedRelation: "bulk_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_notices: {
         Row: {
           body: string
@@ -1080,6 +1281,403 @@ export type Database = {
         }
         Relationships: []
       }
+      product_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          level: number
+          name: string
+          parent_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          level: number
+          name: string
+          parent_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: number
+          name?: string
+          parent_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_primary: boolean
+          product_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_primary?: boolean
+          product_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_primary?: boolean
+          product_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          allow_multi_store_order: boolean
+          category_id: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_recommended: boolean
+          lot_size: number
+          max_order_qty: number | null
+          min_order_qty: number
+          name: string
+          product_type: string
+          recommend_badge: string | null
+          recommend_end: string | null
+          recommend_start: string | null
+          recommend_title: string | null
+          requires_delivery_date: boolean
+          seal_size_id: string | null
+          status: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          allow_multi_store_order?: boolean
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_recommended?: boolean
+          lot_size?: number
+          max_order_qty?: number | null
+          min_order_qty?: number
+          name: string
+          product_type: string
+          recommend_badge?: string | null
+          recommend_end?: string | null
+          recommend_start?: string | null
+          recommend_title?: string | null
+          requires_delivery_date?: boolean
+          seal_size_id?: string | null
+          status?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          allow_multi_store_order?: boolean
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_recommended?: boolean
+          lot_size?: number
+          max_order_qty?: number | null
+          min_order_qty?: number
+          name?: string
+          product_type?: string
+          recommend_badge?: string | null
+          recommend_end?: string | null
+          recommend_start?: string | null
+          recommend_title?: string | null
+          requires_delivery_date?: boolean
+          seal_size_id?: string | null
+          status?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_seal_size_id_fkey"
+            columns: ["seal_size_id"]
+            isOneToOne: false
+            referencedRelation: "seal_sizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_files: {
+        Row: {
+          created_at: string
+          display_order: number
+          file_type: string
+          id: string
+          recipe_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          file_type: string
+          id?: string
+          recipe_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          file_type?: string
+          id?: string
+          recipe_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_files_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_related_products: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          locked_by_user: boolean
+          product_code: string | null
+          product_name: string
+          recipe_id: string
+          source_type: string
+          spec: string | null
+          supplier: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          locked_by_user?: boolean
+          product_code?: string | null
+          product_name: string
+          recipe_id: string
+          source_type?: string
+          spec?: string | null
+          supplier?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          locked_by_user?: boolean
+          product_code?: string | null
+          product_name?: string
+          recipe_id?: string
+          source_type?: string
+          spec?: string | null
+          supplier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_related_products_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_search_logs: {
+        Row: {
+          hit_count: number
+          id: string
+          keyword: string | null
+          searched_at: string
+          user_id: string
+        }
+        Insert: {
+          hit_count?: number
+          id?: string
+          keyword?: string | null
+          searched_at?: string
+          user_id: string
+        }
+        Update: {
+          hit_count?: number
+          id?: string
+          keyword?: string | null
+          searched_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recipe_versions: {
+        Row: {
+          created_at: string
+          id: string
+          original_storage_path: string | null
+          preview_storage_path: string | null
+          published_at: string | null
+          recipe_id: string
+          uploaded_by: string | null
+          version_no: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_storage_path?: string | null
+          preview_storage_path?: string | null
+          published_at?: string | null
+          recipe_id: string
+          uploaded_by?: string | null
+          version_no: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_storage_path?: string | null
+          preview_storage_path?: string | null
+          published_at?: string | null
+          recipe_id?: string
+          uploaded_by?: string | null
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_versions_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_view_logs: {
+        Row: {
+          id: string
+          recipe_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_view_logs_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          area_id: string | null
+          category: string | null
+          company_id: string
+          created_at: string
+          current_version_id: string | null
+          id: string
+          name: string
+          recipe_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          category?: string | null
+          company_id: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          name: string
+          recipe_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          current_version_id?: string | null
+          id?: string
+          name?: string
+          recipe_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_current_version_id_fkey"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           code: string
@@ -1100,6 +1698,85 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      seal_sizes: {
+        Row: {
+          faces: number
+          height_mm: number
+          id: string
+          note: string | null
+          width_mm: number
+        }
+        Insert: {
+          faces: number
+          height_mm: number
+          id?: string
+          note?: string | null
+          width_mm: number
+        }
+        Update: {
+          faces?: number
+          height_mm?: number
+          id?: string
+          note?: string | null
+          width_mm?: number
+        }
+        Relationships: []
+      }
+      store_holidays: {
+        Row: {
+          company_id: string
+          created_at: string
+          holiday_date: string
+          id: string
+          reason: string | null
+          registered_by: string
+          status: string
+          store_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          holiday_date: string
+          id?: string
+          reason?: string | null
+          registered_by: string
+          status?: string
+          store_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          holiday_date?: string
+          id?: string
+          reason?: string | null
+          registered_by?: string
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_holidays_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_holidays_registered_by_fkey"
+            columns: ["registered_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_holidays_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stores: {
         Row: {
@@ -1446,3 +2123,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

@@ -149,51 +149,66 @@ export default async function PortalHomePage() {
             </Link>
           );
         })()}
-        {Object.entries(SYSTEM_LABELS).map(([code, label]) => {
-          const sys = ctx.systems.find((s) => s.code === code);
-          const disabled = !sys || sys.status !== "active" || !sys.base_url;
-          const reason = !sys
+        {(() => {
+          const orderingSys = ctx.systems.find((s) => s.code === "ordering");
+          const orderingDisabled = !orderingSys || orderingSys.status !== "active" || !ctx.store;
+          const orderingReason = !orderingSys
             ? "未設定"
-            : sys.status !== "active"
+            : orderingSys.status !== "active"
               ? "停止中"
-              : !sys.base_url
-                ? "URL未設定"
+              : !ctx.store
+                ? "店舗スコープが必要です"
                 : "";
 
-          return disabled ? (
-            <div
-              key={code}
-              className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-50"
-            >
+          return orderingDisabled ? (
+            <div className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-50">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-400">
-                {SYSTEM_ICONS[code] ?? (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
-                  </svg>
-                )}
+                {SYSTEM_ICONS.ordering}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-500">{label}</p>
-                <p className="text-xs text-slate-400">{reason}</p>
+                <p className="text-sm font-semibold text-slate-500">{SYSTEM_LABELS.ordering}</p>
+                <p className="text-xs text-slate-400">{orderingReason}</p>
               </div>
             </div>
           ) : (
-            <a
-              key={code}
-              href={sys!.base_url!}
+            <Link
+              href="/ordering"
               className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-100">
-                {SYSTEM_ICONS[code] ?? (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
-                  </svg>
-                )}
+                {SYSTEM_ICONS.ordering}
               </div>
-              <p className="text-sm font-semibold text-slate-800">{label}</p>
-            </a>
+              <p className="text-sm font-semibold text-slate-800">{SYSTEM_LABELS.ordering}</p>
+            </Link>
           );
-        })}
+        })()}
+        {(() => {
+          const recipeSys = ctx.systems.find((s) => s.code === "recipe");
+          const recipeDisabled = !recipeSys || recipeSys.status !== "active";
+          const recipeReason = !recipeSys ? "未設定" : recipeSys.status !== "active" ? "停止中" : "";
+
+          return recipeDisabled ? (
+            <div className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-50">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-400">
+                {SYSTEM_ICONS.recipe}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-500">{SYSTEM_LABELS.recipe}</p>
+                <p className="text-xs text-slate-400">{recipeReason}</p>
+              </div>
+            </div>
+          ) : (
+            <Link
+              href="/recipe"
+              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-100">
+                {SYSTEM_ICONS.recipe}
+              </div>
+              <p className="text-sm font-semibold text-slate-800">{SYSTEM_LABELS.recipe}</p>
+            </Link>
+          );
+        })()}
       </section>
     </div>
   );
