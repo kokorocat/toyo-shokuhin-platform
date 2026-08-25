@@ -116,6 +116,19 @@ export async function recordEmployeeCheck(formData: FormData) {
     redirect(`/haccp/employee?error=${encodeURIComponent(itemsError.message)}`);
   }
 
+  // 監査ログ(仕様書9「監査」)。ここでの失敗は登録自体をブロックしない既知のトレードオフ。
+  const { error: auditError } = await supabase.from("audit_logs").insert({
+    actor_id: user.id,
+    system_code: "haccp",
+    action: "employee_record",
+    target_table: "haccp_employee_responses",
+    target_id: inserted.id,
+    after_data: { store_id: storeId, target_date: targetDate, version: nextVersion },
+  });
+  if (auditError) {
+    console.error("[haccp/employee] audit log insert failed", auditError);
+  }
+
   revalidatePath("/haccp/employee");
   revalidatePath("/haccp");
   redirect("/haccp/employee?success=1");

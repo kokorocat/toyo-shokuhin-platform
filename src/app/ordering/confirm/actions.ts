@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { CartItem } from "../CartContext";
+import { todayInTokyo } from "@/lib/date";
 
 export type ConfirmOrderInput = {
   storeId: string;
@@ -15,8 +16,7 @@ export type ConfirmOrderInput = {
 export type ConfirmOrderResult = { ok: true; orderId: string } | { ok: false; error: string };
 
 function generateOrderNumber() {
-  const now = new Date();
-  const ymd = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const ymd = todayInTokyo().replace(/-/g, "");
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `OS${ymd}-${rand}`;
 }

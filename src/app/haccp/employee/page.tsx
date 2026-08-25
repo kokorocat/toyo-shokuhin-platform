@@ -6,6 +6,7 @@ import { recordEmployeeCheck } from "./actions";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { todayInTokyo } from "@/lib/date";
 
 const ITEMS: { code: string; label: string }[] = [
   { code: "handwash", label: "正しい手洗いができているか" },
@@ -37,7 +38,7 @@ export default async function EmployeeCheckPage({
   }
 
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInTokyo();
 
   const [{ data: assignmentRows }, { data: todayResponses }] = await Promise.all([
     supabase

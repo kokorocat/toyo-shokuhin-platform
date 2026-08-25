@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { signOut } from "@/app/login/actions";
+import { isHaccpAdminRole } from "@/app/haccp/admin/guard";
 
 const SYSTEM_LABELS: Record<string, string> = {
   ordering: "販促物受発注",
@@ -114,12 +115,13 @@ export default async function PortalHomePage() {
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {(() => {
           const haccpSys = ctx.systems.find((s) => s.code === "haccp");
-          const haccpDisabled = !haccpSys || haccpSys.status !== "active" || !ctx.store;
+          const haccpHref = ctx.store ? "/haccp" : isHaccpAdminRole(ctx.roleCode) ? "/haccp/admin" : null;
+          const haccpDisabled = !haccpSys || haccpSys.status !== "active" || !haccpHref;
           const haccpReason = !haccpSys
             ? "未設定"
             : haccpSys.status !== "active"
               ? "停止中"
-              : !ctx.store
+              : !haccpHref
                 ? "店舗スコープが必要です"
                 : "";
 
@@ -137,7 +139,7 @@ export default async function PortalHomePage() {
             </div>
           ) : (
             <Link
-              href="/haccp"
+              href={haccpHref}
               className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-green-300 hover:shadow-md"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 transition-colors group-hover:bg-green-100">

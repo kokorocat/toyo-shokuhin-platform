@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { INSPECTION_QUESTIONS } from "./constants";
+import { todayInTokyo } from "@/lib/date";
 
 export async function recordInspection(formData: FormData) {
   const supabase = await createClient();
@@ -48,7 +49,7 @@ export async function recordInspection(formData: FormData) {
     );
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayInTokyo();
   const targetMonth = `${todayStr.slice(0, 7)}-01`;
 
   // 訂正は新版を追加する運用のため、既存の最大バージョンの次番で新版として保存する
@@ -96,6 +97,19 @@ export async function recordInspection(formData: FormData) {
 
   if (itemsError) {
     redirect(`/haccp/inspection?error=${encodeURIComponent(itemsError.message)}`);
+  }
+
+  // 監査ログ(仕様書9「監査」)。ここでの失敗は登録自体をブロックしない既知のトレードオフ。
+  const { error: auditError } = await supabase.from("audit_logs").insert({
+    actor_id: user.id,
+    system_code: "haccp",
+    action: "inspection_record",
+    target_table: "haccp_inspections",
+    target_id: inspection.id,
+    after_data: { store_id: storeId, target_month: targetMonth, version: nextVersion },
+  });
+  if (auditError) {
+    console.error("[haccp/inspection] audit log insert failed", auditError);
   }
 
   revalidatePath("/haccp/inspection");

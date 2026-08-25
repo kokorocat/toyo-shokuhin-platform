@@ -6,6 +6,7 @@ import { recordKeypointCheck } from "./actions";
 import { KEYPOINT_ITEMS } from "./constants";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
+import { todayInTokyo } from "@/lib/date";
 
 const JUDGMENT_LABELS: Record<string, string> = {
   ok: "OK",
@@ -30,7 +31,7 @@ export default async function KeypointCheckPage({
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInTokyo();
   const supabase = await createClient();
 
   const { data: latestResponse } = await supabase

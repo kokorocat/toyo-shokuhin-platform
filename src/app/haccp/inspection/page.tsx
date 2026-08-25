@@ -7,6 +7,7 @@ import { INSPECTION_QUESTIONS } from "./constants";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { todayInTokyo } from "@/lib/date";
 
 const EVALUATION_LABELS: Record<string, string> = {
   good: "良好",
@@ -45,7 +46,7 @@ export default async function HaccpInspectionPage({
   }
 
   const supabase = await createClient();
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayInTokyo();
   const targetMonth = `${todayStr.slice(0, 7)}-01`;
 
   const [{ data: inspectionRows }, { data: storeRow }] = await Promise.all([

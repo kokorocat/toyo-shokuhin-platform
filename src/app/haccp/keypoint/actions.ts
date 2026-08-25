@@ -107,6 +107,19 @@ export async function recordKeypointCheck(formData: FormData) {
     }
   }
 
+  // 監査ログ(仕様書9「監査」)。ここでの失敗は登録自体をブロックしない既知のトレードオフ。
+  const { error: auditError } = await supabase.from("audit_logs").insert({
+    actor_id: user.id,
+    system_code: "haccp",
+    action: "keypoint_record",
+    target_table: "haccp_keypoint_responses",
+    target_id: response.id,
+    after_data: { store_id: storeId, target_date: targetDate, version: nextVersion },
+  });
+  if (auditError) {
+    console.error("[haccp/keypoint] audit log insert failed", auditError);
+  }
+
   revalidatePath("/haccp");
   revalidatePath("/haccp/keypoint");
   redirect("/haccp/keypoint?success=1");

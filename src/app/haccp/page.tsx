@@ -5,29 +5,10 @@ import { SubmitButton } from "./SubmitButton";
 import { confirmHalfMonth } from "./actions";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
+import { todayInTokyo } from "@/lib/date";
+import { getHalfMonthPeriod } from "@/lib/haccp/admin-dashboard";
 
 const CAN_CONFIRM_ROLES = new Set(["store_manager", "company_admin", "area_admin", "super_admin"]);
-
-function halfMonthPeriod(today: Date) {
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const day = today.getDate();
-  if (day <= 15) {
-    return {
-      start: new Date(year, month, 1),
-      end: new Date(year, month, 15),
-    };
-  }
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  return {
-    start: new Date(year, month, 16),
-    end: new Date(year, month, lastDay),
-  };
-}
-
-function toDateStr(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
 
 function StatusDot({ recorded }: { recorded: boolean }) {
   return (
@@ -57,11 +38,9 @@ export default async function HaccpTopPage({
   }
 
   const supabase = await createClient();
-  const todayStr = toDateStr(new Date());
+  const todayStr = todayInTokyo();
   const monthStartStr = `${todayStr.slice(0, 7)}-01`;
-  const period = halfMonthPeriod(new Date());
-  const periodStartStr = toDateStr(period.start);
-  const periodEndStr = toDateStr(period.end);
+  const { start: periodStartStr, end: periodEndStr } = getHalfMonthPeriod(todayStr);
 
   const [
     { data: todayHoliday },
