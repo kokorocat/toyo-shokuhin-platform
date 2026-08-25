@@ -100,5 +100,5 @@ export async function recordInspection(formData: FormData) {
 
   revalidatePath("/haccp/inspection");
   revalidatePath("/haccp");
-  redirect("/haccp/inspection");
+  redirect("/haccp/inspection?success=1");
 }

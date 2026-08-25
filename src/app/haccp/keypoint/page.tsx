@@ -13,7 +13,7 @@ const JUDGMENT_LABELS: Record<string, string> = {
 export default async function KeypointCheckPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
   const params = await searchParams;
   const ctx = await getPortalContext();
@@ -67,6 +67,11 @@ export default async function KeypointCheckPage({
         {ctx.store.name}({ctx.store.storeCode})
       </p>
 
+      {params.success && (
+        <p className="mb-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+          記録しました。
+        </p>
+      )}
       {params.error && (
         <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{params.error}</p>
       )}

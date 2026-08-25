@@ -118,5 +118,5 @@ export async function recordEmployeeCheck(formData: FormData) {
 
   revalidatePath("/haccp/employee");
   revalidatePath("/haccp");
-  redirect("/haccp/employee");
+  redirect("/haccp/employee?success=1");
 }

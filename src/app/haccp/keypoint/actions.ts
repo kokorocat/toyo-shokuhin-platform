@@ -109,5 +109,5 @@ export async function recordKeypointCheck(formData: FormData) {
 
   revalidatePath("/haccp");
   revalidatePath("/haccp/keypoint");
-  redirect("/haccp?keypoint=success");
+  redirect("/haccp/keypoint?success=1");
 }

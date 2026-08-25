@@ -26,9 +26,9 @@ type InspectionSummary = {
 export default async function HaccpInspectionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const ctx = await getPortalContext();
 
   if (!ctx?.store) {
@@ -81,6 +81,9 @@ export default async function HaccpInspectionPage({
         ※以下の17問は、原紙(旧GASシステムの自主点検用紙)が未確認のため、一般的な食品衛生自主点検表の構成に基づく暫定の設問です。正式な問題文は原紙確認後に差し替えます。
       </p>
 
+      {success && (
+        <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">提出しました。</p>
+      )}
       {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {currentInspection && (
@@ -156,24 +159,24 @@ export default async function HaccpInspectionPage({
                 <legend className="mb-2 text-sm font-medium text-slate-800">
                   {idx + 1}. {q.text}
                 </legend>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                <div className="flex gap-2">
+                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
                     <input
                       type="radio"
                       name={`answer_${q.code}`}
                       value="good"
                       required
-                      className="h-4 w-4"
+                      className="sr-only"
                     />
                     良好
                   </label>
-                  <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
                     <input
                       type="radio"
                       name={`answer_${q.code}`}
                       value="needs_improvement"
                       required
-                      className="h-4 w-4"
+                      className="sr-only"
                     />
                     要改善
                   </label>

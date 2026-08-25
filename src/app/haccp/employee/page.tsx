@@ -19,9 +19,9 @@ const ITEMS: { code: string; label: string }[] = [
 export default async function EmployeeCheckPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const ctx = await getPortalContext();
 
   if (!ctx?.store) {
@@ -85,6 +85,9 @@ export default async function EmployeeCheckPage({
         {ctx.store.name}（{ctx.store.storeCode}） / {today}
       </p>
 
+      {success && (
+        <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">記録しました。</p>
+      )}
       {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <section className="mb-6">
@@ -167,24 +170,24 @@ export default async function EmployeeCheckPage({
             {ITEMS.map((item) => (
               <div key={item.code} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                 <p className="mb-2 text-sm text-slate-700">{item.label}</p>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                <div className="flex gap-2">
+                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
                     <input
                       type="radio"
                       name={`answer_${item.code}`}
                       value="good"
                       required
-                      className="h-4 w-4"
+                      className="sr-only"
                     />
                     良好
                   </label>
-                  <label className="flex items-center gap-1.5 text-sm text-slate-700">
+                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:font-semibold has-[:checked]:text-red-700">
                     <input
                       type="radio"
                       name={`answer_${item.code}`}
                       value="bad"
                       required
-                      className="h-4 w-4"
+                      className="sr-only"
                     />
                     異常
                   </label>
