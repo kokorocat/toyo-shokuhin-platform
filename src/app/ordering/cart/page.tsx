@@ -41,7 +41,7 @@ export default function CartPage() {
                   value={item.memo}
                   onChange={(e) => cart.updateMemo(item.key, e.target.value)}
                   placeholder="明細備考（任意）"
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs"
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2">
@@ -49,7 +49,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => cart.updateQuantity(item.key, item.quantity - 1)}
-                    className="px-2.5 py-1 text-slate-500 hover:bg-slate-50"
+                    className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
                     aria-label="数量を減らす"
                   >
                     −
@@ -59,12 +59,12 @@ export default function CartPage() {
                     min={1}
                     value={item.quantity}
                     onChange={(e) => cart.updateQuantity(item.key, Number(e.target.value) || 1)}
-                    className="w-12 border-x border-slate-300 py-1 text-center text-sm"
+                    className="w-14 border-x border-slate-300 py-2 text-center text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => cart.updateQuantity(item.key, item.quantity + 1)}
-                    className="px-2.5 py-1 text-slate-500 hover:bg-slate-50"
+                    className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
                     aria-label="数量を増やす"
                   >
                     ＋
@@ -73,7 +73,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   onClick={() => cart.removeItem(item.key)}
-                  className="text-xs text-red-600 hover:underline"
+                  className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-100"
                 >
                   削除
                 </button>

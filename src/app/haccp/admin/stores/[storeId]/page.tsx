@@ -540,7 +540,7 @@ export default async function HaccpAdminStoreDetailPage({
                       const item = inspectionItemsByCode.get(q.code);
                       const bad = item?.answer === "needs_improvement";
                       return (
-                        <tr key={q.code} className={bad ? "bg-amber-50" : undefined}>
+                        <tr key={q.code} className={bad ? "bg-amber-50" : idx % 2 === 1 ? "bg-slate-50/50" : undefined}>
                           <td className="px-2 py-2 text-slate-400">{idx + 1}</td>
                           <td className="px-2 py-2 text-slate-700">{q.text}</td>
                           <td className="px-2 py-2">

@@ -10,6 +10,7 @@ import { updateOrderStatus } from "../actions";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { SubmitButton } from "@/components/SubmitButton";
 
 // actions.ts の ALLOWED_TRANSITIONS と同一内容(表示用の複製)。
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -281,14 +282,14 @@ export default async function OrderDetailPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {order.order_lines.map((line) => {
+                {order.order_lines.map((line, idx) => {
                   const detailEntries = line.detail
                     ? Object.entries(line.detail).filter(
                         ([, v]) => v !== null && v !== undefined && v !== ""
                       )
                     : [];
                   return (
-                    <tr key={line.id}>
+                    <tr key={line.id} className={idx % 2 === 1 ? "bg-slate-50/50" : undefined}>
                       <td className="px-4 py-3 font-medium text-slate-800">{line.product_name_snapshot}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                         {PRODUCT_TYPE_LABELS[line.product_type_snapshot] ?? line.product_type_snapshot}
@@ -445,12 +446,12 @@ export default async function OrderDetailPage({
                   </div>
                 )}
 
-                <button
-                  type="submit"
+                <SubmitButton
                   className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+                  pendingText="更新中..."
                 >
                   ステータスを更新
-                </button>
+                </SubmitButton>
               </form>
             )}
           </div>

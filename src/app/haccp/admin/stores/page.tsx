@@ -373,13 +373,13 @@ export default async function HaccpAdminStoresPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {pageStores.map((store) => {
+                {pageStores.map((store, idx) => {
                   const kp = keypointBadge(keypointMap.get(store.id));
                   const emp = employeeBadge(employeeMap.get(store.id));
                   const ins = inspectionBadge(inspectionMap.get(store.id));
                   const conf = confirmationBadge(confirmationMap.get(store.id));
                   return (
-                    <tr key={store.id} className="transition-colors hover:bg-slate-50">
+                    <tr key={store.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">{store.store_code}</td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <Link

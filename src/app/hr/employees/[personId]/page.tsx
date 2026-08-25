@@ -326,8 +326,8 @@ export default async function HrEmployeeDetailPage({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {pastAddresses.map((a) => (
-                        <tr key={a.id}>
+                      {pastAddresses.map((a, idx) => (
+                        <tr key={a.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                           <td className="whitespace-nowrap px-4 py-2 text-slate-600">
                             {formatDate(a.effective_from)} 〜 {a.effective_to ? formatDate(a.effective_to) : ""}
                           </td>

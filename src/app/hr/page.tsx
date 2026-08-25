@@ -88,12 +88,12 @@ function ModuleCard({
     );
   }
   return (
-    <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-70">
-      <span className="absolute right-3 top-3 inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
-        未実装
+    <div className="relative rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+      <span className="absolute right-3 top-3 inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        準備中
       </span>
-      <p className="pr-14 text-sm font-semibold text-slate-500">{title}</p>
-      <p className="mt-1 pr-14 text-xs text-slate-400">{description}</p>
+      <p className="pr-14 text-sm font-semibold text-slate-400">{title}</p>
+      <p className="mt-1 pr-14 text-xs text-slate-300">{description}</p>
     </div>
   );
 }
@@ -195,8 +195,8 @@ export default async function HrTopPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {companyBreakdown.map((c) => (
-                      <tr key={c.companyId}>
+                    {companyBreakdown.map((c, idx) => (
+                      <tr key={c.companyId} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                         <td className="whitespace-nowrap px-5 py-2.5 text-slate-700">{c.name}</td>
                         <td className="whitespace-nowrap px-5 py-2.5 text-right font-medium text-slate-900">
                           {c.count.toLocaleString("ja-JP")}
@@ -221,8 +221,8 @@ export default async function HrTopPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {categoryBreakdown.map((c) => (
-                      <tr key={c.label}>
+                    {categoryBreakdown.map((c, idx) => (
+                      <tr key={c.label} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                         <td className="whitespace-nowrap px-5 py-2.5">
                           <span
                             className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${categoryBadgeClass(c.label)}`}

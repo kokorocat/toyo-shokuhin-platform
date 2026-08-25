@@ -271,13 +271,13 @@ export default async function HrEmployeesPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {pageRows.map((row) => {
+                {pageRows.map((row, idx) => {
                   const cat = categoryBadge(row.employment_category);
                   const st = statusBadge(row.retired_on);
                   const person = row.hr_persons;
                   const employee = row.employees;
                   return (
-                    <tr key={row.id} className="transition-colors hover:bg-slate-50">
+                    <tr key={row.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                         {employee?.employee_code ?? "-"}
                       </td>

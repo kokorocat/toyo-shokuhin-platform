@@ -9,6 +9,7 @@ import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
 import { updateProduct } from "@/app/ordering/admin/products/actions";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   normal_pop: "通常POP",
@@ -309,13 +310,13 @@ export default async function EditProductPage({
             </label>
           </div>
 
-          <div className="flex items-center gap-2 sm:col-span-2">
-            <button
-              type="submit"
+          <div className="flex items-center gap-3 border-t border-slate-100 pt-5 sm:col-span-2">
+            <SubmitButton
               className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+              pendingText="更新中..."
             >
               更新する
-            </button>
+            </SubmitButton>
           </div>
         </div>
       </form>

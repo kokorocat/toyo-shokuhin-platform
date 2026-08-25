@@ -230,8 +230,8 @@ export default async function OrderingAdminOrdersPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {pageOrders.map((order) => (
-                  <tr key={order.id} className="transition-colors hover:bg-slate-50">
+                {pageOrders.map((order, idx) => (
+                  <tr key={order.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                     <td className="whitespace-nowrap px-4 py-3">
                       <Link
                         href={`/ordering/admin/orders/${order.id}`}

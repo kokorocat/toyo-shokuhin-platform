@@ -112,19 +112,19 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
               value={priceProductName}
               onChange={(e) => setPriceProductName(e.target.value)}
               placeholder="商品名"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <input
               value={priceSpec}
               onChange={(e) => setPriceSpec(e.target.value)}
               placeholder="規格"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <input
               value={priceTaxExcl}
               onChange={(e) => setPriceTaxExcl(e.target.value)}
               placeholder="税抜価格"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
         )}
@@ -134,19 +134,19 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
               value={vikingCallNumber}
               onChange={(e) => setVikingCallNumber(e.target.value)}
               placeholder="呼出番号"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <input
               value={vikingProductName}
               onChange={(e) => setVikingProductName(e.target.value)}
               placeholder="商品名"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
             <input
               value={vikingPaper}
               onChange={(e) => setVikingPaper(e.target.value)}
               placeholder="用紙"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
         )}
@@ -156,7 +156,7 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
             <button
               type="button"
               onClick={() => setQty((q) => Math.max(product.min_order_qty || 1, q - 1))}
-              className="px-3 py-1.5 text-slate-500 hover:bg-slate-50"
+              className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
               aria-label="数量を減らす"
             >
               −
@@ -166,12 +166,12 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
               min={product.min_order_qty || 1}
               value={qty}
               onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-              className="w-14 border-x border-slate-300 py-1.5 text-center text-sm"
+              className="w-14 border-x border-slate-300 py-2 text-center text-sm"
             />
             <button
               type="button"
               onClick={() => setQty((q) => q + 1)}
-              className="px-3 py-1.5 text-slate-500 hover:bg-slate-50"
+              className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
               aria-label="数量を増やす"
             >
               ＋

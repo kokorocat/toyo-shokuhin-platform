@@ -8,6 +8,7 @@ import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
 import { createProduct } from "@/app/ordering/admin/products/actions";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const SELECT_CLASS =
   "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
@@ -251,12 +252,12 @@ export default async function NewProductPage({
           >
             キャンセル
           </Link>
-          <button
-            type="submit"
+          <SubmitButton
             className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+            pendingText="登録中..."
           >
             登録する
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

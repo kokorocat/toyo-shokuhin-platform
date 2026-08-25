@@ -10,6 +10,7 @@ import { approveRecipe, rejectRecipe } from "@/app/recipe/admin/approvals/action
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { SubmitButton } from "@/components/SubmitButton";
 
 type SearchParams = { error?: string; success?: string };
 
@@ -130,12 +131,12 @@ export default async function RecipeApprovalsPage({
                   <div className="flex flex-wrap items-start gap-3 px-5 py-4">
                     <form action={approveRecipe}>
                       <input type="hidden" name="recipe_id" value={recipe.id} />
-                      <button
-                        type="submit"
+                      <SubmitButton
                         className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 active:bg-blue-950"
+                        pendingText="承認中..."
                       >
                         承認して公開
-                      </button>
+                      </SubmitButton>
                     </form>
 
                     <form action={rejectRecipe} className="flex min-w-[260px] flex-1 flex-wrap items-start gap-2">
@@ -147,12 +148,12 @@ export default async function RecipeApprovalsPage({
                         placeholder="差し戻し理由を入力してください"
                         className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       />
-                      <button
-                        type="submit"
+                      <SubmitButton
                         className="shrink-0 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-50"
+                        pendingText="処理中..."
                       >
                         差し戻す
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </div>
@@ -179,8 +180,8 @@ export default async function RecipeApprovalsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {publishedRecipes.map((recipe) => (
-                  <tr key={recipe.id}>
+                {publishedRecipes.map((recipe, idx) => (
+                  <tr key={recipe.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{recipe.recipe_code}</td>
                     <td className="px-4 py-3 font-medium text-slate-800">{recipe.name}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">

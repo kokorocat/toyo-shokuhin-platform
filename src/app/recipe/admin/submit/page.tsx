@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
+import { SubmitButton } from "@/components/SubmitButton";
 import { isRecipeAdminRole } from "../guard";
 import { submitRecipe } from "./actions";
 
@@ -136,12 +137,12 @@ export default async function RecipeSubmitPage({
               <p className="mt-1 text-xs text-slate-400">xlsx / xls / pdf 形式に対応しています。</p>
             </div>
 
-            <button
-              type="submit"
+            <SubmitButton
               className="w-full rounded-lg bg-blue-800 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+              pendingText="申請中..."
             >
               申請する
-            </button>
+            </SubmitButton>
           </form>
           <p className="mt-3 text-xs text-slate-400">
             申請後は承認待ちの状態となり、管理者の承認をもってレシピ一覧に公開されます。

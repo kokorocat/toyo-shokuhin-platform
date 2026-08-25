@@ -128,11 +128,11 @@ export default async function OrderingAdminProductsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map((product) => {
+              {products.map((product, idx) => {
                 const isActive = product.status === "active";
                 const nextStatus = isActive ? "hidden" : "active";
                 return (
-                  <tr key={product.id} className="transition-colors hover:bg-slate-50">
+                  <tr key={product.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                     <td className="px-4 py-3">
                       <Link
                         href={`/ordering/admin/products/${product.id}`}
