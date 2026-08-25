@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { isRecipeAdminRole } from "./admin/guard";
 
 export default async function RecipeListPage({
   searchParams,
@@ -55,6 +56,17 @@ export default async function RecipeListPage({
           className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
         />
       </form>
+
+      {isRecipeAdminRole(ctx.roleCode) && (
+        <div className="mb-5 flex flex-wrap gap-3 text-sm">
+          <Link href="/recipe/admin/submit" className="text-blue-700 hover:underline">
+            ＋ 新規レシピ申請
+          </Link>
+          <Link href="/recipe/admin/approvals" className="text-blue-700 hover:underline">
+            承認待ち一覧
+          </Link>
+        </div>
+      )}
 
       {!recipes || recipes.length === 0 ? (
         <EmptyState message="該当するレシピがありません。" />

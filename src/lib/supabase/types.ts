@@ -635,6 +635,191 @@ export type Database = {
           },
         ]
       }
+      hr_assignments: {
+        Row: {
+          change_type: string | null
+          created_at: string
+          department: string | null
+          effective_from: string
+          effective_to: string | null
+          employment_id: string
+          id: string
+          position: string | null
+          store_id: string | null
+        }
+        Insert: {
+          change_type?: string | null
+          created_at?: string
+          department?: string | null
+          effective_from: string
+          effective_to?: string | null
+          employment_id: string
+          id?: string
+          position?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          change_type?: string | null
+          created_at?: string
+          department?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          employment_id?: string
+          id?: string
+          position?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_assignments_employment_id_fkey"
+            columns: ["employment_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_assignments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employee_addresses: {
+        Row: {
+          address: string | null
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          emergency_contact: string | null
+          id: string
+          person_id: string
+          phone: string | null
+          postal_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          emergency_contact?: string | null
+          id?: string
+          person_id: string
+          phone?: string | null
+          postal_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          emergency_contact?: string | null
+          id?: string
+          person_id?: string
+          phone?: string | null
+          postal_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_addresses_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "hr_persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employments: {
+        Row: {
+          created_at: string
+          employee_id: string
+          employment_category: string | null
+          hired_on: string
+          id: string
+          is_rehire: boolean
+          person_id: string
+          retired_on: string | null
+          retirement_reason: string | null
+          salary_category: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          employment_category?: string | null
+          hired_on: string
+          id?: string
+          is_rehire?: boolean
+          person_id: string
+          retired_on?: string | null
+          retirement_reason?: string | null
+          salary_category?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          employment_category?: string | null
+          hired_on?: string
+          id?: string
+          is_rehire?: boolean
+          person_id?: string
+          retired_on?: string | null
+          retirement_reason?: string | null
+          salary_category?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employments_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "hr_persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_persons: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          full_name: string
+          full_name_kana: string | null
+          gender_code: string | null
+          id: string
+          identity_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          full_name: string
+          full_name_kana?: string | null
+          gender_code?: string | null
+          id?: string
+          identity_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          full_name?: string
+          full_name_kana?: string | null
+          gender_code?: string | null
+          id?: string
+          identity_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manager_confirmations: {
         Row: {
           comment: string | null
@@ -1627,6 +1812,7 @@ export type Database = {
           id: string
           name: string
           recipe_code: string
+          rejection_note: string | null
           status: string
           updated_at: string
         }
@@ -1639,6 +1825,7 @@ export type Database = {
           id?: string
           name: string
           recipe_code: string
+          rejection_note?: string | null
           status?: string
           updated_at?: string
         }
@@ -1651,6 +1838,7 @@ export type Database = {
           id?: string
           name?: string
           recipe_code?: string
+          rejection_note?: string | null
           status?: string
           updated_at?: string
         }

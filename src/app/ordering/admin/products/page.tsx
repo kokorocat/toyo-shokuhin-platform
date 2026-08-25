@@ -1,0 +1,193 @@
+// OM-30 商品一覧(仕様書10章 商品管理)。
+// 商品の追加・編集・非表示化(物理削除はしない)を行う起点画面。過去注文はスナップショットを
+// 保持するため、ここでの編集・非表示化は既存のorder_linesに影響しない(スキーマ側で担保済み)。
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal/get-portal-context";
+import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
+import { toggleProductStatus } from "./actions";
+import { Banner } from "@/components/Banner";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function first(v: string | string[] | undefined): string | undefined {
+  const value = Array.isArray(v) ? v[0] : v;
+  return value && value.length > 0 ? value : undefined;
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  normal_pop: "通常POP",
+  price_input_pop: "価格入POP",
+  viking_price: "バイキングプライス",
+  normal_seal: "通常シール",
+  seal_price_list: "シール価格表掲載品",
+  laminate: "ラミネート",
+  other: "その他",
+};
+
+type ProductListRow = {
+  id: string;
+  name: string;
+  product_type: string;
+  unit_price: number;
+  lot_size: number;
+  status: string;
+  is_recommended: boolean;
+  display_order: number;
+  product_categories: { name: string } | { name: string }[] | null;
+};
+
+function categoryName(row: ProductListRow): string {
+  const cat = row.product_categories;
+  if (!cat) return "-";
+  return Array.isArray(cat) ? (cat[0]?.name ?? "-") : cat.name;
+}
+
+export default async function OrderingAdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const sp = await searchParams;
+  const ctx = await getPortalContext();
+
+  if (!ctx || !isOrderingAdminRole(ctx.roleCode ?? null)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <p className="text-sm text-slate-500">
+          権限がありません。管理者権限を持つアカウントで再ログインしてください。
+        </p>
+      </div>
+    );
+  }
+
+  const errorMessage = first(sp.error);
+  const successMessage = first(sp.success);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, name, product_type, unit_price, lot_size, status, is_recommended, display_order, product_categories(name)"
+    )
+    .order("display_order");
+
+  const products = (data ?? []) as ProductListRow[];
+
+  return (
+    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
+      <PageHeader
+        backHref="/ordering"
+        backLabel="カタログに戻る"
+        title="商品一覧"
+        subtitle="登録済みの販促物商品の管理(追加・編集・公開/非表示の切り替え)"
+      />
+
+      {successMessage && (
+        <div className="mb-4">
+          <Banner variant="success">保存しました。</Banner>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="mb-4">
+          <Banner variant="error">{errorMessage}</Banner>
+        </div>
+      )}
+      {error && (
+        <div className="mb-4">
+          <Banner variant="error">商品の取得に失敗しました: {error.message}</Banner>
+        </div>
+      )}
+
+      <div className="mb-4 flex items-center justify-end">
+        <Link
+          href="/ordering/admin/products/new"
+          className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+        >
+          ＋ 新規商品を追加
+        </Link>
+      </div>
+
+      {products.length === 0 ? (
+        <EmptyState message="登録されている商品がありません。「＋ 新規商品を追加」から商品を登録してください。" />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full min-w-[880px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
+                <th className="whitespace-nowrap px-4 py-3">商品名</th>
+                <th className="whitespace-nowrap px-4 py-3">カテゴリ</th>
+                <th className="whitespace-nowrap px-4 py-3">タイプ</th>
+                <th className="whitespace-nowrap px-4 py-3">単価</th>
+                <th className="whitespace-nowrap px-4 py-3">ロット数</th>
+                <th className="whitespace-nowrap px-4 py-3">おすすめ</th>
+                <th className="whitespace-nowrap px-4 py-3">状態</th>
+                <th className="whitespace-nowrap px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {products.map((product) => {
+                const isActive = product.status === "active";
+                const nextStatus = isActive ? "hidden" : "active";
+                return (
+                  <tr key={product.id} className="transition-colors hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/ordering/admin/products/${product.id}`}
+                        className="font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                      >
+                        {product.name}
+                      </Link>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{categoryName(product)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      {TYPE_LABELS[product.product_type] ?? product.product_type}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                      ¥{product.unit_price.toLocaleString()}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{product.lot_size}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      {product.is_recommended && (
+                        <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
+                          おすすめ
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                          isActive ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {isActive ? "公開中" : "非表示"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <form action={toggleProductStatus}>
+                        <input type="hidden" name="product_id" value={product.id} />
+                        <input type="hidden" name="next_status" value={nextStatus} />
+                        <button
+                          type="submit"
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors ${
+                            isActive
+                              ? "border-red-200 bg-white text-red-700 hover:bg-red-50"
+                              : "border-green-200 bg-white text-green-700 hover:bg-green-50"
+                          }`}
+                        >
+                          {isActive ? "非表示にする" : "公開する"}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

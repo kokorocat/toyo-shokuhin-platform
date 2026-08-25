@@ -41,7 +41,7 @@ export async function getPortalContext(): Promise<PortalContext | null> {
   const { data: systems } = await supabase
     .from("system_applications")
     .select("code, name, base_url, status")
-    .in("code", ["haccp", "ordering", "recipe"]);
+    .in("code", ["haccp", "ordering", "recipe", "hr"]);
 
   const { count: unreadCount } = await supabase
     .from("portal_notices")

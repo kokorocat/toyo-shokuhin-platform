@@ -1,0 +1,178 @@
+// OM-00 受発注管理ダッシュボード(仕様書§3)。
+// 受注ステータス別件数・今月の受注合計金額・商品点数を一覧し、OM-10(受注管理)・
+// OM-30(商品管理)への入口とする。集計はすべて独立クエリのためPromise.allで並列化する
+// (このコードベースの規約 — src/app/haccp/admin/page.tsx 参照)。
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getPortalContext } from "@/lib/portal/get-portal-context";
+import { PageHeader } from "@/components/PageHeader";
+import { isOrderingAdminRole } from "./guard";
+import { todayInTokyo } from "@/lib/date";
+
+const GREEN = "bg-green-100 text-green-700";
+const RED = "bg-red-100 text-red-700";
+const BLUE = "bg-blue-100 text-blue-700";
+const SLATE = "bg-slate-100 text-slate-500";
+const AMBER = "bg-amber-100 text-amber-700";
+
+// 許可遷移(新規→制作中→出荷準備中→郵送完了、キャンセルは郵送完了前まで)の表示順に揃える。
+const ORDER_STATUSES: { code: string; label: string; badge: string }[] = [
+  { code: "new", label: "新規", badge: BLUE },
+  { code: "in_production", label: "制作中", badge: AMBER },
+  { code: "preparing_shipment", label: "出荷準備中", badge: AMBER },
+  { code: "shipped", label: "郵送完了", badge: GREEN },
+  { code: "cancelled", label: "キャンセル", badge: RED },
+];
+
+function StatCard({
+  label,
+  value,
+  badge,
+}: {
+  label: string;
+  value: string;
+  badge: string;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
+      <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${badge}`}>
+        {label}
+      </span>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function AdminNavCard({
+  href,
+  title,
+  description,
+}: {
+  href: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50"
+    >
+      <div>
+        <p className="text-base font-bold text-slate-900">{title}</p>
+        <p className="mt-1 text-xs text-slate-500">{description}</p>
+      </div>
+      <svg
+        className="h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-blue-700"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+      </svg>
+    </Link>
+  );
+}
+
+export default async function OrderingAdminDashboardPage() {
+  const ctx = await getPortalContext();
+
+  if (!isOrderingAdminRole(ctx?.roleCode ?? null)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <p className="text-sm text-slate-500">
+          権限がありません。管理者アカウントで再度ログインしてください。
+        </p>
+      </div>
+    );
+  }
+
+  const supabase = await createClient();
+
+  // 「今月」はAsia/Tokyo基準(仕様書「表示・対象日判定は日本時間」)。
+  const todayStr = todayInTokyo();
+  const [yearStr, monthStr] = todayStr.split("-");
+  const monthLabel = `${yearStr}年${Number(monthStr)}月`;
+  const monthStartIso = `${yearStr}-${monthStr}-01T00:00:00+09:00`;
+
+  const [
+    newCount,
+    inProductionCount,
+    preparingShipmentCount,
+    shippedCount,
+    cancelledCount,
+    monthlyOrders,
+    activeProducts,
+    hiddenProducts,
+  ] = await Promise.all([
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "in_production"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "preparing_shipment"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "shipped"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "cancelled"),
+    supabase
+      .from("orders")
+      .select("total_amount")
+      .gte("created_at", monthStartIso)
+      .neq("status", "cancelled"),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "hidden"),
+  ]);
+
+  const statusCountMap: Record<string, number> = {
+    new: newCount.count ?? 0,
+    in_production: inProductionCount.count ?? 0,
+    preparing_shipment: preparingShipmentCount.count ?? 0,
+    shipped: shippedCount.count ?? 0,
+    cancelled: cancelledCount.count ?? 0,
+  };
+
+  const monthlyTotal = (monthlyOrders.data ?? []).reduce(
+    (sum, order) => sum + (order.total_amount ?? 0),
+    0
+  );
+
+  return (
+    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
+      <PageHeader
+        backHref="/"
+        backLabel="ポータルTOPに戻る"
+        title="受発注管理ダッシュボード"
+        subtitle={`${monthLabel}時点`}
+      />
+
+      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-sm font-bold text-slate-900">概況</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-5 py-5 sm:grid-cols-3">
+          {ORDER_STATUSES.map((s) => (
+            <StatCard
+              key={s.code}
+              label={s.label}
+              value={`${statusCountMap[s.code]}件`}
+              badge={s.badge}
+            />
+          ))}
+          <StatCard label="今月の受注合計金額" value={`${monthlyTotal.toLocaleString()}円`} badge={SLATE} />
+          <StatCard label="公開中の商品" value={`${activeProducts.count ?? 0}件`} badge={GREEN} />
+          <StatCard label="非表示の商品" value={`${hiddenProducts.count ?? 0}件`} badge={SLATE} />
+        </div>
+      </section>
+
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <AdminNavCard
+          href="/ordering/admin/orders"
+          title="受注管理"
+          description="注文の一覧・詳細確認・ステータス変更を行います"
+        />
+        <AdminNavCard
+          href="/ordering/admin/products"
+          title="商品管理"
+          description="販促物の追加・編集・公開/非表示の切り替えを行います"
+        />
+      </div>
+    </div>
+  );
+}
