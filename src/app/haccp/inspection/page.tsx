@@ -4,6 +4,9 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { SubmitButton } from "../SubmitButton";
 import { recordInspection } from "./actions";
 import { INSPECTION_QUESTIONS } from "./constants";
+import { Banner } from "@/components/Banner";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 
 const EVALUATION_LABELS: Record<string, string> = {
   good: "良好",
@@ -33,8 +36,10 @@ export default async function HaccpInspectionPage({
 
   if (!ctx?.store) {
     return (
-      <div className="p-8 text-sm text-slate-500">
-        店舗スコープを持つアカウントでログインしてください。
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <p className="text-sm text-slate-500">
+          店舗スコープを持つアカウントでログインしてください。
+        </p>
       </div>
     );
   }
@@ -54,7 +59,6 @@ export default async function HaccpInspectionPage({
     supabase.from("stores").select("manager_name").eq("id", ctx.store.id).maybeSingle(),
   ]);
 
-  // 訂正は新版を追加する運用のため、対象月ごとに最新versionのみを「有効版」として扱う
   const latestByMonth = new Map<string, InspectionSummary>();
   for (const row of inspectionRows ?? []) {
     if (!latestByMonth.has(row.target_month)) latestByMonth.set(row.target_month, row);
@@ -67,100 +71,117 @@ export default async function HaccpInspectionPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <div className="mb-4">
-        <Link href="/haccp" className="text-xs text-blue-700 underline">
-          ← HACCP管理TOPに戻る
-        </Link>
-      </div>
-      <h1 className="mb-1 text-lg font-bold text-slate-900">食品衛生自主点検入力</h1>
-      <p className="mb-4 text-xs text-slate-500">
-        {ctx.store.name}（{ctx.store.storeCode}） / 対象月: {formatMonth(targetMonth)}
-      </p>
+      <PageHeader
+        backHref="/haccp"
+        backLabel="HACCP管理TOPに戻る"
+        title="食品衛生自主点検入力"
+        subtitle={`${ctx.store.name}（${ctx.store.storeCode}） / 対象月: ${formatMonth(targetMonth)}`}
+      />
 
-      <p className="mb-4 text-xs text-slate-500">
-        ※以下の17問は、原紙(旧GASシステムの自主点検用紙)が未確認のため、一般的な食品衛生自主点検表の構成に基づく暫定の設問です。正式な問題文は原紙確認後に差し替えます。
-      </p>
+      <div className="mb-5">
+        <Banner variant="info">
+          以下の17問は、原紙(旧GASシステムの自主点検用紙)が未確認のため、一般的な食品衛生自主点検表の構成に基づく暫定の設問です。
+        </Banner>
+      </div>
 
       {success && (
-        <p className="mb-4 rounded bg-green-50 p-3 text-sm text-green-700">提出しました。</p>
+        <div className="mb-5">
+          <Banner variant="success">提出しました。</Banner>
+        </div>
       )}
-      {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && (
+        <div className="mb-5">
+          <Banner variant="error">{error}</Banner>
+        </div>
+      )}
 
       {currentInspection && (
-        <p className="mb-4 rounded bg-blue-50 p-3 text-sm text-blue-800">
-          今月は提出済みです({currentInspection.submitted_on}提出 / v{currentInspection.version} /{" "}
-          {EVALUATION_LABELS[currentInspection.overall_evaluation] ?? currentInspection.overall_evaluation}
-          )。再度送信すると新しいバージョンとして記録されます。
-        </p>
+        <div className="mb-5">
+          <Banner variant="info">
+            今月は提出済みです（{currentInspection.submitted_on}提出 / v{currentInspection.version} /{" "}
+            {EVALUATION_LABELS[currentInspection.overall_evaluation] ?? currentInspection.overall_evaluation}
+            ）。再度送信すると新しいバージョンとして記録されます。
+          </Banner>
+        </div>
       )}
 
       <form action={recordInspection} className="space-y-6">
         <input type="hidden" name="company_id" value={ctx.company?.id ?? ""} />
         <input type="hidden" name="store_id" value={ctx.store.id} />
 
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">基本情報</h2>
-          <div className="space-y-3">
+        {/* Basic info */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-bold text-slate-900">基本情報</h2>
+          </div>
+          <div className="space-y-4 px-5 py-5">
             <div>
               <label
                 htmlFor="store_manager_name"
-                className="mb-1 block text-xs font-medium text-slate-700"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
               >
-                店長名(任意)
+                店長名（任意）
               </label>
               <input
                 id="store_manager_name"
                 name="store_manager_name"
                 type="text"
                 defaultValue={storeRow?.manager_name ?? ""}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
               <label
                 htmlFor="hygiene_officer_name"
-                className="mb-1 block text-xs font-medium text-slate-700"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
               >
-                食品衛生責任者名(任意)
+                食品衛生責任者名（任意）
               </label>
               <input
                 id="hygiene_officer_name"
                 name="hygiene_officer_name"
                 type="text"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
               <label
                 htmlFor="implementer_name"
-                className="mb-1 block text-xs font-medium text-slate-700"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
               >
-                実施者名(必須)
+                実施者名
+                <span className="ml-1 text-xs text-red-600">必須</span>
               </label>
               <input
                 id="implementer_name"
                 name="implementer_name"
                 type="text"
                 required
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
-        </section>
+        </div>
 
+        {/* 17 questions */}
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">点検項目(17問)</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            点検項目（17問）
+          </h2>
           <div className="space-y-3">
             {INSPECTION_QUESTIONS.map((q, idx) => (
               <fieldset
                 key={q.code}
-                className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
               >
-                <legend className="mb-2 text-sm font-medium text-slate-800">
-                  {idx + 1}. {q.text}
+                <legend className="mb-3 text-sm font-medium text-slate-800">
+                  <span className="mr-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                    {idx + 1}
+                  </span>
+                  {q.text}
                 </legend>
-                <div className="flex gap-2">
-                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
                     <input
                       type="radio"
                       name={`answer_${q.code}`}
@@ -170,7 +191,7 @@ export default async function HaccpInspectionPage({
                     />
                     良好
                   </label>
-                  <label className="flex-1 cursor-pointer rounded-md border border-slate-300 px-3 py-3 text-center text-sm text-slate-700 has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
+                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
                     <input
                       type="radio"
                       name={`answer_${q.code}`}
@@ -186,62 +207,69 @@ export default async function HaccpInspectionPage({
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold text-slate-800">
-            改善が必要な項目がある場合の詳細
-          </h2>
-          <p className="mb-2 text-xs text-slate-500">
-            いずれかの項目で「要改善」を選択した場合は、該当項目と改善内容を具体的に入力してください(必須)。
-          </p>
-          <textarea
-            name="improvement_reason"
-            rows={4}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </section>
+        {/* Improvement details */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-bold text-slate-900">
+              改善が必要な項目がある場合の詳細
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              いずれかの項目で「要改善」を選択した場合は、該当項目と改善内容を具体的に入力してください（必須）。
+            </p>
+          </div>
+          <div className="px-5 py-5">
+            <textarea
+              name="improvement_reason"
+              rows={4}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+        </div>
 
         <SubmitButton
-          className="w-full rounded-md bg-blue-800 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+          className="w-full rounded-lg bg-blue-800 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
           pendingText="送信中..."
         >
           点検結果を登録する
         </SubmitButton>
       </form>
 
-      <hr className="my-8 border-slate-200" />
-
-      <section>
-        <h2 className="mb-2 text-sm font-semibold text-slate-800">過去の点検結果(直近3か月)</h2>
-        {history.length === 0 && (
-          <p className="text-sm text-slate-500">まだ過去の記録がありません。</p>
-        )}
-        <ul className="space-y-2">
-          {history.map((h) => (
-            <li
-              key={h.id}
-              className={`flex items-center justify-between rounded-lg border p-3 shadow-sm ${
-                h.overall_evaluation === "needs_improvement"
-                  ? "border-red-300 bg-red-50"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div>
-                <p className="text-sm font-medium text-slate-800">{formatMonth(h.target_month)}</p>
-                <p className="text-xs text-slate-400">{h.submitted_on}提出</p>
-              </div>
-              <span
-                className={`rounded px-2 py-0.5 text-xs font-bold ${
+      {/* Past results */}
+      <div className="mt-10 border-t border-slate-200 pt-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          過去の点検結果（直近3か月）
+        </h2>
+        {history.length === 0 ? (
+          <EmptyState message="まだ過去の記録がありません。" />
+        ) : (
+          <ul className="space-y-2">
+            {history.map((h) => (
+              <li
+                key={h.id}
+                className={`flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm ${
                   h.overall_evaluation === "needs_improvement"
-                    ? "bg-red-600 text-white"
-                    : "bg-green-600 text-white"
+                    ? "border-red-200 bg-red-50"
+                    : "border-slate-200 bg-white"
                 }`}
               >
-                {EVALUATION_LABELS[h.overall_evaluation] ?? h.overall_evaluation}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{formatMonth(h.target_month)}</p>
+                  <p className="text-xs text-slate-400">{h.submitted_on}提出</p>
+                </div>
+                <span
+                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                    h.overall_evaluation === "needs_improvement"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {EVALUATION_LABELS[h.overall_evaluation] ?? h.overall_evaluation}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 
-// 訂正は新版を追加する運用のため、同一対象日/対象月の中で最新versionのみを「有効版」として表示する
 function latestByKey<T extends { version: number }>(rows: T[], keyOf: (r: T) => string): T[] {
   const byKey = new Map<string, T>();
   for (const r of rows) {
@@ -18,8 +19,10 @@ export default async function HaccpHistoryPage() {
 
   if (!ctx?.store) {
     return (
-      <div className="p-8 text-sm text-slate-500">
-        店舗スコープを持つアカウントでログインしてください。
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <p className="text-sm text-slate-500">
+          店舗スコープを持つアカウントでログインしてください。
+        </p>
       </div>
     );
   }
@@ -65,81 +68,98 @@ export default async function HaccpHistoryPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <div className="mb-4">
-        <Link href="/haccp" className="text-xs text-blue-700 underline">
-          ← HACCP管理TOPに戻る
-        </Link>
-      </div>
-      <h1 className="mb-1 text-lg font-bold text-slate-900">過去回答一覧</h1>
-      <p className="mb-6 text-xs text-slate-500">
-        {ctx.store.name}（{ctx.store.storeCode}） / 訂正がある場合は最新版のみ表示しています
-      </p>
+      <PageHeader
+        backHref="/haccp"
+        backLabel="HACCP管理TOPに戻る"
+        title="過去回答一覧"
+        subtitle={`${ctx.store.name}（${ctx.store.storeCode}） / 訂正がある場合は最新版のみ表示`}
+      />
 
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-slate-800">
-          重要ポイント・温度・ラベル(直近{keypoints.length}件)
+      {/* Keypoints */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          重要ポイント・温度・ラベル（直近{keypoints.length}件）
         </h2>
-        {keypoints.length === 0 && <p className="text-sm text-slate-500">記録がありません。</p>}
-        <ul className="space-y-1.5">
-          {keypoints.map((k) => (
-            <li
-              key={k.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"
-            >
-              <span className="text-slate-800">{k.target_date}</span>
-              <span className="text-xs text-slate-400">
-                v{k.version} / {new Date(k.created_at).toLocaleString("ja-JP")}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {keypoints.length === 0 ? (
+          <EmptyState message="記録がありません。" />
+        ) : (
+          <ul className="space-y-2">
+            {keypoints.map((k) => (
+              <li
+                key={k.id}
+                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+              >
+                <span className="text-sm font-medium text-slate-800">{k.target_date}</span>
+                <span className="text-xs text-slate-400">
+                  v{k.version} / {new Date(k.created_at).toLocaleString("ja-JP")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      <section className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-slate-800">
-          従業員衛生(直近{employeeResponses.length}件)
+      {/* Employee records */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          従業員衛生（直近{employeeResponses.length}件）
         </h2>
-        {employeeResponses.length === 0 && <p className="text-sm text-slate-500">記録がありません。</p>}
-        <ul className="space-y-1.5">
-          {employeeResponses.map((e) => (
-            <li
-              key={e.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"
-            >
-              <span className="text-slate-800">
-                {e.target_date} /{" "}
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(e.employees as any)?.full_name ?? e.manual_name ?? "-"}
-              </span>
-              <span className="text-xs text-slate-400">v{e.version}</span>
-            </li>
-          ))}
-        </ul>
+        {employeeResponses.length === 0 ? (
+          <EmptyState message="記録がありません。" />
+        ) : (
+          <ul className="space-y-2">
+            {employeeResponses.map((e) => (
+              <li
+                key={e.id}
+                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+              >
+                <span className="text-sm font-medium text-slate-800">
+                  {e.target_date} /{" "}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(e.employees as any)?.full_name ?? e.manual_name ?? "-"}
+                </span>
+                <span className="text-xs text-slate-400">v{e.version}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
+      {/* Inspections */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-slate-800">
-          食品衛生自主点検(直近{inspections.length}件)
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          食品衛生自主点検（直近{inspections.length}件）
         </h2>
-        {inspections.length === 0 && <p className="text-sm text-slate-500">記録がありません。</p>}
-        <ul className="space-y-1.5">
-          {inspections.map((i) => (
-            <li
-              key={i.id}
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm shadow-sm ${
-                i.overall_evaluation === "needs_improvement"
-                  ? "border-red-300 bg-red-50"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <span className="text-slate-800">{i.target_month.slice(0, 7)}</span>
-              <span className="text-xs text-slate-500">
-                {i.overall_evaluation === "needs_improvement" ? "要改善" : "良好"} / 提出:{" "}
-                {i.submitted_on}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {inspections.length === 0 ? (
+          <EmptyState message="記録がありません。" />
+        ) : (
+          <ul className="space-y-2">
+            {inspections.map((i) => (
+              <li
+                key={i.id}
+                className={`flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm ${
+                  i.overall_evaluation === "needs_improvement"
+                    ? "border-red-200 bg-red-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <div>
+                  <span className="text-sm font-medium text-slate-800">{i.target_month.slice(0, 7)}</span>
+                  <p className="text-xs text-slate-400">提出: {i.submitted_on}</p>
+                </div>
+                <span
+                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                    i.overall_evaluation === "needs_improvement"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {i.overall_evaluation === "needs_improvement" ? "要改善" : "良好"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

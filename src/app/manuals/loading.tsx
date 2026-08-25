@@ -1,4 +1,4 @@
-export default function HaccpLoading() {
+export default function ManualsLoading() {
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-4 py-6">
       <div className="flex flex-col items-center gap-3">

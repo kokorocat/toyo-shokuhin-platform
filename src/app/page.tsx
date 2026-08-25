@@ -7,8 +7,19 @@ const SYSTEM_LABELS: Record<string, string> = {
   recipe: "レシピ閲覧",
 };
 
-// 店舗スコープを持たないロール向けのラベル(company_admin/area_adminは会社・エリア単位のスコープを
-// 別途持つが、いずれも特定の店舗には紐付かないため、店舗紐付け前提のヘッダー表示を分岐する)
+const SYSTEM_ICONS: Record<string, React.ReactNode> = {
+  ordering: (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+    </svg>
+  ),
+  recipe: (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+    </svg>
+  ),
+};
+
 const NO_STORE_ROLE_LABELS: Record<string, { badge: string; heading: string }> = {
   super_admin: { badge: "全権限管理者アカウント", heading: "店舗スコープなし(全社・全エリア管理権限)" },
   company_admin: { badge: "会社管理者アカウント", heading: "店舗スコープなし(会社全体の管理権限)" },
@@ -21,63 +32,85 @@ export default async function PortalHomePage() {
 
   if (!ctx) {
     return (
-      <div className="p-8 text-sm text-slate-500">
-        セッションを確認できませんでした。再度ログインしてください。
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <p className="text-sm text-slate-500">
+          セッションを確認できませんでした。再度ログインしてください。
+        </p>
       </div>
     );
   }
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
-      <header className="mb-6 flex items-start justify-between">
-        <div>
-          {ctx.store ? (
-            <>
-              <p className="text-xs text-slate-500">
-                {ctx.company?.name ?? "会社未設定"}
-                {ctx.area ? ` ／ ${ctx.area.name}` : ""}
-              </p>
-              <h1 className="text-lg font-bold text-slate-900">
-                {ctx.store.name}（{ctx.store.storeCode}）
-              </h1>
-            </>
-          ) : (
-            <>
-              <p className="text-xs text-slate-500">
-                {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.badge ?? "管理者アカウント"}
-              </p>
-              <h1 className="text-lg font-bold text-slate-900">
-                {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.heading ?? "店舗スコープなし"}
-              </h1>
-            </>
-          )}
-          <p className="mt-1 text-xs text-slate-400">{ctx.displayName} さん</p>
+      {/* Header */}
+      <header className="mb-8 rounded-xl bg-gradient-to-r from-blue-800 to-blue-900 px-5 py-5 text-white shadow-lg sm:px-6">
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            {ctx.store ? (
+              <>
+                <p className="text-xs text-blue-200">
+                  {ctx.company?.name ?? "会社未設定"}
+                  {ctx.area ? ` ／ ${ctx.area.name}` : ""}
+                </p>
+                <h1 className="mt-0.5 truncate text-lg font-bold tracking-tight">
+                  {ctx.store.name}（{ctx.store.storeCode}）
+                </h1>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-blue-200">
+                  {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.badge ?? "管理者アカウント"}
+                </p>
+                <h1 className="mt-0.5 text-lg font-bold tracking-tight">
+                  {NO_STORE_ROLE_LABELS[ctx.roleCode ?? ""]?.heading ?? "店舗スコープなし"}
+                </h1>
+              </>
+            )}
+            <p className="mt-1.5 text-sm text-blue-200">{ctx.displayName} さん</p>
+          </div>
+          <form action={signOut}>
+            <button className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20">
+              ログアウト
+            </button>
+          </form>
         </div>
-        <form action={signOut}>
-          <button className="text-xs text-slate-500 underline">ログアウト</button>
-        </form>
       </header>
 
+      {/* Quick links */}
       <section className="mb-6 grid grid-cols-2 gap-3">
         <Link
           href="/notices"
-          className="relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300"
+          className="group relative flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
         >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-100">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+            </svg>
+          </div>
           <p className="text-sm font-semibold text-slate-800">お知らせ</p>
           {ctx.unreadNoticeCount > 0 && (
-            <span className="absolute right-3 top-3 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+            <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold tabular-nums text-white shadow-sm">
               {ctx.unreadNoticeCount}
             </span>
           )}
         </Link>
         <Link
           href="/manuals"
-          className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300"
+          className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
         >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors group-hover:bg-blue-50 group-hover:text-blue-700">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+          </div>
           <p className="text-sm font-semibold text-slate-800">マニュアル</p>
         </Link>
       </section>
 
+      {/* System cards */}
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+        業務システム
+      </h2>
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {(() => {
           const haccpSys = ctx.systems.find((s) => s.code === "haccp");
@@ -91,15 +124,27 @@ export default async function PortalHomePage() {
                 : "";
 
           return haccpDisabled ? (
-            <div className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 p-4 text-center opacity-60">
-              <p className="text-sm font-semibold text-slate-500">HACCP管理</p>
-              <p className="mt-1 text-xs text-slate-400">{haccpReason}</p>
+            <div className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-50">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-400">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-500">HACCP管理</p>
+                <p className="text-xs text-slate-400">{haccpReason}</p>
+              </div>
             </div>
           ) : (
             <Link
               href="/haccp"
-              className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm hover:border-blue-300"
+              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-green-300 hover:shadow-md"
             >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 transition-colors group-hover:bg-green-100">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                </svg>
+              </div>
               <p className="text-sm font-semibold text-slate-800">HACCP管理</p>
             </Link>
           );
@@ -118,17 +163,33 @@ export default async function PortalHomePage() {
           return disabled ? (
             <div
               key={code}
-              className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 p-4 text-center opacity-60"
+              className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 opacity-50"
             >
-              <p className="text-sm font-semibold text-slate-500">{label}</p>
-              <p className="mt-1 text-xs text-slate-400">{reason}</p>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-slate-400">
+                {SYSTEM_ICONS[code] ?? (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-500">{label}</p>
+                <p className="text-xs text-slate-400">{reason}</p>
+              </div>
             </div>
           ) : (
             <a
               key={code}
               href={sys!.base_url!}
-              className="rounded-lg border border-slate-200 bg-white p-4 text-center shadow-sm hover:border-blue-300"
+              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
             >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-100">
+                {SYSTEM_ICONS[code] ?? (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                )}
+              </div>
               <p className="text-sm font-semibold text-slate-800">{label}</p>
             </a>
           );
