@@ -273,168 +273,44 @@ export type Database = {
           },
         ]
       }
-      haccp_check_points: {
+      haccp_keypoint_responses: {
         Row: {
-          category: string
           company_id: string
           created_at: string
-          display_order: number
           id: string
-          max_value: number | null
-          min_value: number | null
-          name: string
-          status: string
+          recorded_by: string
           store_id: string
-          unit: string
-          updated_at: string
+          target_date: string
+          version: number
         }
         Insert: {
-          category?: string
           company_id: string
           created_at?: string
-          display_order?: number
           id?: string
-          max_value?: number | null
-          min_value?: number | null
-          name: string
-          status?: string
+          recorded_by: string
           store_id: string
-          unit?: string
-          updated_at?: string
+          target_date: string
+          version?: number
         }
         Update: {
-          category?: string
           company_id?: string
           created_at?: string
-          display_order?: number
           id?: string
-          max_value?: number | null
-          min_value?: number | null
-          name?: string
-          status?: string
-          store_id?: string
-          unit?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "haccp_check_points_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "haccp_check_points_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      haccp_temperature_records: {
-        Row: {
-          check_point_id: string
-          created_at: string
-          id: string
-          is_out_of_range: boolean
-          note: string | null
-          recorded_at: string
-          recorded_by: string
-          recorded_on: string
-          store_id: string
-          value: number
-        }
-        Insert: {
-          check_point_id: string
-          created_at?: string
-          id?: string
-          is_out_of_range?: boolean
-          note?: string | null
-          recorded_at?: string
-          recorded_by: string
-          recorded_on?: string
-          store_id: string
-          value: number
-        }
-        Update: {
-          check_point_id?: string
-          created_at?: string
-          id?: string
-          is_out_of_range?: boolean
-          note?: string | null
-          recorded_at?: string
           recorded_by?: string
-          recorded_on?: string
           store_id?: string
-          value?: number
+          target_date?: string
+          version?: number
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_temperature_records_check_point_id_fkey"
-            columns: ["check_point_id"]
-            isOneToOne: false
-            referencedRelation: "haccp_check_points"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "haccp_temperature_records_recorded_by_fkey"
-            columns: ["recorded_by"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "haccp_temperature_records_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      haccp_hygiene_items: {
-        Row: {
-          company_id: string
-          created_at: string
-          display_order: number
-          id: string
-          name: string
-          status: string
-          store_id: string
-          updated_at: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          display_order?: number
-          id?: string
-          name: string
-          status?: string
-          store_id: string
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          display_order?: number
-          id?: string
-          name?: string
-          status?: string
-          store_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "haccp_hygiene_items_company_id_fkey"
+            foreignKeyName: "haccp_keypoint_responses_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "haccp_hygiene_items_store_id_fkey"
+            foreignKeyName: "haccp_keypoint_responses_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -442,57 +318,130 @@ export type Database = {
           },
         ]
       }
-      haccp_hygiene_records: {
+      haccp_keypoint_items: {
         Row: {
-          checked_at: string
-          checked_by: string
-          checked_on: string
-          created_at: string
+          checked: boolean
           id: string
-          is_ok: boolean
-          item_id: string
+          item_code: string
           note: string | null
-          store_id: string
+          response_id: string
         }
         Insert: {
-          checked_at?: string
-          checked_by: string
-          checked_on?: string
-          created_at?: string
+          checked?: boolean
           id?: string
-          is_ok: boolean
-          item_id: string
+          item_code: string
           note?: string | null
-          store_id: string
+          response_id: string
         }
         Update: {
-          checked_at?: string
-          checked_by?: string
-          checked_on?: string
-          created_at?: string
+          checked?: boolean
           id?: string
-          is_ok?: boolean
-          item_id?: string
+          item_code?: string
           note?: string | null
-          store_id?: string
+          response_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_hygiene_records_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "haccp_keypoint_items_response_id_fkey"
+            columns: ["response_id"]
             isOneToOne: false
-            referencedRelation: "haccp_hygiene_items"
+            referencedRelation: "haccp_keypoint_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_temperature_labels: {
+        Row: {
+          id: string
+          judgment: string | null
+          label_type: string
+          measured_value: number | null
+          note: string | null
+          response_id: string
+        }
+        Insert: {
+          id?: string
+          judgment?: string | null
+          label_type: string
+          measured_value?: number | null
+          note?: string | null
+          response_id: string
+        }
+        Update: {
+          id?: string
+          judgment?: string | null
+          label_type?: string
+          measured_value?: number | null
+          note?: string | null
+          response_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_temperature_labels_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_keypoint_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_employee_responses: {
+        Row: {
+          company_id: string
+          created_at: string
+          employee_id: string | null
+          id: string
+          is_unmatched: boolean
+          manual_employee_code: string | null
+          manual_name: string | null
+          recorded_by: string
+          store_id: string
+          target_date: string
+          version: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          is_unmatched?: boolean
+          manual_employee_code?: string | null
+          manual_name?: string | null
+          recorded_by: string
+          store_id: string
+          target_date: string
+          version?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          is_unmatched?: boolean
+          manual_employee_code?: string | null
+          manual_name?: string | null
+          recorded_by?: string
+          store_id?: string
+          target_date?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_employee_responses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "haccp_hygiene_records_checked_by_fkey"
-            columns: ["checked_by"]
+            foreignKeyName: "haccp_employee_responses_employee_id_fkey"
+            columns: ["employee_id"]
             isOneToOne: false
-            referencedRelation: "user_profiles"
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "haccp_hygiene_records_store_id_fkey"
+            foreignKeyName: "haccp_employee_responses_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -500,57 +449,180 @@ export type Database = {
           },
         ]
       }
-      haccp_corrective_actions: {
+      haccp_employee_items: {
         Row: {
-          action_taken: string
-          cause: string
-          created_at: string
-          created_by: string
-          hygiene_record_id: string | null
+          action_taken: string | null
+          answer: string
           id: string
+          item_code: string
+          note: string | null
+          response_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          answer: string
+          id?: string
+          item_code: string
+          note?: string | null
+          response_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          answer?: string
+          id?: string
+          item_code?: string
+          note?: string | null
+          response_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_employee_items_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_employee_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_inspections: {
+        Row: {
+          company_id: string
+          created_at: string
+          hygiene_officer_name: string | null
+          id: string
+          implementer_name: string
+          improvement_reason: string | null
+          overall_evaluation: string
+          recorded_by: string
+          store_id: string
+          store_manager_name: string | null
+          submitted_on: string
+          target_month: string
+          version: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          hygiene_officer_name?: string | null
+          id?: string
+          implementer_name: string
+          improvement_reason?: string | null
+          overall_evaluation: string
+          recorded_by: string
+          store_id: string
+          store_manager_name?: string | null
+          submitted_on?: string
+          target_month: string
+          version?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          hygiene_officer_name?: string | null
+          id?: string
+          implementer_name?: string
+          improvement_reason?: string | null
+          overall_evaluation?: string
+          recorded_by?: string
+          store_id?: string
+          store_manager_name?: string | null
+          submitted_on?: string
+          target_month?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_inspections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "haccp_inspections_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      haccp_inspection_items: {
+        Row: {
+          action_taken: string | null
+          answer: string
+          id: string
+          inspection_id: string
+          question_code: string
+          reason: string | null
+        }
+        Insert: {
+          action_taken?: string | null
+          answer: string
+          id?: string
+          inspection_id: string
+          question_code: string
+          reason?: string | null
+        }
+        Update: {
+          action_taken?: string | null
+          answer?: string
+          id?: string
+          inspection_id?: string
+          question_code?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "haccp_inspection_items_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "haccp_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_holidays: {
+        Row: {
+          company_id: string
+          created_at: string
+          holiday_date: string
+          id: string
+          reason: string | null
+          registered_by: string
           status: string
           store_id: string
-          temperature_record_id: string | null
         }
         Insert: {
-          action_taken: string
-          cause: string
+          company_id: string
           created_at?: string
-          created_by: string
-          hygiene_record_id?: string | null
+          holiday_date: string
           id?: string
+          reason?: string | null
+          registered_by: string
           status?: string
           store_id: string
-          temperature_record_id?: string | null
         }
         Update: {
-          action_taken?: string
-          cause?: string
+          company_id?: string
           created_at?: string
-          created_by?: string
-          hygiene_record_id?: string | null
+          holiday_date?: string
           id?: string
+          reason?: string | null
+          registered_by?: string
           status?: string
           store_id?: string
-          temperature_record_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_corrective_actions_hygiene_record_id_fkey"
-            columns: ["hygiene_record_id"]
+            foreignKeyName: "store_holidays_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "haccp_hygiene_records"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "haccp_corrective_actions_temperature_record_id_fkey"
-            columns: ["temperature_record_id"]
-            isOneToOne: false
-            referencedRelation: "haccp_temperature_records"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "haccp_corrective_actions_store_id_fkey"
+            foreignKeyName: "store_holidays_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -558,34 +630,59 @@ export type Database = {
           },
         ]
       }
-      haccp_daily_approvals: {
+      manager_confirmations: {
         Row: {
-          approved_at: string
-          approved_by: string
-          approved_date: string
+          comment: string | null
+          company_id: string
+          confirmed_by: string
+          confirmed_on: string
+          created_at: string
           id: string
-          note: string | null
+          period_end: string
+          period_start: string
+          period_type: string
+          status: string
           store_id: string
+          version: number
         }
         Insert: {
-          approved_at?: string
-          approved_by: string
-          approved_date?: string
+          comment?: string | null
+          company_id: string
+          confirmed_by: string
+          confirmed_on?: string
+          created_at?: string
           id?: string
-          note?: string | null
+          period_end: string
+          period_start: string
+          period_type: string
+          status?: string
           store_id: string
+          version?: number
         }
         Update: {
-          approved_at?: string
-          approved_by?: string
-          approved_date?: string
+          comment?: string | null
+          company_id?: string
+          confirmed_by?: string
+          confirmed_on?: string
+          created_at?: string
           id?: string
-          note?: string | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          status?: string
           store_id?: string
+          version?: number
         }
         Relationships: [
           {
-            foreignKeyName: "haccp_daily_approvals_store_id_fkey"
+            foreignKeyName: "manager_confirmations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manager_confirmations_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
