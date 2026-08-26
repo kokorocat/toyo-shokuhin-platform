@@ -180,6 +180,15 @@ type AuditLogRow = {
   user_profiles: NamedActor;
 };
 
+type HolidayRow = {
+  id: string;
+  holiday_date: string;
+  reason: string | null;
+  status: string;
+  created_at: string;
+  user_profiles: NamedActor;
+};
+
 export default async function HaccpAdminStoreDetailPage({
   params,
   searchParams,
@@ -223,6 +232,7 @@ export default async function HaccpAdminStoreDetailPage({
     { data: inspectionRowsRaw },
     { data: confirmationRowsRaw },
     { data: auditRowsRaw },
+    { data: holidayRowsRaw },
   ] = await Promise.all([
     supabase
       .from("haccp_keypoint_responses")
@@ -265,6 +275,13 @@ export default async function HaccpAdminStoreDetailPage({
       .in("target_table", [...AUDIT_TABLES])
       .order("occurred_at", { ascending: false })
       .limit(300),
+    supabase
+      .from("store_holidays")
+      .select("id, holiday_date, reason, status, created_at, user_profiles(display_name)")
+      .eq("store_id", storeId)
+      .eq("status", "active")
+      .order("holiday_date", { ascending: false })
+      .limit(30),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -277,6 +294,8 @@ export default async function HaccpAdminStoreDetailPage({
   const confirmationRows = (confirmationRowsRaw ?? []) as any as ConfirmationRow[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const auditRowsAll = (auditRowsRaw ?? []) as any as AuditLogRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const holidayRows = (holidayRowsRaw ?? []) as any as HolidayRow[];
 
   const relevantAuditIds = new Set<string>([
     ...keypointRows.map((r) => r.id),
@@ -337,6 +356,7 @@ export default async function HaccpAdminStoreDetailPage({
           { id: "employee", label: "従業員衛生" },
           { id: "inspection", label: "自主点検" },
           { id: "confirmation", label: "責任者確認" },
+          { id: "holiday", label: "店休日" },
           { id: "audit", label: "監査ログ" },
         ].map((s) => (
           <a
@@ -637,6 +657,28 @@ export default async function HaccpAdminStoreDetailPage({
               />
             </div>
           </div>
+        )}
+      </section>
+
+      {/* 店休日 */}
+      <section id="holiday" className="mb-8 scroll-mt-4">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">店休日(直近30件)</h2>
+        {holidayRows.length === 0 ? (
+          <EmptyState message="登録されている店休日はありません。" />
+        ) : (
+          <ul className="space-y-2">
+            {holidayRows.map((h) => (
+              <li key={h.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-slate-800">{h.holiday_date}</span>
+                  <span className="text-xs text-slate-400">
+                    {h.user_profiles?.display_name ?? "(不明)"} ・ {formatDateTime(h.created_at)} 登録
+                  </span>
+                </div>
+                {h.reason && <p className="mt-1 text-xs text-slate-500">{h.reason}</p>}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
