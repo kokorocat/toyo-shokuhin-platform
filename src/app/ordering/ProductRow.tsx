@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "./CartContext";
+import { QuantityStepper } from "./QuantityStepper";
 
 export type CatalogProduct = {
   id: string;
@@ -152,31 +153,11 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
         )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex items-center rounded-lg border border-slate-300">
-            <button
-              type="button"
-              onClick={() => setQty((q) => Math.max(product.min_order_qty || 1, q - 1))}
-              className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
-              aria-label="数量を減らす"
-            >
-              −
-            </button>
-            <input
-              type="number"
-              min={product.min_order_qty || 1}
-              value={qty}
-              onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-              className="w-14 border-x border-slate-300 py-2 text-center text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setQty((q) => q + 1)}
-              className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
-              aria-label="数量を増やす"
-            >
-              ＋
-            </button>
-          </div>
+          <QuantityStepper
+            value={qty}
+            min={product.min_order_qty || 1}
+            onChange={setQty}
+          />
           <button
             type="button"
             onClick={handleAdd}

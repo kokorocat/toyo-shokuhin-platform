@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
+import { StickyActionBar } from "@/components/StickyActionBar";
 import { useCart } from "../CartContext";
 import { confirmOrder } from "./actions";
 
@@ -134,21 +135,19 @@ export default function ConfirmClient({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isPending}
-            aria-busy={isPending}
-            className={`w-full rounded-lg bg-blue-800 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 ${
-              isPending ? "cursor-wait opacity-60" : ""
-            }`}
-          >
-            {isPending ? "送信中..." : "この内容で発注を確定する"}
-          </button>
-        </div>
-      </div>
+      <StickyActionBar>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          aria-busy={isPending}
+          className={`w-full rounded-lg bg-blue-800 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 ${
+            isPending ? "cursor-wait opacity-60" : ""
+          }`}
+        >
+          {isPending ? "送信中..." : "この内容で発注を確定する"}
+        </button>
+      </StickyActionBar>
     </div>
   );
 }

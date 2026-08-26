@@ -4,21 +4,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Banner } from "@/components/Banner";
 
-const STATUS_LABELS: Record<string, string> = {
-  new: "新規",
-  in_production: "制作中",
-  preparing_shipment: "出荷準備中",
-  shipped: "郵送完了",
-  cancelled: "キャンセル",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  in_production: "bg-amber-100 text-amber-700",
-  preparing_shipment: "bg-purple-100 text-purple-700",
-  shipped: "bg-green-100 text-green-700",
-  cancelled: "bg-slate-200 text-slate-500",
-};
+import {
+  ORDER_STATUS_LABELS as STATUS_LABELS,
+  ORDER_STATUS_BADGE_CLASS as STATUS_STYLES,
+} from "@/lib/ordering/order-status";
 
 export default async function OrderingHistoryPage({
   searchParams,

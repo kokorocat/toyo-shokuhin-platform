@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { AccessDenied } from "@/components/AccessDenied";
 import { isRecipeAdminRole } from "./admin/guard";
 
 export default async function RecipeListPage({
@@ -13,11 +14,7 @@ export default async function RecipeListPage({
   const { q } = await searchParams;
   const ctx = await getPortalContext();
   if (!ctx) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <p className="text-sm text-slate-500">セッションを確認できませんでした。</p>
-      </div>
-    );
+    return <AccessDenied message="セッションを確認できませんでした。" />;
   }
 
   const supabase = await createClient();

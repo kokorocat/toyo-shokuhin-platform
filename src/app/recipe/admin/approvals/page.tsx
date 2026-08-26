@@ -11,6 +11,7 @@ import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { SubmitButton } from "@/components/SubmitButton";
+import { AccessDenied } from "@/components/AccessDenied";
 
 type SearchParams = { error?: string; success?: string };
 
@@ -33,13 +34,7 @@ export default async function RecipeApprovalsPage({
   const ctx = await getPortalContext();
 
   if (!ctx || !isRecipeAdminRole(ctx.roleCode ?? null)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <p className="text-sm text-slate-500">
-          この画面を表示する権限がありません。管理者権限を持つアカウントで再ログインしてください。
-        </p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   const supabase = await createClient();
@@ -79,6 +74,68 @@ export default async function RecipeApprovalsPage({
         >
           ＋ 新規レシピ申請
         </Link>
+      </div>
+
+      {/* 承認フロー図解 */}
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">承認ワークフロー</h3>
+        <div className="flex flex-wrap items-start justify-center gap-0">
+          {/* 作成・編集 */}
+          <div className="flex flex-col items-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-slate-700">作成・編集</p>
+          </div>
+          {/* 矢印 */}
+          <div className="mt-4 flex items-center px-2 text-slate-300 sm:px-3">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+          </div>
+          {/* 申請 */}
+          <div className="flex flex-col items-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-slate-700">申請</p>
+            <span className="mt-1 inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">承認待ち</span>
+          </div>
+          {/* 矢印 */}
+          <div className="mt-4 flex items-center px-2 text-slate-300 sm:px-3">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+          </div>
+          {/* 承認 */}
+          <div className="flex flex-col items-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-slate-700">承認</p>
+            <span className="mt-1 inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">承認済み</span>
+          </div>
+          {/* 矢印 */}
+          <div className="mt-4 flex items-center px-2 text-slate-300 sm:px-3">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+          </div>
+          {/* 公開 */}
+          <div className="flex flex-col items-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
+              </svg>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-slate-700">公開</p>
+          </div>
+        </div>
+        {/* 差し戻しループ */}
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-red-500">
+          <svg className="h-3.5 w-3.5 rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+          <span className="font-medium">差し戻し（承認 → 作成・編集へ）</span>
+        </div>
       </div>
 
       {error && (

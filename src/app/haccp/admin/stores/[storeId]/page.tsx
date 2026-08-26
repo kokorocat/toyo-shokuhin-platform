@@ -10,6 +10,7 @@ import { isHaccpAdminRole } from "@/app/haccp/admin/guard";
 import { getHalfMonthPeriod } from "@/lib/haccp/admin-dashboard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { Banner } from "@/components/Banner";
 import { todayInTokyo } from "@/lib/date";
 import { KEYPOINT_ITEMS } from "@/app/haccp/keypoint/constants";
 import { INSPECTION_QUESTIONS } from "@/app/haccp/inspection/constants";
@@ -329,8 +330,27 @@ export default async function HaccpAdminStoreDetailPage({
         subtitle={`${areaName ?? "エリア未設定"} / 対象日: ${targetDate} ・ 対象月: ${formatMonth(targetMonth)} ・ 責任者確認期間: ${period.start} 〜 ${period.end}`}
       />
 
+      {/* セクションナビゲーション */}
+      <nav className="mb-6 flex flex-wrap gap-2" aria-label="ページ内リンク">
+        {[
+          { id: "keypoint", label: "重要ポイント" },
+          { id: "employee", label: "従業員衛生" },
+          { id: "inspection", label: "自主点検" },
+          { id: "confirmation", label: "責任者確認" },
+          { id: "audit", label: "監査ログ" },
+        ].map((s) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
       {/* 重要ポイント・温度・ラベル */}
-      <section className="mb-8">
+      <section id="keypoint" className="mb-8 scroll-mt-4">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
           重要ポイント・温度・ラベル（対象日: {targetDate}）
         </h2>
@@ -404,7 +424,7 @@ export default async function HaccpAdminStoreDetailPage({
       </section>
 
       {/* 従業員衛生 */}
-      <section className="mb-8">
+      <section id="employee" className="mb-8 scroll-mt-4">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
           従業員衛生（対象日: {targetDate}）
         </h2>
@@ -484,7 +504,7 @@ export default async function HaccpAdminStoreDetailPage({
       </section>
 
       {/* 食品衛生自主点検 */}
-      <section className="mb-8">
+      <section id="inspection" className="mb-8 scroll-mt-4">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
           食品衛生自主点検（対象月: {formatMonth(targetMonth)}）
         </h2>
@@ -546,7 +566,7 @@ export default async function HaccpAdminStoreDetailPage({
                           <td className="px-2 py-2">
                             <span
                               className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${
-                                bad ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                                bad ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
                               }`}
                             >
                               {item ? (EVALUATION_LABELS[item.answer] ?? item.answer) : "-"}
@@ -562,10 +582,10 @@ export default async function HaccpAdminStoreDetailPage({
                 </table>
               </div>
               {latestInspection.improvement_reason && (
-                <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                <Banner variant="warning" className="mt-4">
                   <p className="mb-1 font-medium">改善が必要な項目の詳細</p>
                   <p>{latestInspection.improvement_reason}</p>
-                </div>
+                </Banner>
               )}
               <HistoryList
                 entries={inspectionRows.map((r) => ({
@@ -580,7 +600,7 @@ export default async function HaccpAdminStoreDetailPage({
       </section>
 
       {/* 責任者確認 */}
-      <section className="mb-8">
+      <section id="confirmation" className="mb-8 scroll-mt-4">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
           責任者確認（期間: {period.start} 〜 {period.end}）
         </h2>
@@ -621,7 +641,7 @@ export default async function HaccpAdminStoreDetailPage({
       </section>
 
       {/* 監査ログ */}
-      <section>
+      <section id="audit" className="scroll-mt-4">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">監査ログ</h2>
         {auditLogs.length === 0 ? (
           <EmptyState message="監査ログはありません。" />

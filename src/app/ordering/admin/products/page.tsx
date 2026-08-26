@@ -9,6 +9,7 @@ import { toggleProductStatus } from "./actions";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { SubmitButton } from "@/components/SubmitButton";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -169,16 +170,16 @@ export default async function OrderingAdminProductsPage({
                       <form action={toggleProductStatus}>
                         <input type="hidden" name="product_id" value={product.id} />
                         <input type="hidden" name="next_status" value={nextStatus} />
-                        <button
-                          type="submit"
+                        <SubmitButton
                           className={`rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors ${
                             isActive
                               ? "border-red-200 bg-white text-red-700 hover:bg-red-50"
                               : "border-green-200 bg-white text-green-700 hover:bg-green-50"
                           }`}
+                          pendingText="処理中..."
                         >
                           {isActive ? "非表示にする" : "公開する"}
-                        </button>
+                        </SubmitButton>
                       </form>
                     </td>
                   </tr>

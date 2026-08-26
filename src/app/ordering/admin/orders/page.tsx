@@ -16,23 +16,11 @@ const PAGE_SIZE = 50;
 const FETCH_LIMIT = 1000;
 
 // 許可遷移順(仕様書7章)と合わせた並び。
-const STATUS_LABELS: Record<string, string> = {
-  new: "新規",
-  in_production: "制作中",
-  preparing_shipment: "出荷準備中",
-  shipped: "郵送完了",
-  cancelled: "キャンセル",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  in_production: "bg-blue-100 text-blue-700",
-  preparing_shipment: "bg-amber-100 text-amber-700",
-  shipped: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
-
-const STATUS_KEYS = Object.keys(STATUS_LABELS);
+import {
+  ORDER_STATUS_LABELS as STATUS_LABELS,
+  ORDER_STATUS_BADGE_CLASS as STATUS_STYLES,
+  ORDER_STATUS_KEYS as STATUS_KEYS,
+} from "@/lib/ordering/order-status";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { AccessDenied } from "@/components/AccessDenied";
 
 const FILE_TYPE_LABELS: Record<string, string> = {
   work_instruction: "作業手順書",
@@ -26,11 +27,7 @@ export default async function RecipeDetailPage({
   const { id } = await params;
   const ctx = await getPortalContext();
   if (!ctx) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <p className="text-sm text-slate-500">セッションを確認できませんでした。</p>
-      </div>
-    );
+    return <AccessDenied message="セッションを確認できませんでした。" />;
   }
 
   const supabase = await createClient();
@@ -140,7 +137,7 @@ export default async function RecipeDetailPage({
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-blue-700 hover:underline"
+                              className="inline-block rounded px-1 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-50 hover:underline"
                             >
                               開く →
                             </a>

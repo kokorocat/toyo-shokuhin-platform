@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { StickyActionBar } from "@/components/StickyActionBar";
+import { QuantityStepper } from "../QuantityStepper";
 import { useCart } from "../CartContext";
 
 export default function CartPage() {
@@ -45,31 +47,10 @@ export default function CartPage() {
                 />
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2">
-                <div className="flex items-center rounded-lg border border-slate-300">
-                  <button
-                    type="button"
-                    onClick={() => cart.updateQuantity(item.key, item.quantity - 1)}
-                    className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
-                    aria-label="数量を減らす"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => cart.updateQuantity(item.key, Number(e.target.value) || 1)}
-                    className="w-14 border-x border-slate-300 py-2 text-center text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => cart.updateQuantity(item.key, item.quantity + 1)}
-                    className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
-                    aria-label="数量を増やす"
-                  >
-                    ＋
-                  </button>
-                </div>
+                <QuantityStepper
+                  value={item.quantity}
+                  onChange={(v) => cart.updateQuantity(item.key, v)}
+                />
                 <button
                   type="button"
                   onClick={() => cart.removeItem(item.key)}
@@ -84,21 +65,19 @@ export default function CartPage() {
       )}
 
       {cart.items.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm">
-          <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-slate-500">合計 {cart.totalCount}点</p>
-              <p className="text-base font-bold text-slate-900">{cart.totalAmount.toLocaleString()}円</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push("/ordering/confirm")}
-              className="rounded-lg bg-blue-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900"
-            >
-              発注に進む
-            </button>
+        <StickyActionBar>
+          <div>
+            <p className="text-xs text-slate-500">合計 {cart.totalCount}点</p>
+            <p className="text-base font-bold text-slate-900">{cart.totalAmount.toLocaleString()}円</p>
           </div>
-        </div>
+          <button
+            type="button"
+            onClick={() => router.push("/ordering/confirm")}
+            className="rounded-lg bg-blue-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900"
+          >
+            発注に進む
+          </button>
+        </StickyActionBar>
       )}
 
       {cart.items.length === 0 && (

@@ -8,21 +8,20 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { isOrderingAdminRole } from "./guard";
 import { todayInTokyo } from "@/lib/date";
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_BADGE_CLASS,
+  ORDER_STATUS_KEYS,
+} from "@/lib/ordering/order-status";
 
-const GREEN = "bg-green-100 text-green-700";
-const RED = "bg-red-100 text-red-700";
-const BLUE = "bg-blue-100 text-blue-700";
 const SLATE = "bg-slate-100 text-slate-500";
-const AMBER = "bg-amber-100 text-amber-700";
+const GREEN = "bg-green-100 text-green-700";
 
-// 許可遷移(新規→制作中→出荷準備中→郵送完了、キャンセルは郵送完了前まで)の表示順に揃える。
-const ORDER_STATUSES: { code: string; label: string; badge: string }[] = [
-  { code: "new", label: "新規", badge: BLUE },
-  { code: "in_production", label: "制作中", badge: AMBER },
-  { code: "preparing_shipment", label: "出荷準備中", badge: AMBER },
-  { code: "shipped", label: "郵送完了", badge: GREEN },
-  { code: "cancelled", label: "キャンセル", badge: RED },
-];
+const ORDER_STATUSES = ORDER_STATUS_KEYS.map((code) => ({
+  code,
+  label: ORDER_STATUS_LABELS[code],
+  badge: ORDER_STATUS_BADGE_CLASS[code],
+}));
 
 function StatCard({
   label,

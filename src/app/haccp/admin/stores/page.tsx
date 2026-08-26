@@ -28,7 +28,7 @@ const MONTH_RE = /^\d{4}-\d{2}$/;
 
 const GREEN = "bg-green-100 text-green-700";
 const RED = "bg-red-100 text-red-700";
-const BLUE = "bg-blue-100 text-blue-700";
+const NEUTRAL = "bg-slate-100 text-slate-500";
 const SLATE = "bg-slate-100 text-slate-500";
 const AMBER = "bg-amber-100 text-amber-700";
 
@@ -99,7 +99,7 @@ function keypointBadge(s: KeypointStatus | undefined): { label: string; classNam
   if (s.status === "answered") {
     return s.needsImprovement ? { label: "要改善", className: RED } : { label: "回答済", className: GREEN };
   }
-  if (s.status === "unanswered") return { label: "未回答", className: BLUE };
+  if (s.status === "unanswered") return { label: "未回答", className: NEUTRAL };
   if (s.status === "holiday") return { label: "店休日", className: SLATE };
   return { label: "対象外", className: SLATE };
 }
@@ -114,7 +114,7 @@ function employeeBadge(s: EmployeeStatus | undefined): { label: string; classNam
     };
   }
   // 勤怠データ未連携のため「未回答」とは断定しない(仕様書5.2)。「記録なし」と表示する。
-  if (s.status === "not_recorded") return { label: "記録なし", className: BLUE };
+  if (s.status === "not_recorded") return { label: "記録なし", className: NEUTRAL };
   if (s.status === "holiday") return { label: "店休日", className: SLATE };
   return { label: "対象外", className: SLATE };
 }
@@ -124,7 +124,7 @@ function inspectionBadge(s: InspectionStatus | undefined): { label: string; clas
   if (s.status === "answered") {
     return s.needsImprovement ? { label: "要改善", className: RED } : { label: "回答済", className: GREEN };
   }
-  if (s.status === "unanswered") return { label: "未回答", className: BLUE };
+  if (s.status === "unanswered") return { label: "未回答", className: NEUTRAL };
   return { label: "対象外", className: SLATE };
 }
 

@@ -21,21 +21,10 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  new: "新規",
-  in_production: "制作中",
-  preparing_shipment: "出荷準備中",
-  shipped: "郵送完了",
-  cancelled: "キャンセル",
-};
-
-const STATUS_BADGE_CLASS: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  in_production: "bg-blue-100 text-blue-700",
-  preparing_shipment: "bg-amber-100 text-amber-700",
-  shipped: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
+import {
+  ORDER_STATUS_LABELS as STATUS_LABELS,
+  ORDER_STATUS_BADGE_CLASS as STATUS_BADGE_CLASS,
+} from "@/lib/ordering/order-status";
 
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   normal_pop: "通常POP",
@@ -458,7 +447,7 @@ export default async function OrderDetailPage({
         </div>
       </section>
 
-      {/* ステータス変更履歴 */}
+      {/* ステータス変更履歴 — ステップ進行表示 */}
       <section>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
           ステータス変更履歴
@@ -466,28 +455,51 @@ export default async function OrderDetailPage({
         {histories.length === 0 ? (
           <EmptyState message="変更履歴はありません。" />
         ) : (
-          <ul className="space-y-2">
-            {histories.map((h) => (
-              <li
-                key={h.id}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    {h.from_status ? (
-                      <StatusBadge status={h.from_status} />
-                    ) : (
-                      <span className="text-xs text-slate-400">(新規登録)</span>
+          <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
+            <div className="flex items-start overflow-x-auto pb-2">
+              {histories.map((h, idx) => {
+                const isLast = idx === histories.length - 1;
+                const isCancelled = h.to_status === "cancelled";
+                return (
+                  <div key={h.id} className="flex items-start">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                          isCancelled
+                            ? "bg-red-100 text-red-600"
+                            : "bg-green-100 text-green-600"
+                        }`}
+                      >
+                        {isCancelled ? (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="mt-2 min-w-[100px] text-center">
+                        <p className="text-xs font-bold text-slate-800">
+                          {STATUS_LABELS[h.to_status] ?? h.to_status}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-400">
+                          {formatDateTime(h.created_at)}
+                        </p>
+                        {h.note && (
+                          <p className="mt-1 text-[11px] text-slate-500">{h.note}</p>
+                        )}
+                      </div>
+                    </div>
+                    {!isLast && (
+                      <div className="mt-4 h-px w-8 shrink-0 bg-slate-300 sm:w-12" />
                     )}
-                    <span className="text-slate-400">→</span>
-                    <StatusBadge status={h.to_status} />
                   </div>
-                  <span className="text-xs text-slate-400">{formatDateTime(h.created_at)}</span>
-                </div>
-                {h.note && <p className="mt-1.5 text-xs text-slate-500">理由: {h.note}</p>}
-              </li>
-            ))}
-          </ul>
+                );
+              })}
+            </div>
+          </div>
         )}
       </section>
     </div>

@@ -4,6 +4,7 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
+import { AccessDenied } from "@/components/AccessDenied";
 import { isRecipeAdminRole } from "../guard";
 import { submitRecipe } from "./actions";
 
@@ -20,13 +21,7 @@ export default async function RecipeSubmitPage({
   const ctx = await getPortalContext();
 
   if (!isRecipeAdminRole(ctx?.roleCode ?? null)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <p className="text-sm text-slate-500">
-          権限がありません。管理者アカウントで再度ログインしてください。
-        </p>
-      </div>
-    );
+    return <AccessDenied message="権限がありません。管理者アカウントで再度ログインしてください。" />;
   }
 
   const supabase = await createClient();
