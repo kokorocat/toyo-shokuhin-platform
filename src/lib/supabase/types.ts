@@ -349,8 +349,9 @@ export type Database = {
           is_unmatched: boolean
           manual_employee_code: string | null
           manual_name: string | null
-          recorded_by: string
+          recorded_by: string | null
           store_id: string
+          submitted_via: string
           target_date: string
           version: number
         }
@@ -362,8 +363,9 @@ export type Database = {
           is_unmatched?: boolean
           manual_employee_code?: string | null
           manual_name?: string | null
-          recorded_by: string
+          recorded_by?: string | null
           store_id: string
+          submitted_via?: string
           target_date: string
           version?: number
         }
@@ -375,8 +377,9 @@ export type Database = {
           is_unmatched?: boolean
           manual_employee_code?: string | null
           manual_name?: string | null
-          recorded_by?: string
+          recorded_by?: string | null
           store_id?: string
+          submitted_via?: string
           target_date?: string
           version?: number
         }
@@ -448,6 +451,9 @@ export type Database = {
       }
       haccp_inspections: {
         Row: {
+          area_hygiene_officer_name: string | null
+          area_manager_name: string | null
+          business_license_expiry_date: string | null
           company_id: string
           created_at: string
           hygiene_officer_name: string | null
@@ -455,14 +461,20 @@ export type Database = {
           implementer_name: string
           improvement_reason: string | null
           overall_evaluation: string
-          recorded_by: string
+          recorded_by: string | null
+          self_evaluation: string | null
+          special_notes: string | null
           store_id: string
           store_manager_name: string | null
           submitted_on: string
+          submitted_via: string
           target_month: string
           version: number
         }
         Insert: {
+          area_hygiene_officer_name?: string | null
+          area_manager_name?: string | null
+          business_license_expiry_date?: string | null
           company_id: string
           created_at?: string
           hygiene_officer_name?: string | null
@@ -470,14 +482,20 @@ export type Database = {
           implementer_name: string
           improvement_reason?: string | null
           overall_evaluation: string
-          recorded_by: string
+          recorded_by?: string | null
+          self_evaluation?: string | null
+          special_notes?: string | null
           store_id: string
           store_manager_name?: string | null
           submitted_on?: string
+          submitted_via?: string
           target_month: string
           version?: number
         }
         Update: {
+          area_hygiene_officer_name?: string | null
+          area_manager_name?: string | null
+          business_license_expiry_date?: string | null
           company_id?: string
           created_at?: string
           hygiene_officer_name?: string | null
@@ -485,10 +503,13 @@ export type Database = {
           implementer_name?: string
           improvement_reason?: string | null
           overall_evaluation?: string
-          recorded_by?: string
+          recorded_by?: string | null
+          self_evaluation?: string | null
+          special_notes?: string | null
           store_id?: string
           store_manager_name?: string | null
           submitted_on?: string
+          submitted_via?: string
           target_month?: string
           version?: number
         }
@@ -553,8 +574,9 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
-          recorded_by: string
+          recorded_by: string | null
           store_id: string
+          submitted_via: string
           target_date: string
           version: number
         }
@@ -562,8 +584,9 @@ export type Database = {
           company_id: string
           created_at?: string
           id?: string
-          recorded_by: string
+          recorded_by?: string | null
           store_id: string
+          submitted_via?: string
           target_date: string
           version?: number
         }
@@ -571,8 +594,9 @@ export type Database = {
           company_id?: string
           created_at?: string
           id?: string
-          recorded_by?: string
+          recorded_by?: string | null
           store_id?: string
+          submitted_via?: string
           target_date?: string
           version?: number
         }
@@ -1802,8 +1826,90 @@ export type Database = {
           },
         ]
       }
+      recipe_applications: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          submitted_by: string
+          submitter_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          submitted_by: string
+          submitter_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          submitted_by?: string
+          submitter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_applications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_applications_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_applications_submitter_id_fkey"
+            columns: ["submitter_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_submitters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_submitters: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_submitters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
+          application_id: string | null
           area_id: string | null
           category: string | null
           company_id: string
@@ -1817,6 +1923,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          application_id?: string | null
           area_id?: string | null
           category?: string | null
           company_id: string
@@ -1830,6 +1937,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          application_id?: string | null
           area_id?: string | null
           category?: string | null
           company_id?: string
@@ -1843,6 +1951,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recipes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_applications"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recipes_area_id_fkey"
             columns: ["area_id"]
@@ -1977,6 +2092,7 @@ export type Database = {
           manager_name: string | null
           name: string
           opened_on: string | null
+          public_access_token: string
           status: string
           store_code: string
           updated_at: string
@@ -1991,6 +2107,7 @@ export type Database = {
           manager_name?: string | null
           name: string
           opened_on?: string | null
+          public_access_token?: string
           status?: string
           store_code: string
           updated_at?: string
@@ -2005,6 +2122,7 @@ export type Database = {
           manager_name?: string | null
           name?: string
           opened_on?: string | null
+          public_access_token?: string
           status?: string
           store_code?: string
           updated_at?: string
@@ -2178,7 +2296,88 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      link_recipe_current_version: {
+        Args: { p_recipe_id: string; p_version_id: string }
+        Returns: undefined
+      }
+      find_or_create_user_profile_by_email: {
+        Args: {
+          p_email: string
+          p_display_name?: string | null
+          p_company_id?: string | null
+          p_area_id?: string | null
+          p_store_id?: string | null
+        }
+        Returns: string
+      }
+      grant_user_access_scope: {
+        Args: {
+          p_target_user_id: string
+          p_role_code: string
+          p_company_id?: string | null
+          p_area_id?: string | null
+          p_store_id?: string | null
+          p_started_on?: string
+        }
+        Returns: string
+      }
+      revoke_user_access_scope: {
+        Args: { p_scope_id: string; p_ended_on?: string }
+        Returns: undefined
+      }
+      kiosk_get_employees: {
+        Args: { p_token: string }
+        Returns: { employee_id: string; employee_code: string; full_name: string }[]
+      }
+      kiosk_get_store: {
+        Args: { p_token: string }
+        Returns: { store_id: string; company_id: string; store_name: string; store_code: string }[]
+      }
+      kiosk_submit_employee_check: {
+        Args: {
+          p_token: string
+          p_target_date: string
+          p_employee_id?: string | null
+          p_manual_name?: string | null
+          p_answers?: Json
+          p_note?: string | null
+          p_action_taken?: string | null
+        }
+        Returns: string
+      }
+      kiosk_submit_inspection: {
+        Args: {
+          p_token: string
+          p_implementer_name: string
+          p_answers: Json
+          p_self_evaluation: string
+          p_store_manager_name?: string | null
+          p_hygiene_officer_name?: string | null
+          p_area_manager_name?: string | null
+          p_area_hygiene_officer_name?: string | null
+          p_improvement_reason?: string | null
+          p_special_notes?: string | null
+          p_business_license_expiry_date?: string | null
+        }
+        Returns: string
+      }
+      kiosk_submit_keypoint: {
+        Args: {
+          p_token: string
+          p_target_date: string
+          p_items: Json
+          p_temp_value?: number | null
+          p_temp_judgment?: string | null
+          p_temp_note?: string | null
+          p_label_judgment?: string | null
+          p_label_note?: string | null
+        }
+        Returns: string
+      }
+      regenerate_store_kiosk_token: {
+        Args: { p_store_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

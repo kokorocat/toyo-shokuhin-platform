@@ -8,7 +8,7 @@ import { parseRecipeFileContent } from "@/lib/recipe/parse-recipe-file";
 
 type FileResult = { fileName: string; status: "ok" | "duplicate" | "error"; detail?: string };
 
-export async function submitRecipe(formData: FormData) {
+export async function bulkUploadApprovedRecipes(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,49 +16,25 @@ export async function submitRecipe(formData: FormData) {
   if (!user) redirect("/login");
 
   const companyId = String(formData.get("company_id") ?? "");
-  const submitterId = String(formData.get("submitter_id") ?? "");
   const areaId = String(formData.get("area_id") ?? "") || null;
   const category = String(formData.get("category") ?? "").trim() || null;
   const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
 
   if (!companyId) {
-    redirect(`/recipe/admin/submit?error=${encodeURIComponent("会社を選択してください")}`);
-  }
-  if (!submitterId) {
-    redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent("申請者を選択してください")}`);
+    redirect(`/recipe/admin/upload?error=${encodeURIComponent("会社を選択してください")}`);
   }
   if (files.length === 0) {
-    redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent("ファイルを選択してください")}`);
-  }
-
-  // 名簿の会社整合性を先に確認する(最終的な防衛はRLSだが、分かりやすいエラーを先に返す)。
-  const { data: submitter } = await supabase
-    .from("recipe_submitters")
-    .select("id")
-    .eq("id", submitterId)
-    .eq("company_id", companyId)
-    .eq("status", "active")
-    .maybeSingle();
-  if (!submitter) {
-    redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent("申請者を選択してください")}`);
-  }
-
-  const { data: application, error: appError } = await supabase
-    .from("recipe_applications")
-    .insert({ company_id: companyId, submitter_id: submitterId, submitted_by: user.id })
-    .select("id")
-    .single();
-  if (appError || !application) {
-    redirect(
-      `/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent(appError?.message ?? "申請の登録に失敗しました")}`
-    );
+    redirect(`/recipe/admin/upload?error=${encodeURIComponent("ファイルを選択してください")}`);
   }
 
   const results: FileResult[] = [];
 
   for (const file of files) {
-    // upload/actions.tsのbulkUploadApprovedRecipesと同じ理由でExcel内容から読み取る
-    // (呼出No.セルにエリアの略称が含まれ、会社内での一意性を正しく担保できるため)。
+    // Excelファイルはファイル内の呼出No.(E3)・商品名(Q3)セルから読み取る(エリアの略称込みの値
+    // のため、エリアが違えば数字が同じでも別コードとして扱える — クライアント確認済みの実運用に
+    // 対応するための2026-08-27追加)。xlsx以外(pdf等)や、想定セルが読み取れないExcelファイルは、
+    // ファイル名から解析する(この場合エリア情報が無いため、同一会社内で数字が重複すると
+    // 既存レシピとして重複スキップされる — 呼出No.セルが正しく入ったExcelでの登録を推奨)。
     const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const parsed = isExcel ? await parseRecipeFileContent(file) : parseFileName(file.name);
     if (!parsed) {
@@ -91,8 +67,7 @@ export async function submitRecipe(formData: FormData) {
         area_id: areaId,
         name: parsed.name,
         category,
-        status: "draft",
-        application_id: application.id,
+        status: "published",
       })
       .select("id")
       .single();
@@ -103,19 +78,17 @@ export async function submitRecipe(formData: FormData) {
     }
 
     const ext = file.name.split(".").pop() || "xlsx";
-    const path = `${companyId}/submissions/${parsed.code}-${Date.now()}.${ext}`;
+    const path = `${companyId}/approved/${parsed.code}-${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("recipe-files").upload(path, file, {
       contentType: file.type || undefined,
       upsert: false,
     });
 
-    let originalStoragePath: string | null = null;
+    let storagePath: string | null = null;
     if (uploadError) {
-      // レシピ本体は作成済みなので、アップロード失敗はエラー表示のみとし登録自体は破棄しない
-      // (bulkUploadApprovedRecipesと同じ既知のトレードオフ)。
-      console.error("[recipe/admin/submit] file upload failed", file.name, uploadError);
+      console.error("[recipe/admin/upload] file upload failed", file.name, uploadError);
     } else {
-      originalStoragePath = path;
+      storagePath = path;
     }
 
     const { data: version, error: versionError } = await supabase
@@ -123,8 +96,9 @@ export async function submitRecipe(formData: FormData) {
       .insert({
         recipe_id: recipe.id,
         version_no: 1,
-        original_storage_path: originalStoragePath,
+        original_storage_path: storagePath,
         uploaded_by: user.id,
+        published_at: new Date().toISOString(),
       })
       .select("id")
       .single();
@@ -134,20 +108,27 @@ export async function submitRecipe(formData: FormData) {
       continue;
     }
 
-    await supabase.from("recipes").update({ current_version_id: version.id }).eq("id", recipe.id);
-
-    results.push({
-      fileName: file.name,
-      status: uploadError ? "error" : "ok",
-      detail: uploadError ? "ファイル本体の保存に失敗しました(レシピ情報は登録済み)" : undefined,
+    // 直接UPDATEではなくRPC経由にする理由: 通常のrecipes_update_*ポリシーは
+    // 「draft状態のまま」または「super_adminのみ」を前提としており、一括アップロードが
+    // 挿入直後に行うstatus='published'のままcurrent_version_idだけを紐付ける操作を
+    // 安全に表現できない(20260827000007のコメント参照 — 複数ポリシー間の組み合わせによる
+    // 迂回を防ぐため、RPC内で対象行を明示的に検証する設計にしている)。
+    const { error: linkError } = await supabase.rpc("link_recipe_current_version", {
+      p_recipe_id: recipe.id,
+      p_version_id: version.id,
     });
+    if (linkError) {
+      console.error("[recipe/admin/upload] linking current_version_id failed", file.name, linkError);
+    }
+
+    results.push({ fileName: file.name, status: uploadError ? "error" : "ok", detail: uploadError ? "ファイル本体の保存に失敗しました(レシピ情報は登録済み)" : undefined });
   }
 
   const okCount = results.filter((r) => r.status === "ok").length;
   const dupCount = results.filter((r) => r.status === "duplicate").length;
   const errorFiles = results.filter((r) => r.status === "error");
 
-  const summaryParts = [`${okCount}件申請完了`];
+  const summaryParts = [`${okCount}件アップロード完了`];
   if (dupCount > 0) summaryParts.push(`${dupCount}件は重複のためスキップ`);
   if (errorFiles.length > 0) {
     summaryParts.push(`${errorFiles.length}件失敗(${errorFiles.map((f) => f.fileName).join(", ")})`);
@@ -157,21 +138,20 @@ export async function submitRecipe(formData: FormData) {
   const { error: auditError } = await supabase.from("audit_logs").insert({
     actor_id: user.id,
     system_code: "recipe",
-    action: "submit_application",
-    target_table: "recipe_applications",
-    target_id: application.id,
-    after_data: { company_id: companyId, submitter_id: submitterId, ok_count: okCount, duplicate_count: dupCount, error_count: errorFiles.length },
+    action: "bulk_upload_approved",
+    target_table: "recipes",
+    target_id: companyId,
+    after_data: { company_id: companyId, area_id: areaId, ok_count: okCount, duplicate_count: dupCount, error_count: errorFiles.length },
   });
   if (auditError) {
-    console.error("[recipe/admin/submit] audit log insert failed", auditError);
+    console.error("[recipe/admin/upload] audit log insert failed", auditError);
   }
 
-  revalidatePath("/recipe/admin/submit");
-  revalidatePath("/recipe/admin/approvals");
-  revalidatePath("/recipe/admin/history");
+  revalidatePath("/recipe");
+  revalidatePath("/recipe/admin/upload");
 
   if (errorFiles.length > 0) {
-    redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent(summaryParts.join(" / "))}`);
+    redirect(`/recipe/admin/upload?error=${encodeURIComponent(summaryParts.join(" / "))}`);
   }
-  redirect(`/recipe/admin/submit?company_id=${companyId}&success=${encodeURIComponent(summaryParts.join(" / "))}`);
+  redirect(`/recipe/admin/upload?success=${encodeURIComponent(summaryParts.join(" / "))}`);
 }

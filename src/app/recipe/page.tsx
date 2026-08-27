@@ -4,7 +4,7 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { AccessDenied } from "@/components/AccessDenied";
-import { isRecipeAdminRole } from "./admin/guard";
+import { isRecipeAdminRole, isRecipeApprovalRole } from "./admin/guard";
 
 export default async function RecipeListPage({
   searchParams,
@@ -54,23 +54,35 @@ export default async function RecipeListPage({
         />
       </form>
 
-      {isRecipeAdminRole(ctx.roleCode) && (
+      {(isRecipeAdminRole(ctx.roleCode) || isRecipeApprovalRole(ctx.roleCode)) && (
         <div className="mb-5 flex flex-wrap gap-2">
-          <Link
-            href="/recipe/admin/submit"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-800 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 active:bg-blue-950"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            新規レシピ申請
-          </Link>
-          <Link
-            href="/recipe/admin/approvals"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            承認待ち一覧
-          </Link>
+          {isRecipeAdminRole(ctx.roleCode) && (
+            <Link
+              href="/recipe/admin/submit"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-800 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 active:bg-blue-950"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              新規レシピ申請
+            </Link>
+          )}
+          {isRecipeAdminRole(ctx.roleCode) && (
+            <Link
+              href="/recipe/admin/upload"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              承認済みレシピアップロード
+            </Link>
+          )}
+          {isRecipeApprovalRole(ctx.roleCode) && (
+            <Link
+              href="/recipe/admin/approvals"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              承認待ち一覧
+            </Link>
+          )}
         </div>
       )}
 
