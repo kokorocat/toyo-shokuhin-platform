@@ -22,6 +22,15 @@ const ROLE_LABELS: Record<string, string> = {
   system_maintenance: "システム保守",
 };
 
+const ROLE_BADGE_CLASS: Record<string, string> = {
+  store_user: "bg-slate-100 text-slate-600",
+  store_manager: "bg-blue-100 text-blue-700",
+  area_admin: "bg-amber-100 text-amber-700",
+  company_admin: "bg-green-100 text-green-700",
+  super_admin: "bg-red-100 text-red-700",
+  system_maintenance: "bg-slate-200 text-slate-700",
+};
+
 // company_admin(super_admin以外)が付与できるのはこの3つのみ
 // (grant_user_access_scope RPC自身の権限上限チェックと同じ境界)。
 const NON_SUPER_GRANTABLE_ROLES = ["store_user", "store_manager", "area_admin"];
@@ -206,11 +215,13 @@ export default async function MasterUsersPage({
                     const isActive = !scope.ended_on || scope.ended_on >= todayInTokyo();
                     const scopeLabel = company?.name ?? area?.name ?? (store ? `${store.store_code} ${store.name}` : "全社・全エリア");
                     return (
-                      <li key={scope.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
-                        <div className="text-sm text-slate-700">
-                          <span className="font-medium">{role ? ROLE_LABELS[role.code] ?? role.code : "-"}</span>
-                          <span className="ml-2 text-slate-400">{scopeLabel}</span>
-                          <span className="ml-2 text-xs text-slate-400">
+                      <li key={scope.id} className={`flex flex-wrap items-center justify-between gap-2 px-5 py-3 ${!isActive ? "opacity-50" : ""}`}>
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${ROLE_BADGE_CLASS[role?.code ?? ""] ?? "bg-slate-100 text-slate-600"}`}>
+                            {role ? ROLE_LABELS[role.code] ?? role.code : "-"}
+                          </span>
+                          <span className="text-slate-500">{scopeLabel}</span>
+                          <span className="text-xs text-slate-400">
                             {scope.started_on} 〜 {scope.ended_on ?? "現在"}
                           </span>
                         </div>

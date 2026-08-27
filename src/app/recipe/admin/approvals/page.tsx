@@ -122,8 +122,14 @@ export default async function RecipeApprovalsPage({
                       <p className="text-sm font-semibold text-slate-900">
                         {app.companyName} / 申請者: {app.submitterName ?? "(名簿未設定)"}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        申請日: {formatDate(app.createdAt)} / 判定済み {judgedCount}/{total}件 残り{total - judgedCount}件
+                      <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <span>申請日: {formatDate(app.createdAt)}</span>
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                          判定済み {judgedCount}/{total}件
+                        </span>
+                        {!allJudged && (
+                          <span className="font-semibold text-amber-600">残り{total - judgedCount}件</span>
+                        )}
                       </p>
                     </div>
                     <span
@@ -142,7 +148,15 @@ export default async function RecipeApprovalsPage({
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-xs text-slate-400">{item.recipe_code}</p>
-                              <h3 className="text-sm font-semibold text-slate-900">{item.name}</h3>
+                              <h3 className="inline text-sm font-semibold text-slate-900">
+                                {item.name}
+                                {item.status === "approved" && (
+                                  <span className="ml-2 inline-flex items-center rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">承認済み</span>
+                                )}
+                                {item.status === "published" && (
+                                  <span className="ml-2 inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">公開済み</span>
+                                )}
+                              </h3>
                               {item.category && <p className="mt-0.5 text-xs text-slate-500">{item.category}</p>}
                             </div>
                             {rejected && (

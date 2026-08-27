@@ -82,12 +82,15 @@ export default async function RecipeSubmittersPage({
             </form>
           </div>
 
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            登録済み申請者（{rows.length}名）
+          </h2>
           {rows.length === 0 ? (
             <EmptyState message="申請者がまだ登録されていません。" />
           ) : (
             <ul className="space-y-2">
               {rows.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <li key={s.id} className={`flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm ${s.status !== "active" ? "opacity-60" : ""}`}>
                   <span
                     className={`inline-flex shrink-0 items-center rounded-md px-2 py-1 text-xs font-bold ${
                       s.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"

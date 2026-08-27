@@ -187,24 +187,21 @@ export default async function HaccpInspectionPage({
         </div>
 
         {/* 8 categories / 18 items */}
-        <section className="space-y-5">
+        <section className="space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             点検項目（8カテゴリ・18項目）
           </h2>
           {INSPECTION_CATEGORIES.map((category) => (
-            <div key={category.no}>
-              <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+            <div key={category.no} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
                   {category.no}
                 </span>
-                {category.title}
-              </h3>
-              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-slate-800">{category.title}</h3>
+              </div>
+              <div className="divide-y divide-slate-100">
                 {category.items.map((q) => (
-                  <fieldset
-                    key={q.code}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
-                  >
+                  <fieldset key={q.code} className="px-5 py-4">
                     <legend className="mb-3 text-sm font-medium text-slate-800">
                       {category.items.length > 1 && (
                         <span className="mr-1.5 text-xs font-semibold text-slate-400">

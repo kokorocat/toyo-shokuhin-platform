@@ -150,17 +150,26 @@ export default async function RecipeSubmitPage({
         </div>
       )}
 
-      <div className="mt-6 flex justify-center gap-4 text-center">
-        <Link href={`/recipe/admin/submitters?company_id=${selectedCompanyId}`} className="text-sm text-blue-700 transition-colors hover:text-blue-900">
+      <div className="mt-6 flex flex-wrap justify-center gap-3 text-center">
+        <Link
+          href={`/recipe/admin/submitters?company_id=${selectedCompanyId}`}
+          className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+        >
           申請者名簿を編集
         </Link>
         {isRecipeAdminRole(ctx?.roleCode ?? null) && (
-          <Link href="/recipe/admin/history" className="text-sm text-blue-700 transition-colors hover:text-blue-900">
+          <Link
+            href="/recipe/admin/history"
+            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+          >
             申請履歴を見る
           </Link>
         )}
         {isRecipeApprovalRole(ctx?.roleCode ?? null) && (
-          <Link href="/recipe/admin/approvals" className="text-sm text-blue-700 transition-colors hover:text-blue-900">
+          <Link
+            href="/recipe/admin/approvals"
+            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+          >
             承認待ち一覧を見る
           </Link>
         )}

@@ -99,10 +99,20 @@ export default async function RecipeHistoryPage({
                     <p className="text-sm font-semibold text-slate-900">
                       申請者: {app.submitterName ?? "(名簿未設定)"}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      申請日: {formatDate(app.createdAt)} / 判定済み {judgedCount}/{total}件
+                    <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span>申請日: {formatDate(app.createdAt)}</span>
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                        {judgedCount}/{total}件
+                      </span>
                     </p>
                   </div>
+                  <span
+                    className={`inline-flex shrink-0 items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                      judgedCount === total ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {judgedCount === total ? "判定完了" : "判定中"}
+                  </span>
                 </summary>
                 <div className="divide-y divide-slate-100 border-t border-slate-100">
                   {app.items.map((item) => (

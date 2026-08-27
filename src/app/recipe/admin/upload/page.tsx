@@ -118,7 +118,10 @@ export default async function RecipeBulkUploadPage({
       </div>
 
       <div className="mt-6 text-center">
-        <Link href="/recipe/admin/submit" className="text-sm text-blue-700 transition-colors hover:text-blue-900">
+        <Link
+          href="/recipe/admin/submit"
+          className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+        >
           未承認レシピの申請はこちら
         </Link>
       </div>
