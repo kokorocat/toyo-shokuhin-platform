@@ -3,6 +3,7 @@
 // 集計ロジックはHM-00/HM-10と共有(admin-dashboard.ts)だが、この画面は集計ではなく
 // 「回答本文・訂正履歴・責任者確認・監査ログ」という記録そのものを表示するため、
 // 各haccpテーブルを直接(全バージョン)取得する。
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
@@ -11,9 +12,11 @@ import { getHalfMonthPeriod } from "@/lib/haccp/admin-dashboard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Banner } from "@/components/Banner";
+import { SubmitButton } from "@/components/SubmitButton";
 import { todayInTokyo } from "@/lib/date";
 import { KEYPOINT_ITEMS } from "@/app/haccp/keypoint/constants";
 import { INSPECTION_QUESTIONS } from "@/app/haccp/inspection/constants";
+import { regenerateKioskToken } from "./actions";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -156,7 +159,12 @@ type InspectionRow = {
   implementer_name: string;
   store_manager_name: string | null;
   hygiene_officer_name: string | null;
+  area_manager_name: string | null;
+  area_hygiene_officer_name: string | null;
   improvement_reason: string | null;
+  self_evaluation: string | null;
+  special_notes: string | null;
+  business_license_expiry_date: string | null;
   user_profiles: NamedActor;
   haccp_inspection_items: { question_code: string; answer: string; reason: string | null; action_taken: string | null }[];
 };
@@ -194,7 +202,7 @@ export default async function HaccpAdminStoreDetailPage({
   searchParams,
 }: {
   params: Promise<{ storeId: string }>;
-  searchParams: Promise<{ date?: string; month?: string }>;
+  searchParams: Promise<{ date?: string; month?: string; kioskError?: string; kioskSuccess?: string }>;
 }) {
   const { storeId } = await params;
   const sp = await searchParams;
@@ -220,11 +228,16 @@ export default async function HaccpAdminStoreDetailPage({
   // RLSスコープ外、または存在しないIDはnotFoundとして扱う(URL直指定での範囲外取得を防止)。
   const { data: store } = await supabase
     .from("stores")
-    .select("id, store_code, name, company_id, area_id, areas(name)")
+    .select("id, store_code, name, company_id, area_id, public_access_token, areas(name)")
     .eq("id", storeId)
     .maybeSingle();
 
   if (!store) notFound();
+
+  const hdrs = await headers();
+  const host = hdrs.get("host");
+  const proto = hdrs.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+  const kioskUrl = host ? `${proto}://${host}/haccp/kiosk/${store.public_access_token}` : `/haccp/kiosk/${store.public_access_token}`;
 
   const [
     { data: keypointRowsRaw },
@@ -253,7 +266,7 @@ export default async function HaccpAdminStoreDetailPage({
     supabase
       .from("haccp_inspections")
       .select(
-        "id, version, created_at, submitted_on, overall_evaluation, implementer_name, store_manager_name, hygiene_officer_name, improvement_reason, user_profiles(display_name), haccp_inspection_items(question_code,answer,reason,action_taken)"
+        "id, version, created_at, submitted_on, overall_evaluation, implementer_name, store_manager_name, hygiene_officer_name, area_manager_name, area_hygiene_officer_name, improvement_reason, self_evaluation, special_notes, business_license_expiry_date, user_profiles(display_name), haccp_inspection_items(question_code,answer,reason,action_taken)"
       )
       .eq("store_id", storeId)
       .eq("target_month", targetMonth)
@@ -368,6 +381,45 @@ export default async function HaccpAdminStoreDetailPage({
           </a>
         ))}
       </nav>
+
+      {/* ログイン不要の店舗側入力リンク(kiosk) */}
+      <div className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-sm font-bold text-slate-900">ログイン不要の入力用リンク</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            店舗のタブレット等にブックマークしておくと、ログインせずに衛生チェックを入力できます。
+          </p>
+        </div>
+        <div className="px-5 py-4">
+          {sp.kioskSuccess && (
+            <div className="mb-3">
+              <Banner variant="success">リンクを再発行しました。以前のリンクは無効になります。</Banner>
+            </div>
+          )}
+          {sp.kioskError && (
+            <div className="mb-3">
+              <Banner variant="error">{sp.kioskError}</Banner>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <code className="min-w-0 flex-1 break-all rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              {kioskUrl}
+            </code>
+            <form action={regenerateKioskToken}>
+              <input type="hidden" name="store_id" value={store.id} />
+              <SubmitButton
+                className="shrink-0 rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-50"
+                pendingText="再発行中..."
+              >
+                リンクを再発行
+              </SubmitButton>
+            </form>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            ※リンクを再発行すると、これまでのリンクは使えなくなります。流出時や端末紛失時のみご利用ください。
+          </p>
+        </div>
+      </div>
 
       {/* 重要ポイント・温度・ラベル */}
       <section id="keypoint" className="mb-8 scroll-mt-4">
@@ -564,6 +616,18 @@ export default async function HaccpAdminStoreDetailPage({
                   <span className="font-medium text-slate-700">食品衛生責任者：</span>
                   {latestInspection.hygiene_officer_name ?? "-"}
                 </p>
+                <p>
+                  <span className="font-medium text-slate-700">エリア長：</span>
+                  {latestInspection.area_manager_name ?? "-"}
+                </p>
+                <p>
+                  <span className="font-medium text-slate-700">エリア衛生担当者：</span>
+                  {latestInspection.area_hygiene_officer_name ?? "-"}
+                </p>
+                <p>
+                  <span className="font-medium text-slate-700">営業許可証有効期限：</span>
+                  {latestInspection.business_license_expiry_date ?? "-"}
+                </p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] text-left text-sm">
@@ -605,6 +669,26 @@ export default async function HaccpAdminStoreDetailPage({
                 <Banner variant="warning" className="mt-4">
                   <p className="mb-1 font-medium">改善が必要な項目の詳細</p>
                   <p>{latestInspection.improvement_reason}</p>
+                </Banner>
+              )}
+              {latestInspection.self_evaluation && (
+                <p className="mt-4 text-sm text-slate-600">
+                  <span className="font-medium text-slate-700">自主評価：</span>
+                  <span
+                    className={`ml-1 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${
+                      latestInspection.self_evaluation === "needs_improvement"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {EVALUATION_LABELS[latestInspection.self_evaluation] ?? latestInspection.self_evaluation}
+                  </span>
+                </p>
+              )}
+              {latestInspection.special_notes && (
+                <Banner variant="info" className="mt-4">
+                  <p className="mb-1 font-medium">特記事項</p>
+                  <p>{latestInspection.special_notes}</p>
                 </Banner>
               )}
               <HistoryList
