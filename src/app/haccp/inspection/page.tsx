@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { SubmitButton } from "../SubmitButton";
 import { recordInspection } from "./actions";
-import { INSPECTION_QUESTIONS } from "./constants";
+import { INSPECTION_CATEGORIES } from "./constants";
 import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -79,12 +79,6 @@ export default async function HaccpInspectionPage({
         subtitle={`${ctx.store.name}（${ctx.store.storeCode}） / 対象月: ${formatMonth(targetMonth)}`}
       />
 
-      <div className="mb-5">
-        <Banner variant="info">
-          以下の17問は、原紙(旧GASシステムの自主点検用紙)が未確認のため、一般的な食品衛生自主点検表の構成に基づく暫定の設問です。
-        </Banner>
-      </div>
-
       {success && (
         <div className="mb-5">
           <Banner variant="success">提出しました。</Banner>
@@ -147,6 +141,34 @@ export default async function HaccpInspectionPage({
             </div>
             <div>
               <label
+                htmlFor="area_manager_name"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                エリア長名（任意）
+              </label>
+              <input
+                id="area_manager_name"
+                name="area_manager_name"
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="area_hygiene_officer_name"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                エリア衛生担当者（任意）
+              </label>
+              <input
+                id="area_hygiene_officer_name"
+                name="area_hygiene_officer_name"
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label
                 htmlFor="implementer_name"
                 className="mb-1.5 block text-sm font-medium text-slate-700"
               >
@@ -164,48 +186,60 @@ export default async function HaccpInspectionPage({
           </div>
         </div>
 
-        {/* 17 questions */}
-        <section>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            点検項目（17問）
+        {/* 8 categories / 18 items */}
+        <section className="space-y-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            点検項目（8カテゴリ・18項目）
           </h2>
-          <div className="space-y-3">
-            {INSPECTION_QUESTIONS.map((q, idx) => (
-              <fieldset
-                key={q.code}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
-              >
-                <legend className="mb-3 text-sm font-medium text-slate-800">
-                  <span className="mr-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
-                    {idx + 1}
-                  </span>
-                  {q.text}
-                </legend>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
-                    <input
-                      type="radio"
-                      name={`answer_${q.code}`}
-                      value="good"
-                      required
-                      className="sr-only"
-                    />
-                    良好
-                  </label>
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
-                    <input
-                      type="radio"
-                      name={`answer_${q.code}`}
-                      value="needs_improvement"
-                      required
-                      className="sr-only"
-                    />
-                    要改善
-                  </label>
-                </div>
-              </fieldset>
-            ))}
-          </div>
+          {INSPECTION_CATEGORIES.map((category) => (
+            <div key={category.no}>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white">
+                  {category.no}
+                </span>
+                {category.title}
+              </h3>
+              <div className="space-y-3">
+                {category.items.map((q) => (
+                  <fieldset
+                    key={q.code}
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+                  >
+                    <legend className="mb-3 text-sm font-medium text-slate-800">
+                      {category.items.length > 1 && (
+                        <span className="mr-1.5 text-xs font-semibold text-slate-400">
+                          {q.code.replace("q", "").replace("_", "-")}
+                        </span>
+                      )}
+                      {q.text}
+                    </legend>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
+                        <input
+                          type="radio"
+                          name={`answer_${q.code}`}
+                          value="good"
+                          required
+                          className="sr-only"
+                        />
+                        良好
+                      </label>
+                      <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
+                        <input
+                          type="radio"
+                          name={`answer_${q.code}`}
+                          value="needs_improvement"
+                          required
+                          className="sr-only"
+                        />
+                        要改善
+                      </label>
+                    </div>
+                  </fieldset>
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
 
         {/* Improvement details */}
@@ -224,6 +258,62 @@ export default async function HaccpInspectionPage({
               rows={4}
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
+          </div>
+        </div>
+
+        {/* Self evaluation & footer fields */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-bold text-slate-900">自主評価</h2>
+          </div>
+          <div className="space-y-4 px-5 py-5">
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-slate-700">
+                今月の総合的な自己評価
+                <span className="ml-1 text-xs text-red-600">必須</span>
+              </legend>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
+                  <input type="radio" name="self_evaluation" value="good" required className="sr-only" />
+                  良好
+                </label>
+                <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:font-semibold has-[:checked]:text-amber-700">
+                  <input
+                    type="radio"
+                    name="self_evaluation"
+                    value="needs_improvement"
+                    required
+                    className="sr-only"
+                  />
+                  要改善
+                </label>
+              </div>
+            </fieldset>
+            <div>
+              <label
+                htmlFor="business_license_expiry_date"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                営業許可証の有効期限日（任意）
+              </label>
+              <input
+                id="business_license_expiry_date"
+                name="business_license_expiry_date"
+                type="date"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label htmlFor="special_notes" className="mb-1.5 block text-sm font-medium text-slate-700">
+                特記事項（任意）
+              </label>
+              <textarea
+                id="special_notes"
+                name="special_notes"
+                rows={3}
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
           </div>
         </div>
 

@@ -17,8 +17,13 @@ export async function recordInspection(formData: FormData) {
   const storeId = String(formData.get("store_id") ?? "");
   const storeManagerName = String(formData.get("store_manager_name") ?? "").trim();
   const hygieneOfficerName = String(formData.get("hygiene_officer_name") ?? "").trim();
+  const areaManagerName = String(formData.get("area_manager_name") ?? "").trim();
+  const areaHygieneOfficerName = String(formData.get("area_hygiene_officer_name") ?? "").trim();
   const implementerName = String(formData.get("implementer_name") ?? "").trim();
   const improvementReason = String(formData.get("improvement_reason") ?? "").trim();
+  const selfEvaluation = String(formData.get("self_evaluation") ?? "");
+  const specialNotes = String(formData.get("special_notes") ?? "").trim();
+  const businessLicenseExpiryDate = String(formData.get("business_license_expiry_date") ?? "").trim();
 
   if (!companyId || !storeId) {
     redirect(`/haccp/inspection?error=${encodeURIComponent("店舗情報が取得できませんでした")}`);
@@ -26,6 +31,10 @@ export async function recordInspection(formData: FormData) {
 
   if (!implementerName) {
     redirect(`/haccp/inspection?error=${encodeURIComponent("実施者名を入力してください")}`);
+  }
+
+  if (selfEvaluation !== "good" && selfEvaluation !== "needs_improvement") {
+    redirect(`/haccp/inspection?error=${encodeURIComponent("自主評価を選択してください")}`);
   }
 
   const answers: Record<string, string> = {};
@@ -72,9 +81,14 @@ export async function recordInspection(formData: FormData) {
       target_month: targetMonth,
       store_manager_name: storeManagerName || null,
       hygiene_officer_name: hygieneOfficerName || null,
+      area_manager_name: areaManagerName || null,
+      area_hygiene_officer_name: areaHygieneOfficerName || null,
       implementer_name: implementerName,
       overall_evaluation: overallEvaluation,
       improvement_reason: improvementReason || null,
+      self_evaluation: selfEvaluation,
+      special_notes: specialNotes || null,
+      business_license_expiry_date: businessLicenseExpiryDate || null,
       version: nextVersion,
       recorded_by: user.id,
     })
