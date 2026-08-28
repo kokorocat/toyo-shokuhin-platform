@@ -42,3 +42,6 @@ next-env.d.ts
 
 # supabase cli local state
 /supabase/.temp/
+
+# client-provided GAS screenshots, for design reference only (not shipped)
+/_design-reference/

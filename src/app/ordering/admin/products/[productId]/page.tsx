@@ -36,9 +36,9 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   hidden: { label: "非表示", className: "bg-slate-100 text-slate-500" },
 };
 
-const inputClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
-const labelClass = "mb-1.5 block text-xs font-medium text-slate-600";
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+const LABEL_CLASS = "mb-1 block text-xs font-medium text-slate-600";
 
 type CategoryRow = {
   id: string;
@@ -56,8 +56,6 @@ type SealSizeRow = {
   note: string | null;
 };
 
-// 大分類→中分類→小分類の階層をインデント付きの1階層セレクトに展開する。
-// parent_idチェーンで再帰するためlevelの値に依存しない。
 function flattenCategories(categories: CategoryRow[]): { id: string; label: string }[] {
   const byParent = new Map<string | null, CategoryRow[]>();
   for (const c of categories) {
@@ -117,7 +115,6 @@ export default async function EditProductPage({
     .eq("id", productId)
     .maybeSingle();
 
-  // 存在しないID(削除済み想定・URL直指定含む)はnotFoundとして扱う。
   if (!product) notFound();
 
   const [{ data: categories }, { data: sealSizes }] = await Promise.all([
@@ -141,13 +138,11 @@ export default async function EditProductPage({
         title={`商品を編集: ${product.name}`}
       />
 
-      <div className="mb-4 flex items-center gap-2">
-        <span
-          className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${statusBadge.className}`}
-        >
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${statusBadge.className}`}>
           {statusBadge.label}
         </span>
-        <p className="text-xs text-slate-400">
+        <p className="text-[11px] text-slate-400">
           ※公開・非表示の切り替えは商品一覧画面から行ってください。
         </p>
       </div>
@@ -159,143 +154,75 @@ export default async function EditProductPage({
       )}
 
       <form action={updateProduct} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
+        <div className="border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-bold text-slate-900">商品情報</h2>
         </div>
-        <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3.5 px-4 py-4 sm:grid-cols-2">
           <input type="hidden" name="product_id" value={product.id} />
 
           <div className="sm:col-span-2">
-            <label htmlFor="name" className={labelClass}>
+            <label htmlFor="name" className={LABEL_CLASS}>
               商品名 <span className="text-red-600">*</span>
             </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              defaultValue={product.name}
-              className={inputClass}
-            />
+            <input id="name" name="name" type="text" required defaultValue={product.name} className={INPUT_CLASS} />
           </div>
 
           <div>
-            <label htmlFor="category_id" className={labelClass}>
-              カテゴリ
-            </label>
-            <select
-              id="category_id"
-              name="category_id"
-              defaultValue={product.category_id ?? ""}
-              className={inputClass}
-            >
+            <label htmlFor="category_id" className={LABEL_CLASS}>カテゴリ</label>
+            <select id="category_id" name="category_id" defaultValue={product.category_id ?? ""} className={INPUT_CLASS}>
               <option value="">（未分類）</option>
               {categoryOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="product_type" className={labelClass}>
+            <label htmlFor="product_type" className={LABEL_CLASS}>
               商品タイプ <span className="text-red-600">*</span>
             </label>
-            <select
-              id="product_type"
-              name="product_type"
-              required
-              defaultValue={product.product_type}
-              className={inputClass}
-            >
+            <select id="product_type" name="product_type" required defaultValue={product.product_type} className={INPUT_CLASS}>
               {PRODUCT_TYPE_ORDER.map((t) => (
-                <option key={t} value={t}>
-                  {PRODUCT_TYPE_LABELS[t]}
-                </option>
+                <option key={t} value={t}>{PRODUCT_TYPE_LABELS[t]}</option>
               ))}
             </select>
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="description" className={labelClass}>
-              説明
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              defaultValue={product.description ?? ""}
-              className={inputClass}
-            />
+            <label htmlFor="description" className={LABEL_CLASS}>説明</label>
+            <textarea id="description" name="description" rows={3} defaultValue={product.description ?? ""} className={INPUT_CLASS} />
           </div>
 
           <div>
-            <label htmlFor="unit_price" className={labelClass}>
+            <label htmlFor="unit_price" className={LABEL_CLASS}>
               単価(円) <span className="text-red-600">*</span>
             </label>
-            <input
-              id="unit_price"
-              name="unit_price"
-              type="number"
-              min={0}
-              step={1}
-              required
-              defaultValue={product.unit_price}
-              className={inputClass}
-            />
+            <input id="unit_price" name="unit_price" type="number" min={0} step={1} required defaultValue={product.unit_price} className={INPUT_CLASS} />
           </div>
 
           <div>
-            <label htmlFor="lot_size" className={labelClass}>
+            <label htmlFor="lot_size" className={LABEL_CLASS}>
               ロット数 <span className="text-red-600">*</span>
             </label>
-            <input
-              id="lot_size"
-              name="lot_size"
-              type="number"
-              min={1}
-              step={1}
-              required
-              defaultValue={product.lot_size}
-              className={inputClass}
-            />
+            <input id="lot_size" name="lot_size" type="number" min={1} step={1} required defaultValue={product.lot_size} className={INPUT_CLASS} />
           </div>
 
           <div>
-            <label htmlFor="seal_size_id" className={labelClass}>
-              シールサイズ
-            </label>
-            <select
-              id="seal_size_id"
-              name="seal_size_id"
-              defaultValue={product.seal_size_id ?? ""}
-              className={inputClass}
-            >
+            <label htmlFor="seal_size_id" className={LABEL_CLASS}>シールサイズ</label>
+            <select id="seal_size_id" name="seal_size_id" defaultValue={product.seal_size_id ?? ""} className={INPUT_CLASS}>
               <option value="">（指定なし）</option>
               {sealSizeOptions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {sealSizeLabel(s)}
-                </option>
+                <option key={s.id} value={s.id}>{sealSizeLabel(s)}</option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-[11px] text-slate-400">
               ※商品タイプが「通常シール」の場合のみ使用されます。
             </p>
           </div>
 
           <div>
-            <label htmlFor="recommend_badge" className={labelClass}>
-              おすすめバッジ文言
-            </label>
-            <input
-              id="recommend_badge"
-              name="recommend_badge"
-              type="text"
-              defaultValue={product.recommend_badge ?? ""}
-              placeholder="例: 人気No.1"
-              className={inputClass}
-            />
+            <label htmlFor="recommend_badge" className={LABEL_CLASS}>おすすめバッジ文言</label>
+            <input id="recommend_badge" name="recommend_badge" type="text" defaultValue={product.recommend_badge ?? ""} placeholder="例: 人気No.1" className={INPUT_CLASS} />
           </div>
 
           <div className="flex items-center sm:col-span-2">
@@ -304,15 +231,15 @@ export default async function EditProductPage({
                 type="checkbox"
                 name="is_recommended"
                 defaultChecked={product.is_recommended}
-                className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-blue-500/20"
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
               />
               おすすめ商品として表示する
             </label>
           </div>
 
-          <div className="flex items-center gap-3 border-t border-slate-100 pt-5 sm:col-span-2">
+          <div className="flex items-center gap-2 border-t border-slate-100 pt-4 sm:col-span-2">
             <SubmitButton
-              className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+              className="rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
               pendingText="更新中..."
             >
               更新する

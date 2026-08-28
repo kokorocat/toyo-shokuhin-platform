@@ -27,12 +27,14 @@ const TYPE_LABELS: Record<string, string> = {
   other: "その他",
 };
 
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+
 export function ProductRow({ product }: { product: CatalogProduct }) {
   const cart = useCart();
   const [qty, setQty] = useState(product.min_order_qty || 1);
   const [added, setAdded] = useState(false);
 
-  // 商品タイプ別の入力詳細(仕様書5〜6)
   const [priceProductName, setPriceProductName] = useState("");
   const [priceSpec, setPriceSpec] = useState("");
   const [priceTaxExcl, setPriceTaxExcl] = useState("");
@@ -72,87 +74,56 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-start sm:gap-4 sm:p-4">
-      {/* placeholder image box (no real image upload pipeline in this MVP) */}
-      <div className="mb-3 flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-300 sm:mb-0">
-        <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+    <div className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-300">
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18A1.5 1.5 0 0022.5 18.75V5.25A1.5 1.5 0 0021 3.75H3A1.5 1.5 0 001.5 5.25v13.5A1.5 1.5 0 003 20.25z" />
         </svg>
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="bg-white font-semibold text-slate-900">{product.name}</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="text-sm font-semibold text-slate-900">{product.name}</p>
           {product.is_recommended && product.recommend_badge && (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
               {product.recommend_badge}
             </span>
           )}
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
             {TYPE_LABELS[product.product_type] ?? product.product_type}
           </span>
         </div>
-        {product.description && <p className="mt-0.5 text-sm text-slate-500">{product.description}</p>}
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+        {product.description && <p className="mt-0.5 text-xs text-slate-500">{product.description}</p>}
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs">
           <span className="font-bold text-red-600">
-            {product.unit_price > 0 ? `${product.unit_price}円` : "無料"}
+            {product.unit_price > 0 ? `¥${product.unit_price.toLocaleString()}` : "無料"}
           </span>
-          <span className="text-blue-600">
+          <span className="text-slate-500">
             {product.lot_size > 1 ? `ロット ${product.lot_size}枚/回` : "1枚単位"}
           </span>
           {product.seal_size && (
-            <span className="text-blue-600">
+            <span className="text-slate-500">
               {product.seal_size.faces}面（{product.seal_size.width_mm}×{product.seal_size.height_mm}mm）
             </span>
           )}
         </div>
 
         {product.product_type === "price_input_pop" && (
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <input
-              value={priceProductName}
-              onChange={(e) => setPriceProductName(e.target.value)}
-              placeholder="商品名"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            <input
-              value={priceSpec}
-              onChange={(e) => setPriceSpec(e.target.value)}
-              placeholder="規格"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            <input
-              value={priceTaxExcl}
-              onChange={(e) => setPriceTaxExcl(e.target.value)}
-              placeholder="税抜価格"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+            <input value={priceProductName} onChange={(e) => setPriceProductName(e.target.value)} placeholder="商品名" className={INPUT_CLASS} />
+            <input value={priceSpec} onChange={(e) => setPriceSpec(e.target.value)} placeholder="規格" className={INPUT_CLASS} />
+            <input value={priceTaxExcl} onChange={(e) => setPriceTaxExcl(e.target.value)} placeholder="税抜価格" className={INPUT_CLASS} />
           </div>
         )}
         {product.product_type === "viking_price" && (
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <input
-              value={vikingCallNumber}
-              onChange={(e) => setVikingCallNumber(e.target.value)}
-              placeholder="呼出番号"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            <input
-              value={vikingProductName}
-              onChange={(e) => setVikingProductName(e.target.value)}
-              placeholder="商品名"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            <input
-              value={vikingPaper}
-              onChange={(e) => setVikingPaper(e.target.value)}
-              placeholder="用紙"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+            <input value={vikingCallNumber} onChange={(e) => setVikingCallNumber(e.target.value)} placeholder="呼出番号" className={INPUT_CLASS} />
+            <input value={vikingProductName} onChange={(e) => setVikingProductName(e.target.value)} placeholder="商品名" className={INPUT_CLASS} />
+            <input value={vikingPaper} onChange={(e) => setVikingPaper(e.target.value)} placeholder="用紙" className={INPUT_CLASS} />
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <QuantityStepper
             value={qty}
             min={product.min_order_qty || 1}
@@ -162,11 +133,11 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
             type="button"
             onClick={handleAdd}
             disabled={requiresDetail && !detailValid}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors ${
-              added ? "bg-green-600" : "bg-blue-800 hover:bg-blue-900"
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors ${
+              added ? "bg-emerald-600" : "bg-emerald-500 hover:bg-emerald-600"
             } disabled:cursor-not-allowed disabled:opacity-40`}
           >
-            {added ? "追加しました" : "カートに追加"}
+            {added ? "✓ 追加しました" : "カートに追加"}
           </button>
         </div>
       </div>

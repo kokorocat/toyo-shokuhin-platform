@@ -12,10 +12,30 @@ const IMPORTANCE_LABELS: Record<string, string> = {
 const IMPORTANCE_STYLES: Record<string, string> = {
   urgent: "bg-red-100 text-red-700",
   important: "bg-amber-100 text-amber-700",
-  normal: "bg-slate-100 text-slate-600",
+  normal: "bg-slate-100 text-slate-500",
 };
 
-export default async function NoticesPage() {
+const IMPORTANCE_BORDER: Record<string, string> = {
+  urgent: "border-l-red-500",
+  important: "border-l-amber-400",
+  normal: "border-l-slate-200",
+};
+
+const IMPORTANCE_TABS = [
+  { label: "すべて", value: "" },
+  { label: "緊急", value: "urgent" },
+  { label: "重要", value: "important" },
+  { label: "通常", value: "normal" },
+] as const;
+
+export default async function NoticesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const importanceFilter = typeof sp.importance === "string" ? sp.importance : "";
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,15 +51,44 @@ export default async function NoticesPage() {
     : { data: [] as { notice_id: string }[] };
   const readIds = new Set((reads ?? []).map((r) => r.notice_id));
 
+  const allNotices = notices ?? [];
+  const filtered = importanceFilter
+    ? allNotices.filter((n) => n.importance === importanceFilter)
+    : allNotices;
+
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
+    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       <PageHeader
         backHref="/"
         backLabel="店舗ポータルTOPに戻る"
         title="お知らせ一覧"
       />
 
-      {(!notices || notices.length === 0) ? (
+      {/* Importance filter tabs */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {IMPORTANCE_TABS.map((tab) => {
+          const isActive = importanceFilter === tab.value;
+          const count = tab.value
+            ? allNotices.filter((n) => n.importance === tab.value).length
+            : allNotices.length;
+          return (
+            <Link
+              key={tab.value}
+              href={tab.value ? `/notices?importance=${tab.value}` : "/notices"}
+              className={
+                isActive
+                  ? "rounded-full bg-slate-800 px-4 py-2 text-xs font-bold text-white"
+                  : "rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              }
+            >
+              {tab.label}
+              <span className="ml-1.5 tabular-nums">{count}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
         <EmptyState
           message="現在表示できるお知らせはありません。"
           icon={
@@ -50,32 +99,45 @@ export default async function NoticesPage() {
         />
       ) : (
         <ul className="space-y-2">
-          {notices.map((n) => {
+          {filtered.map((n) => {
             const unread = !readIds.has(n.id);
             return (
               <li key={n.id}>
                 <Link
                   href={`/notices/${n.id}`}
-                  className={`block rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${
+                  className={`block overflow-hidden rounded-xl border border-l-4 shadow-sm transition-all hover:shadow-md ${
+                    IMPORTANCE_BORDER[n.importance] ?? "border-l-slate-200"
+                  } ${
                     n.importance === "urgent"
-                      ? "border-red-200 bg-red-50 hover:border-red-300"
-                      : "border-slate-200 bg-white hover:border-blue-300"
+                      ? "border-red-200 bg-red-50/30"
+                      : "border-slate-200 bg-white"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${IMPORTANCE_STYLES[n.importance] ?? IMPORTANCE_STYLES.normal}`}>
-                      {IMPORTANCE_LABELS[n.importance] ?? n.importance}
-                    </span>
-                    {unread && (
-                      <span className="inline-flex items-center rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
-                        未読
+                  <div className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${
+                          IMPORTANCE_STYLES[n.importance] ?? IMPORTANCE_STYLES.normal
+                        }`}
+                      >
+                        {n.importance === "urgent" && (
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {IMPORTANCE_LABELS[n.importance] ?? n.importance}
                       </span>
-                    )}
-                    <span className="ml-auto text-xs text-slate-400">
-                      {new Date(n.display_start_at).toLocaleDateString("ja-JP")}
-                    </span>
+                      {unread && (
+                        <span className="inline-flex items-center rounded-md bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
+                          未読
+                        </span>
+                      )}
+                      <span className="ml-auto text-xs text-slate-400">
+                        {new Date(n.display_start_at).toLocaleDateString("ja-JP")}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm font-medium text-slate-800">{n.title}</p>
                   </div>
-                  <p className="mt-2 text-sm font-medium text-slate-800">{n.title}</p>
                 </Link>
               </li>
             );

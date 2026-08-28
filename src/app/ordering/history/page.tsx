@@ -45,7 +45,7 @@ export default async function OrderingHistoryPage({
       />
 
       {success && (
-        <div className="mb-5">
+        <div className="mb-4">
           <Banner variant="success">発注を確定しました。</Banner>
         </div>
       )}
@@ -53,34 +53,46 @@ export default async function OrderingHistoryPage({
       {!orders || orders.length === 0 ? (
         <EmptyState message="発注履歴がありません。" />
       ) : (
-        <ul className="space-y-2">
-          {orders.map((o) => (
-            <li
-              key={o.id}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-800">{o.order_number}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    {new Date(o.created_at).toLocaleString("ja-JP")} ・ 明細{o.order_lines?.length ?? 0}件
-                    {o.delivery_date ? ` ・ 納品日 ${o.delivery_date}` : ""}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <span
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
-                      STATUS_STYLES[o.status] ?? "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {STATUS_LABELS[o.status] ?? o.status}
-                  </span>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{o.total_amount.toLocaleString()}円</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
+                <th className="whitespace-nowrap px-4 py-2.5">注文番号</th>
+                <th className="whitespace-nowrap px-4 py-2.5">状態</th>
+                <th className="whitespace-nowrap px-4 py-2.5 text-right">金額</th>
+                <th className="whitespace-nowrap px-4 py-2.5">日時</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {orders.map((o, idx) => (
+                <tr key={o.id} className={idx % 2 === 1 ? "bg-slate-50/60" : ""}>
+                  <td className="whitespace-nowrap px-4 py-2.5">
+                    <p className="text-sm font-medium text-slate-800">{o.order_number}</p>
+                    <p className="text-[11px] text-slate-400">
+                      明細{o.order_lines?.length ?? 0}件
+                      {o.delivery_date ? ` ・ 納品 ${o.delivery_date}` : ""}
+                    </p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2.5">
+                    <span
+                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                        STATUS_STYLES[o.status] ?? "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {STATUS_LABELS[o.status] ?? o.status}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-right">
+                    <p className="text-sm font-bold text-slate-900">¥{o.total_amount.toLocaleString()}</p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500">
+                    {new Date(o.created_at).toLocaleString("ja-JP")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

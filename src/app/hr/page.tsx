@@ -54,7 +54,7 @@ function StatCard({
   note?: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <p className="text-2xl font-bold text-slate-900">{value.toLocaleString("ja-JP")}</p>
       <p className="mt-1 text-xs font-medium text-slate-500">{label}</p>
       {note && <p className="mt-0.5 text-[11px] text-slate-400">{note}</p>}
@@ -163,7 +163,10 @@ export default async function HrTopPage() {
         subtitle="社員・雇用管理MVP — その他モジュールは今後実装予定です"
       />
 
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">概要</h2>
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">概要</h2>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
 
       {!hasEmployments ? (
         <div className="mb-8">
@@ -196,7 +199,7 @@ export default async function HrTopPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {companyBreakdown.map((c, idx) => (
-                      <tr key={c.companyId} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                      <tr key={c.companyId} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
                         <td className="whitespace-nowrap px-5 py-2.5 text-slate-700">{c.name}</td>
                         <td className="whitespace-nowrap px-5 py-2.5 text-right font-medium text-slate-900">
                           {c.count.toLocaleString("ja-JP")}
@@ -222,7 +225,7 @@ export default async function HrTopPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {categoryBreakdown.map((c, idx) => (
-                      <tr key={c.label} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                      <tr key={c.label} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
                         <td className="whitespace-nowrap px-5 py-2.5">
                           <span
                             className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${categoryBadgeClass(c.label)}`}
@@ -243,9 +246,10 @@ export default async function HrTopPage() {
         </div>
       )}
 
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-        業務モジュール
-      </h2>
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">業務モジュール</h2>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {MODULES.map((m) => (
           <ModuleCard key={m.title} title={m.title} description={m.description} href={m.href} />

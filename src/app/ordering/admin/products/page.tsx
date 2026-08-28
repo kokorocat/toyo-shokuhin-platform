@@ -105,7 +105,7 @@ export default async function OrderingAdminProductsPage({
       <div className="mb-4 flex items-center justify-end">
         <Link
           href="/ordering/admin/products/new"
-          className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+          className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-600"
         >
           ＋ 新規商品を追加
         </Link>
@@ -117,15 +117,15 @@ export default async function OrderingAdminProductsPage({
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[880px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
-                <th className="whitespace-nowrap px-4 py-3">商品名</th>
-                <th className="whitespace-nowrap px-4 py-3">カテゴリ</th>
-                <th className="whitespace-nowrap px-4 py-3">タイプ</th>
-                <th className="whitespace-nowrap px-4 py-3">単価</th>
-                <th className="whitespace-nowrap px-4 py-3">ロット数</th>
-                <th className="whitespace-nowrap px-4 py-3">おすすめ</th>
-                <th className="whitespace-nowrap px-4 py-3">状態</th>
-                <th className="whitespace-nowrap px-4 py-3" />
+              <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th className="whitespace-nowrap px-3 py-2.5">商品名</th>
+                <th className="whitespace-nowrap px-3 py-2.5">カテゴリ</th>
+                <th className="whitespace-nowrap px-3 py-2.5">タイプ</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-right">単価</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-right">ロット数</th>
+                <th className="whitespace-nowrap px-3 py-2.5">おすすめ</th>
+                <th className="whitespace-nowrap px-3 py-2.5">状態</th>
+                <th className="whitespace-nowrap px-3 py-2.5" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -133,48 +133,48 @@ export default async function OrderingAdminProductsPage({
                 const isActive = product.status === "active";
                 const nextStatus = isActive ? "hidden" : "active";
                 return (
-                  <tr key={product.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
-                    <td className="px-4 py-3">
+                  <tr key={product.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
+                    <td className="px-3 py-2.5">
                       <Link
                         href={`/ordering/admin/products/${product.id}`}
-                        className="font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         {product.name}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{categoryName(product)}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{categoryName(product)}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">
                       {TYPE_LABELS[product.product_type] ?? product.product_type}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">
                       ¥{product.unit_price.toLocaleString()}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{product.lot_size}</td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">{product.lot_size}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       {product.is_recommended && (
-                        <span className="inline-flex items-center rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
+                        <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
                           おすすめ
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
                           isActive ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
                         }`}
                       >
                         {isActive ? "公開中" : "非表示"}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right">
                       <form action={toggleProductStatus}>
                         <input type="hidden" name="product_id" value={product.id} />
                         <input type="hidden" name="next_status" value={nextStatus} />
                         <SubmitButton
-                          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors ${
+                          className={`rounded-full border px-3 py-1 text-[11px] font-bold transition-colors ${
                             isActive
-                              ? "border-red-200 bg-white text-red-700 hover:bg-red-50"
-                              : "border-green-200 bg-white text-green-700 hover:bg-green-50"
+                              ? "border-red-200 bg-white text-red-600 hover:bg-red-50"
+                              : "border-green-200 bg-white text-green-600 hover:bg-green-50"
                           }`}
                           pendingText="処理中..."
                         >

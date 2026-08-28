@@ -107,7 +107,6 @@ export default async function OrderingAdminOrdersPage({
     Number.isFinite(rawPageNum) && rawPageNum >= 1 ? Math.min(Math.floor(rawPageNum), totalPages) : 1;
   const pageOrders = filteredOrders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ページングリンクで引き継ぐ現在の検索条件。
   const currentParams: Record<string, string | undefined> = {
     status: statusFilter,
     q,
@@ -133,25 +132,21 @@ export default async function OrderingAdminOrdersPage({
         </div>
       )}
 
-      {/* 絞り込みフォーム(GETリクエストでこの画面へ自己遷移) */}
       <form
         method="get"
         action="/ordering/admin/orders"
-        className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm"
+        className="mb-5 rounded-xl border border-slate-200 bg-white shadow-sm"
       >
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-slate-900">絞り込み条件</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label htmlFor="status" className="mb-1.5 block text-xs font-medium text-slate-600">
+        <div className="flex flex-wrap items-end gap-3 px-4 py-3">
+          <div className="w-40">
+            <label htmlFor="status" className="mb-1 block text-[11px] font-medium text-slate-500">
               状態
             </label>
             <select
               id="status"
               name="status"
               defaultValue={statusFilter ?? ""}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="">すべて</option>
               {STATUS_KEYS.map((key) => (
@@ -161,8 +156,8 @@ export default async function OrderingAdminOrdersPage({
               ))}
             </select>
           </div>
-          <div className="sm:col-span-1 lg:col-span-2">
-            <label htmlFor="q" className="mb-1.5 block text-xs font-medium text-slate-600">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="q" className="mb-1 block text-[11px] font-medium text-slate-500">
               店舗名 / 注文番号
             </label>
             <input
@@ -171,19 +166,19 @@ export default async function OrderingAdminOrdersPage({
               type="text"
               defaultValue={q ?? ""}
               placeholder="部分一致"
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex gap-2">
             <button
               type="submit"
-              className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+              className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
             >
               絞り込む
             </button>
             <Link
               href="/ordering/admin/orders"
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
             >
               クリア
             </Link>
@@ -195,10 +190,9 @@ export default async function OrderingAdminOrdersPage({
         <EmptyState message="該当する注文がありません。" />
       ) : (
         <>
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm text-slate-500">
-              該当注文 {totalCount}件中 {(page - 1) * PAGE_SIZE + 1}〜
-              {Math.min(page * PAGE_SIZE, totalCount)}件を表示
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs text-slate-500">
+              該当 {totalCount}件中 {(page - 1) * PAGE_SIZE + 1}〜{Math.min(page * PAGE_SIZE, totalCount)}件
             </p>
             <p className="text-xs text-slate-400">
               {page} / {totalPages} ページ
@@ -208,43 +202,43 @@ export default async function OrderingAdminOrdersPage({
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
-                  <th className="whitespace-nowrap px-4 py-3">注文番号</th>
-                  <th className="whitespace-nowrap px-4 py-3">店舗</th>
-                  <th className="whitespace-nowrap px-4 py-3">状態</th>
-                  <th className="whitespace-nowrap px-4 py-3">合計金額</th>
-                  <th className="whitespace-nowrap px-4 py-3">受注日時</th>
-                  <th className="whitespace-nowrap px-4 py-3">納品日</th>
+                <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="whitespace-nowrap px-3 py-2.5">注文番号</th>
+                  <th className="whitespace-nowrap px-3 py-2.5">店舗</th>
+                  <th className="whitespace-nowrap px-3 py-2.5">状態</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">合計金額</th>
+                  <th className="whitespace-nowrap px-3 py-2.5">受注日時</th>
+                  <th className="whitespace-nowrap px-3 py-2.5">納品日</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageOrders.map((order, idx) => (
-                  <tr key={order.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
-                    <td className="whitespace-nowrap px-4 py-3">
+                  <tr key={order.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <Link
                         href={`/ordering/admin/orders/${order.id}`}
-                        className="font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                        className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         {order.order_number}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{storeName(order)}</td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{storeName(order)}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5">
                       <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
                           STATUS_STYLES[order.status] ?? "bg-slate-100 text-slate-500"
                         }`}
                       >
                         {STATUS_LABELS[order.status] ?? order.status}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">
                       ¥{order.total_amount.toLocaleString()}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-slate-500">
                       {new Date(order.created_at).toLocaleString("ja-JP")}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-xs text-slate-500">
                       {order.delivery_date ?? "-"}
                     </td>
                   </tr>
@@ -254,11 +248,11 @@ export default async function OrderingAdminOrdersPage({
           </div>
 
           {totalPages > 1 && (
-            <nav className="mt-5 flex flex-wrap items-center justify-center gap-1.5" aria-label="ページ">
+            <nav className="mt-4 flex flex-wrap items-center justify-center gap-1" aria-label="ページ">
               <Link
                 href={`/ordering/admin/orders${buildQuery({ ...currentParams, page: String(Math.max(1, page - 1)) })}`}
                 aria-disabled={page === 1}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   page === 1
                     ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
                     : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
@@ -271,9 +265,9 @@ export default async function OrderingAdminOrdersPage({
                   key={p}
                   href={`/ordering/admin/orders${buildQuery({ ...currentParams, page: String(p) })}`}
                   aria-current={p === page ? "page" : undefined}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                     p === page
-                      ? "border-blue-800 bg-blue-800 text-white"
+                      ? "border-blue-600 bg-blue-600 text-white"
                       : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -283,7 +277,7 @@ export default async function OrderingAdminOrdersPage({
               <Link
                 href={`/ordering/admin/orders${buildQuery({ ...currentParams, page: String(Math.min(totalPages, page + 1)) })}`}
                 aria-disabled={page === totalPages}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                   page === totalPages
                     ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
                     : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"

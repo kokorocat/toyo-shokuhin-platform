@@ -11,12 +11,12 @@ export function CartBar() {
   return (
     <StickyActionBar>
       <div>
-        <p className="text-xs text-slate-500">カート内 {cart.totalCount}点</p>
-        <p className="text-base font-bold text-slate-900">{cart.totalAmount.toLocaleString()}円</p>
+        <p className="text-xs font-medium text-slate-500">カート内 {cart.totalCount}点</p>
+        <p className="text-base font-bold text-slate-900">¥{cart.totalAmount.toLocaleString()}</p>
       </div>
       <Link
         href="/ordering/cart"
-        className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900"
+        className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-600"
       >
         カートを見る
       </Link>

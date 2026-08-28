@@ -12,7 +12,7 @@ const IMPORTANCE_LABELS: Record<string, string> = {
 const IMPORTANCE_STYLES: Record<string, string> = {
   urgent: "bg-red-100 text-red-700",
   important: "bg-amber-100 text-amber-700",
-  normal: "bg-slate-100 text-slate-600",
+  normal: "bg-slate-100 text-slate-500",
 };
 
 export default async function NoticeDetailPage({
@@ -42,17 +42,30 @@ export default async function NoticeDetailPage({
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
+    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       <PageHeader
         backHref="/notices"
         backLabel="お知らせ一覧に戻る"
         title={notice.title}
       />
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div
+        className={`overflow-hidden rounded-xl border border-l-4 shadow-sm ${
+          notice.importance === "urgent"
+            ? "border-red-200 border-l-red-500 bg-red-50/30"
+            : notice.importance === "important"
+              ? "border-slate-200 border-l-amber-400 bg-white"
+              : "border-slate-200 border-l-slate-300 bg-white"
+        }`}
+      >
         <div className="border-b border-slate-100 px-5 py-4">
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${IMPORTANCE_STYLES[notice.importance] ?? IMPORTANCE_STYLES.normal}`}>
+            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${IMPORTANCE_STYLES[notice.importance] ?? IMPORTANCE_STYLES.normal}`}>
+              {notice.importance === "urgent" && (
+                <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                </svg>
+              )}
               {IMPORTANCE_LABELS[notice.importance] ?? notice.importance}
             </span>
             <span className="text-xs text-slate-400">

@@ -48,10 +48,10 @@ export function Banner({
   return (
     <div
       role={variant === "error" ? "alert" : "status"}
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${v.container} ${className ?? ""}`}
+      className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm leading-relaxed ${v.container} ${className ?? ""}`}
     >
       {v.icon}
-      <div className="pt-px">{children}</div>
+      <div className="min-w-0 pt-px">{children}</div>
     </div>
   );
 }

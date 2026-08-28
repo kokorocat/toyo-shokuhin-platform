@@ -10,11 +10,11 @@ export function QuantityStepper({
   onChange: (next: number) => void;
 }) {
   return (
-    <div className="flex items-center rounded-lg border border-slate-300">
+    <div className="inline-flex items-center rounded-lg border border-slate-300 bg-white">
       <button
         type="button"
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
+        className="rounded-l-lg px-2.5 py-1.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
         aria-label="数量を減らす"
       >
         −
@@ -24,12 +24,12 @@ export function QuantityStepper({
         min={min}
         value={value}
         onChange={(e) => onChange(Math.max(min, Number(e.target.value) || min))}
-        className="w-14 border-x border-slate-300 py-2 text-center text-sm"
+        className="w-12 border-x border-slate-300 py-1.5 text-center text-sm tabular-nums"
       />
       <button
         type="button"
         onClick={() => onChange(value + 1)}
-        className="px-3.5 py-2 text-base font-medium text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
+        className="rounded-r-lg px-2.5 py-1.5 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100"
         aria-label="数量を増やす"
       >
         ＋

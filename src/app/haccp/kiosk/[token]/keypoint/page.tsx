@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { todayInTokyo } from "@/lib/date";
 import { kioskSubmitKeypoint } from "./actions";
+import Link from "next/link";
 
 const KEYPOINT_ITEMS: { code: string; label: string }[] = [
   { code: "heat_room", label: "加熱(常温)" },
@@ -44,98 +44,118 @@ export default async function KioskKeypointPage({
   const today = todayInTokyo();
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <PageHeader
-        backHref={`/haccp/kiosk/${token}`}
-        backLabel="メニューに戻る"
-        title="重要ポイント・温度・ラベル入力"
-        subtitle={store.store_name}
-      />
-
-      {success && (
-        <div className="mb-5">
-          <Banner variant="success">記録しました。ご協力ありがとうございました。</Banner>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-50">
+      {/* GAS-style blue header */}
+      <header className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white shadow-md">
+        <div className="mx-auto max-w-2xl">
+          <p className="text-lg font-bold">HACCP管理（重要ポイント・温度・ラベル）</p>
         </div>
-      )}
-      {error && (
-        <div className="mb-5">
-          <Banner variant="error">{error}</Banner>
-        </div>
-      )}
+      </header>
 
-      <form action={kioskSubmitKeypoint} className="space-y-6">
-        <input type="hidden" name="token" value={token} />
-
-        <div>
-          <label htmlFor="target_date" className="mb-1.5 block text-base font-medium text-slate-700">
-            対象日
-          </label>
-          <input
-            id="target_date"
-            name="target_date"
-            type="date"
-            required
-            defaultValue={today}
-            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-base shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
+      <main className="mx-auto max-w-2xl px-4 py-6">
+        <div className="mb-4">
+          <Link href={`/haccp/kiosk/${token}`} className="text-sm text-blue-600 hover:underline">
+            ← メニューに戻る
+          </Link>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-base font-bold text-slate-900">重要ポイント6項目</h2>
+        {success && (
+          <div className="mb-4">
+            <Banner variant="success">記録しました。ご協力ありがとうございました。</Banner>
           </div>
-          <div className="divide-y divide-slate-100">
+        )}
+        {error && (
+          <div className="mb-4">
+            <Banner variant="error">{error}</Banner>
+          </div>
+        )}
+
+        <form action={kioskSubmitKeypoint}>
+          <input type="hidden" name="token" value={token} />
+
+          {/* 回答日 card — matching GAS style */}
+          <div className="mb-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-base font-bold text-slate-800">回答日</h2>
+            <div>
+              <label htmlFor="target_date" className="mb-1 block text-xs font-medium text-slate-500">
+                日付（必須）
+              </label>
+              <input
+                id="target_date"
+                name="target_date"
+                type="date"
+                required
+                defaultValue={today}
+                className="rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+          </div>
+
+          {/* 重要ポイントチェック — GAS-style table with No./項目/判定 */}
+          <div className="mb-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-blue-50 px-5 py-3">
+              <h2 className="text-base font-bold text-blue-800">重要ポイントチェック（毎日）</h2>
+              <span className="text-xs font-medium text-slate-500">良 / 否（必須）</span>
+            </div>
+            {/* Table header */}
+            <div className="flex items-center border-b border-slate-200 bg-slate-50 px-5 py-2 text-xs font-bold text-slate-500">
+              <span className="w-10">No</span>
+              <span className="flex-1">項目</span>
+              <span className="w-28 text-center">判定</span>
+            </div>
             {KEYPOINT_ITEMS.map(({ code, label }, idx) => (
-              <div key={code} className={`px-5 py-5 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
-                <p className="mb-3 text-base font-semibold text-slate-800">{label}</p>
-                <label className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-base text-slate-700 transition-colors has-[:checked]:border-green-500 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
+              <div key={code} className={`flex items-center border-b border-slate-100 px-5 py-4 last:border-0 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                <span className="w-10 text-sm font-bold text-slate-400">{idx + 1}</span>
+                <div className="flex-1">
+                  <label className="flex items-center gap-3 text-base text-slate-700">
+                    <input
+                      type="checkbox"
+                      name={`checked_${code}`}
+                      className="h-5 w-5 rounded border-slate-300 text-green-600 focus:ring-green-500/30"
+                    />
+                    <span className="font-medium">{label}</span>
+                  </label>
                   <input
-                    type="checkbox"
-                    name={`checked_${code}`}
-                    className="h-6 w-6 rounded border-slate-300 text-green-600 focus:ring-green-500/30"
+                    type="text"
+                    name={`note_${code}`}
+                    placeholder="メモ（任意）"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
                   />
-                  <span>本日該当あり（重要管理点を確認済み）</span>
-                </label>
-                <input
-                  type="text"
-                  name={`note_${code}`}
-                  placeholder="メモ（任意）"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-base shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
+                </div>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="text-base font-bold text-slate-900">温度・ラベルチェック</h2>
-          </div>
+          {/* 温度・ラベルチェック */}
+          <div className="mb-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
+              <h2 className="text-base font-bold text-blue-800">温度・ラベルチェック</h2>
+            </div>
 
-          <div className="border-b border-slate-100 px-5 py-5">
-            <p className="mb-3 text-base font-semibold text-slate-800">温度チェック</p>
-            <div className="space-y-3">
+            {/* Temperature */}
+            <div className="border-b border-slate-100 px-5 py-4">
+              <p className="mb-2 text-sm font-bold text-slate-700">温度チェック</p>
               <input
                 type="number"
                 step="0.1"
                 name="temp_value"
                 placeholder="測定値（℃）"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-lg shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="mb-3 w-full rounded-lg border border-slate-300 px-4 py-3 text-lg font-semibold tabular-nums transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
               <fieldset>
-                <legend className="mb-2 text-sm font-medium text-slate-600">判定</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-slate-500 has-[:checked]:bg-slate-100 has-[:checked]:font-semibold has-[:checked]:text-slate-800">
+                <legend className="mb-2 text-xs font-medium text-slate-500">判定</legend>
+                <div className="flex gap-3">
+                  <label className="cursor-pointer rounded-full border-2 border-slate-300 px-5 py-2 text-sm font-bold text-slate-500 transition-all has-[:checked]:border-slate-600 has-[:checked]:bg-slate-100 has-[:checked]:text-slate-800">
                     <input type="radio" name="temp_judgment" value="" defaultChecked className="sr-only" />
-                    判定なし
+                    なし
                   </label>
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
+                  <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 transition-all has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
                     <input type="radio" name="temp_judgment" value="ok" className="sr-only" />
-                    OK
+                    良
                   </label>
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:font-semibold has-[:checked]:text-red-700">
+                  <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 transition-all has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
                     <input type="radio" name="temp_judgment" value="ng" className="sr-only" />
-                    NG
+                    否
                   </label>
                 </div>
               </fieldset>
@@ -143,28 +163,27 @@ export default async function KioskKeypointPage({
                 type="text"
                 name="temp_note"
                 placeholder="メモ（任意）"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-base shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
               />
             </div>
-          </div>
 
-          <div className="px-5 py-5">
-            <p className="mb-3 text-base font-semibold text-slate-800">ラベルチェック</p>
-            <div className="space-y-3">
+            {/* Label */}
+            <div className="px-5 py-4">
+              <p className="mb-2 text-sm font-bold text-slate-700">ラベルチェック</p>
               <fieldset>
-                <legend className="mb-2 text-sm font-medium text-slate-600">判定</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-slate-500 has-[:checked]:bg-slate-100 has-[:checked]:font-semibold has-[:checked]:text-slate-800">
+                <legend className="mb-2 text-xs font-medium text-slate-500">判定</legend>
+                <div className="flex gap-3">
+                  <label className="cursor-pointer rounded-full border-2 border-slate-300 px-5 py-2 text-sm font-bold text-slate-500 transition-all has-[:checked]:border-slate-600 has-[:checked]:bg-slate-100 has-[:checked]:text-slate-800">
                     <input type="radio" name="label_judgment" value="" defaultChecked className="sr-only" />
-                    判定なし
+                    なし
                   </label>
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
+                  <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 transition-all has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
                     <input type="radio" name="label_judgment" value="ok" className="sr-only" />
-                    OK
+                    良
                   </label>
-                  <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-4 text-center text-base text-slate-600 transition-colors has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:font-semibold has-[:checked]:text-red-700">
+                  <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 transition-all has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
                     <input type="radio" name="label_judgment" value="ng" className="sr-only" />
-                    NG
+                    否
                   </label>
                 </div>
               </fieldset>
@@ -172,19 +191,19 @@ export default async function KioskKeypointPage({
                 type="text"
                 name="label_note"
                 placeholder="メモ（任意）"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-base shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
               />
             </div>
           </div>
-        </div>
 
-        <SubmitButton
-          className="w-full rounded-xl bg-blue-800 px-4 py-4 text-lg font-bold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
-          pendingText="登録中..."
-        >
-          記録する
-        </SubmitButton>
-      </form>
+          <SubmitButton
+            className="w-full rounded-lg bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow-md transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2"
+            pendingText="登録中..."
+          >
+            記録する
+          </SubmitButton>
+        </form>
+      </main>
     </div>
   );
 }

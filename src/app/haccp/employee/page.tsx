@@ -4,7 +4,6 @@ import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { SubmitButton } from "../SubmitButton";
 import { recordEmployeeCheck } from "./actions";
 import { Banner } from "@/components/Banner";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { todayInTokyo } from "@/lib/date";
 
@@ -78,171 +77,188 @@ export default async function EmployeeCheckPage({
   const recordedToday = [...latestByIdentity.values()];
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <PageHeader
-        backHref="/haccp"
-        backLabel="HACCP管理TOPに戻る"
-        title="従業員衛生チェック"
-        subtitle={`${ctx.store.name}（${ctx.store.storeCode}） / ${today}`}
-      />
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-50">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white shadow-md">
+        <h1 className="text-lg font-bold">従業員衛生チェック</h1>
+        <p className="mt-0.5 text-sm text-blue-100">
+          {ctx.store.name}（{ctx.store.storeCode}） / {today}
+        </p>
+      </div>
 
-      {success && (
-        <div className="mb-5">
-          <Banner variant="success">記録しました。</Banner>
-        </div>
-      )}
-      {error && (
-        <div className="mb-5">
-          <Banner variant="error">{error}</Banner>
-        </div>
-      )}
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <Link href="/haccp" className="text-sm text-blue-600 hover:underline">
+          ← HACCP管理TOPに戻る
+        </Link>
 
-      {/* Today's records */}
-      <section className="mb-6">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          本日の記録済み従業員
-        </h2>
-        {recordedToday.length === 0 ? (
-          <EmptyState message="本日はまだ記録がありません。" />
-        ) : (
-          <ul className="space-y-2">
-            {recordedToday.map((r, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-              >
-                <p className="text-sm font-medium text-slate-800">{r.name}</p>
-                <span
-                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
-                    r.hasBad
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
+        {success && (
+          <div className="mt-4">
+            <Banner variant="success">記録しました。</Banner>
+          </div>
+        )}
+        {error && (
+          <div className="mt-4">
+            <Banner variant="error">{error}</Banner>
+          </div>
+        )}
+
+        {/* Today's records */}
+        <section className="mt-6 mb-6">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-px flex-1 bg-slate-200" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              本日の記録済み従業員
+            </h2>
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          {recordedToday.length === 0 ? (
+            <EmptyState message="本日はまだ記録がありません。" />
+          ) : (
+            <ul className="space-y-2">
+              {recordedToday.map((r, i) => (
+                <li
+                  key={i}
+                  className={`flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 shadow-sm ${
+                    i % 2 === 1 ? "bg-slate-50/60" : "bg-white"
                   }`}
                 >
-                  {r.hasBad ? "要対応" : "良好"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Entry form */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-slate-900">衛生チェックを記録</h2>
-        </div>
-        <div className="px-5 py-5">
-          <form action={recordEmployeeCheck} className="space-y-5">
-            <input type="hidden" name="company_id" value={ctx.company?.id ?? ""} />
-            <input type="hidden" name="store_id" value={ctx.store.id} />
-
-            <div>
-              <label htmlFor="target_date" className="mb-1.5 block text-sm font-medium text-slate-700">
-                対象日
-              </label>
-              <input
-                id="target_date"
-                name="target_date"
-                type="date"
-                required
-                defaultValue={today}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="employee_id" className="mb-1.5 block text-sm font-medium text-slate-700">
-                従業員を選択
-              </label>
-              <select
-                id="employee_id"
-                name="employee_id"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="">選択してください</option>
-                {employeeOptions.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.full_name}（{e.employee_code}）
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="manual_name" className="mb-1.5 block text-sm font-medium text-slate-700">
-                コードが不明な場合は氏名を直接入力
-              </label>
-              <input
-                id="manual_name"
-                name="manual_name"
-                type="text"
-                placeholder="氏名を入力"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
-
-            <div className="space-y-4 border-t border-slate-100 pt-4">
-              {ITEMS.map((item) => (
-                <div key={item.code} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                  <p className="mb-2.5 text-sm font-medium text-slate-700">{item.label}</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:font-semibold has-[:checked]:text-green-700">
-                      <input
-                        type="radio"
-                        name={`answer_${item.code}`}
-                        value="good"
-                        required
-                        className="sr-only"
-                      />
-                      良好
-                    </label>
-                    <label className="cursor-pointer rounded-lg border border-slate-300 px-3 py-3.5 text-center text-sm text-slate-700 transition-colors has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:font-semibold has-[:checked]:text-red-700">
-                      <input
-                        type="radio"
-                        name={`answer_${item.code}`}
-                        value="bad"
-                        required
-                        className="sr-only"
-                      />
-                      異常
-                    </label>
-                  </div>
-                </div>
+                  <p className="text-sm font-medium text-slate-800">{r.name}</p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+                      r.hasBad
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {r.hasBad ? "要対応" : "良好"}
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
+          )}
+        </section>
 
-            <div>
-              <label htmlFor="note" className="mb-1.5 block text-sm font-medium text-slate-700">
-                備考（「異常」の項目がある場合は必須）
-              </label>
-              <textarea
-                id="note"
-                name="note"
-                rows={2}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
+        {/* Entry form */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
+            <h2 className="text-base font-bold text-blue-800">衛生チェックを記録</h2>
+          </div>
+          <div className="px-5 py-5">
+            <form action={recordEmployeeCheck} className="space-y-5">
+              <input type="hidden" name="company_id" value={ctx.company?.id ?? ""} />
+              <input type="hidden" name="store_id" value={ctx.store.id} />
 
-            <div>
-              <label htmlFor="action_taken" className="mb-1.5 block text-sm font-medium text-slate-700">
-                対応内容（「異常」の項目がある場合は必須）
-              </label>
-              <textarea
-                id="action_taken"
-                name="action_taken"
-                rows={2}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
+              <div>
+                <label htmlFor="target_date" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  対象日
+                </label>
+                <input
+                  id="target_date"
+                  name="target_date"
+                  type="date"
+                  required
+                  defaultValue={today}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
 
-            <SubmitButton
-              className="w-full rounded-lg bg-blue-800 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
-              pendingText="登録中..."
-            >
-              記録する
-            </SubmitButton>
-          </form>
+              <div>
+                <label htmlFor="employee_id" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  従業員を選択
+                </label>
+                <select
+                  id="employee_id"
+                  name="employee_id"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">選択してください</option>
+                  {employeeOptions.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.full_name}（{e.employee_code}）
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="manual_name" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  コードが不明な場合は氏名を直接入力
+                </label>
+                <input
+                  id="manual_name"
+                  name="manual_name"
+                  type="text"
+                  placeholder="氏名を入力"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="space-y-4 border-t border-slate-100 pt-4">
+                {ITEMS.map((item, idx) => (
+                  <div key={item.code} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                    <p className="mb-2.5 flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                        {idx + 1}
+                      </span>
+                      {item.label}
+                    </p>
+                    <div className="flex gap-3">
+                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+                        <input
+                          type="radio"
+                          name={`answer_${item.code}`}
+                          value="good"
+                          required
+                          className="sr-only"
+                        />
+                        良
+                      </label>
+                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                        <input
+                          type="radio"
+                          name={`answer_${item.code}`}
+                          value="bad"
+                          required
+                          className="sr-only"
+                        />
+                        否
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label htmlFor="note" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  備考（「異常」の項目がある場合は必須）
+                </label>
+                <textarea
+                  id="note"
+                  name="note"
+                  rows={2}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="action_taken" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  対応内容（「異常」の項目がある場合は必須）
+                </label>
+                <textarea
+                  id="action_taken"
+                  name="action_taken"
+                  rows={2}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <SubmitButton
+                className="w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                pendingText="登録中..."
+              >
+                記録する
+              </SubmitButton>
+            </form>
+          </div>
         </div>
       </div>
     </div>

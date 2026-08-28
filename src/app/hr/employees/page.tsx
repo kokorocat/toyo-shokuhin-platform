@@ -32,12 +32,17 @@ function buildQuery(params: Record<string, string | undefined>): string {
   return qs ? `?${qs}` : "";
 }
 
-const SELECT_CLASS =
-  "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
-const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-slate-600";
+const COMPACT_INPUT =
+  "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 const BADGE_CLASS = "inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold";
 const GREEN = "bg-green-100 text-green-700";
 const SLATE = "bg-slate-100 text-slate-500";
+
+const STATUS_TABS = [
+  { label: "全て", value: "" },
+  { label: "在籍", value: "active" },
+  { label: "退職", value: "retired" },
+] as const;
 
 type CompanyOption = { id: string; name: string };
 
@@ -151,7 +156,6 @@ export default async function HrEmployeesPage({
     Number.isFinite(rawPageNum) && rawPageNum >= 1 ? Math.min(Math.floor(rawPageNum), totalPages) : 1;
   const pageRows = employments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ページングリンクで引き継ぐ現在の検索条件。
   const currentParams: Record<string, string | undefined> = {
     companyId: filters.companyId,
     name: filters.name,
@@ -162,86 +166,78 @@ export default async function HrEmployeesPage({
   return (
     <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       <PageHeader
-        backHref="/"
-        backLabel="ポータルTOPに戻る"
+        backHref="/hr"
+        backLabel="人事労務管理TOPに戻る"
         title="社員一覧"
         subtitle="登録されている社員の雇用履歴の一覧です。氏名をクリックすると詳細を確認できます。"
       />
 
-      {/* 絞り込みフォーム(GETリクエストでこの画面へ自己遷移) */}
+      {/* Pill-shaped status tabs */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {STATUS_TABS.map((tab) => {
+          const isActive = (filters.status ?? "") === tab.value;
+          return (
+            <Link
+              key={tab.value}
+              href={`/hr/employees${buildQuery({
+                companyId: filters.companyId,
+                name: filters.name,
+                employmentCategory: filters.employmentCategory,
+                status: tab.value || undefined,
+              })}`}
+              className={
+                isActive
+                  ? "rounded-full bg-slate-800 px-4 py-2 text-xs font-bold text-white"
+                  : "rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              }
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Dense inline filter bar */}
       <form
         method="get"
         action="/hr/employees"
-        className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm"
+        className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
       >
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-slate-900">絞り込み条件</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label htmlFor="companyId" className={LABEL_CLASS}>
-              会社
-            </label>
-            <select id="companyId" name="companyId" defaultValue={filters.companyId ?? ""} className={SELECT_CLASS}>
-              <option value="">すべて</option>
-              {companyOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="name" className={LABEL_CLASS}>
-              氏名
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              defaultValue={filters.name ?? ""}
-              placeholder="部分一致"
-              className={SELECT_CLASS}
-            />
-          </div>
-          <div>
-            <label htmlFor="employmentCategory" className={LABEL_CLASS}>
-              雇用区分
-            </label>
-            <input
-              id="employmentCategory"
-              name="employmentCategory"
-              type="text"
-              defaultValue={filters.employmentCategory ?? ""}
-              placeholder="部分一致(例: 正社員)"
-              className={SELECT_CLASS}
-            />
-          </div>
-          <div>
-            <label htmlFor="status" className={LABEL_CLASS}>
-              在籍状態
-            </label>
-            <select id="status" name="status" defaultValue={filters.status ?? ""} className={SELECT_CLASS}>
-              <option value="">すべて</option>
-              <option value="active">在籍</option>
-              <option value="retired">退職</option>
-            </select>
-          </div>
-          <div className="flex items-end gap-2">
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
-            >
-              絞り込む
-            </button>
-            <Link
-              href="/hr/employees"
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-            >
-              クリア
-            </Link>
-          </div>
-        </div>
+        {filters.status && <input type="hidden" name="status" value={filters.status} />}
+        <select name="companyId" defaultValue={filters.companyId ?? ""} className={COMPACT_INPUT}>
+          <option value="">全ての会社</option>
+          {companyOptions.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <input
+          name="name"
+          type="text"
+          defaultValue={filters.name ?? ""}
+          placeholder="氏名"
+          className={`${COMPACT_INPUT} w-28`}
+        />
+        <input
+          name="employmentCategory"
+          type="text"
+          defaultValue={filters.employmentCategory ?? ""}
+          placeholder="雇用区分"
+          className={`${COMPACT_INPUT} w-28`}
+        />
+        <button
+          type="submit"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+        >
+          再表示
+        </button>
+        <Link
+          href="/hr/employees"
+          className="text-xs font-medium text-slate-500 hover:text-slate-700"
+        >
+          クリア
+        </Link>
       </form>
 
       {totalCount === 0 ? (
@@ -277,7 +273,10 @@ export default async function HrEmployeesPage({
                   const person = row.hr_persons;
                   const employee = row.employees;
                   return (
-                    <tr key={row.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                    <tr
+                      key={row.id}
+                      className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}
+                    >
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                         {employee?.employee_code ?? "-"}
                       </td>
@@ -315,7 +314,7 @@ export default async function HrEmployeesPage({
               <Link
                 href={`/hr/employees${buildQuery({ ...currentParams, page: String(Math.max(1, page - 1)) })}`}
                 aria-disabled={page === 1}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                className={`rounded-xl border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
                   page === 1
                     ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
                     : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
@@ -328,9 +327,9 @@ export default async function HrEmployeesPage({
                   key={p}
                   href={`/hr/employees${buildQuery({ ...currentParams, page: String(p) })}`}
                   aria-current={p === page ? "page" : undefined}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                  className={`rounded-xl border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
                     p === page
-                      ? "border-blue-800 bg-blue-800 text-white"
+                      ? "border-slate-900 bg-slate-900 text-white"
                       : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -340,7 +339,7 @@ export default async function HrEmployeesPage({
               <Link
                 href={`/hr/employees${buildQuery({ ...currentParams, page: String(Math.min(totalPages, page + 1)) })}`}
                 aria-disabled={page === totalPages}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
+                className={`rounded-xl border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
                   page === totalPages
                     ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
                     : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"

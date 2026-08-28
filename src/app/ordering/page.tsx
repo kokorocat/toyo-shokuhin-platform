@@ -77,30 +77,29 @@ export default async function OrderingCatalogPage({
         subtitle={`${ctx.store.name}（${ctx.store.storeCode}）`}
       />
 
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center gap-2">
         <form className="flex-1">
           <input
             type="search"
             name="q"
             defaultValue={q}
             placeholder="商品名で検索"
-            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </form>
         <Link
           href="/ordering/history"
-          className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50"
+          className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
         >
           発注履歴
         </Link>
       </div>
 
-      {/* カテゴリチップ (大分類→中分類の段階選択) */}
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
         <Link
           href="/ordering"
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-            !category ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-600"
+          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+            !category ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
           }`}
         >
           すべて
@@ -109,8 +108,8 @@ export default async function OrderingCatalogPage({
           <Link
             key={c.id}
             href={`/ordering?category=${c.id}`}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-              category === c.id ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-600"
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              category === c.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
             }`}
           >
             {c.name}
@@ -118,7 +117,7 @@ export default async function OrderingCatalogPage({
         ))}
       </div>
       {midCategories.length > 0 && (
-        <div className="-mt-3 mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="-mt-2 mb-4 flex gap-1.5 overflow-x-auto pb-1">
           {midCategories.map((c) => (
             <span
               key={c.id}
@@ -133,7 +132,7 @@ export default async function OrderingCatalogPage({
       {catalogProducts.length === 0 ? (
         <EmptyState message="該当する商品がありません。" />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {catalogProducts.map((p) => (
             <ProductRow key={p.id} product={p} />
           ))}

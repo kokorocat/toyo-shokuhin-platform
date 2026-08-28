@@ -17,7 +17,6 @@ import {
   type InspectionStatus,
   type ConfirmationStatus,
 } from "@/lib/haccp/admin-dashboard";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { todayInTokyo } from "@/lib/date";
 
@@ -86,7 +85,7 @@ function buildQuery(params: Record<string, string | undefined>): string {
 function Badge({ label, className, sub }: { label: string; className: string; sub?: string }) {
   return (
     <div className="flex flex-col items-start gap-0.5">
-      <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${className}`}>
+      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${className}`}>
         {label}
       </span>
       {sub && <span className="text-[11px] text-slate-400">{sub}</span>}
@@ -113,7 +112,6 @@ function employeeBadge(s: EmployeeStatus | undefined): { label: string; classNam
       sub: `回答人数 ${s.responseCount}名`,
     };
   }
-  // 勤怠データ未連携のため「未回答」とは断定しない(仕様書5.2)。「記録なし」と表示する。
   if (s.status === "not_recorded") return { label: "記録なし", className: NEUTRAL };
   if (s.status === "holiday") return { label: "店休日", className: SLATE };
   return { label: "対象外", className: SLATE };
@@ -132,9 +130,11 @@ function confirmationBadge(s: ConfirmationStatus | undefined): { label: string; 
   if (!s) return { label: "未確認", className: AMBER };
   if (s.status === "confirmed") return { label: "確認済", className: GREEN, sub: s.confirmedOn };
   if (s.status === "needs_action") return { label: "要対応", className: RED };
-  // unconfirmed: 未確認は「いずれ対応が必要」であり中立ではないためamberとする。
   return { label: "未確認", className: AMBER };
 }
+
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20";
 
 export default async function HaccpAdminStoresPage({
   searchParams,
@@ -195,7 +195,6 @@ export default async function HaccpAdminStoresPage({
     : 1;
   const pageStores = stores.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ページングリンク・詳細画面遷移で引き継ぐ現在の検索条件。
   const currentParams: Record<string, string | undefined> = {
     companyId: filters.companyId,
     blockId: filters.blockId,
@@ -208,253 +207,222 @@ export default async function HaccpAdminStoresPage({
   const detailParams = buildQuery({ date: targetDate, month: monthValue });
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
-      <PageHeader
-        backHref="/haccp/admin"
-        backLabel="ダッシュボードに戻る"
-        title="店舗別回答状況"
-        subtitle={`対象日: ${targetDate} / 対象月: ${monthValue} / 責任者確認期間: ${period.start} 〜 ${period.end}`}
-      />
+    <div className="min-h-screen bg-white">
+      {/* Teal gradient header */}
+      <div className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 py-4 text-white shadow-md">
+        <h1 className="text-lg font-bold">店舗別回答状況</h1>
+        <p className="mt-0.5 text-sm text-teal-100">
+          対象日: {targetDate} / 対象月: {monthValue} / 責任者確認期間: {period.start} 〜 {period.end}
+        </p>
+      </div>
 
-      {/* 絞り込みフォーム(GETリクエストでこの画面へ自己遷移) */}
-      <form
-        method="get"
-        action="/haccp/admin/stores"
-        className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm"
-      >
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-slate-900">絞り込み条件</h2>
-        </div>
-        <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label htmlFor="companyId" className="mb-1.5 block text-xs font-medium text-slate-600">
-              会社
-            </label>
-            <select
-              id="companyId"
-              name="companyId"
-              defaultValue={filters.companyId ?? ""}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">すべて</option>
-              {companyOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="blockId" className="mb-1.5 block text-xs font-medium text-slate-600">
-              ブロック
-            </label>
-            <select
-              id="blockId"
-              name="blockId"
-              defaultValue={filters.blockId ?? ""}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">すべて</option>
-              {blockOptions.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="areaId" className="mb-1.5 block text-xs font-medium text-slate-600">
-              エリア
-            </label>
-            <select
-              id="areaId"
-              name="areaId"
-              defaultValue={filters.areaId ?? ""}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="">すべて</option>
-              {areaOptions.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="storeCode" className="mb-1.5 block text-xs font-medium text-slate-600">
-              店舗コード
-            </label>
-            <input
-              id="storeCode"
-              name="storeCode"
-              type="text"
-              defaultValue={filters.storeCode ?? ""}
-              placeholder="部分一致"
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="storeName" className="mb-1.5 block text-xs font-medium text-slate-600">
-              店舗名
-            </label>
-            <input
-              id="storeName"
-              name="storeName"
-              type="text"
-              defaultValue={filters.storeName ?? ""}
-              placeholder="部分一致"
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="date" className="mb-1.5 block text-xs font-medium text-slate-600">
-              対象日(重要ポイント・従業員衛生)
-            </label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              defaultValue={targetDate}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-          <div>
-            <label htmlFor="month" className="mb-1.5 block text-xs font-medium text-slate-600">
-              対象月(食品衛生自主点検)
-            </label>
-            <input
-              id="month"
-              name="month"
-              type="month"
-              defaultValue={monthValue}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-          <div className="flex items-end gap-2">
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
-            >
-              絞り込む
-            </button>
-            <Link
-              href="/haccp/admin/stores"
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-            >
-              クリア
-            </Link>
-          </div>
-        </div>
-      </form>
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        {/* Pill-shaped tab navigation */}
+        <nav className="mb-6 flex flex-wrap gap-2">
+          <Link
+            href="/haccp/admin"
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            ダッシュボード
+          </Link>
+          <span className="rounded-full bg-teal-600 px-4 py-2 text-sm font-bold text-white">
+            店舗別回答状況
+          </span>
+        </nav>
 
-      {totalCount === 0 ? (
-        <EmptyState message="該当する店舗がありません。" />
-      ) : (
-        <>
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm text-slate-500">
-              該当店舗 {totalCount}件中 {(page - 1) * PAGE_SIZE + 1}〜
-              {Math.min(page * PAGE_SIZE, totalCount)}件を表示
-            </p>
-            <p className="text-xs text-slate-400">{page} / {totalPages} ページ</p>
+        {/* Filter form */}
+        <form
+          method="get"
+          action="/haccp/admin/stores"
+          className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
+            <h2 className="text-base font-bold text-blue-800">絞り込み条件</h2>
           </div>
-
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[880px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
-                  <th className="whitespace-nowrap px-4 py-3">店舗コード</th>
-                  <th className="whitespace-nowrap px-4 py-3">店舗名</th>
-                  <th className="whitespace-nowrap px-4 py-3">エリア</th>
-                  <th className="whitespace-nowrap px-4 py-3">重要ポイント</th>
-                  <th className="whitespace-nowrap px-4 py-3">従業員衛生</th>
-                  <th className="whitespace-nowrap px-4 py-3">食品衛生自主点検</th>
-                  <th className="whitespace-nowrap px-4 py-3">責任者確認</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pageStores.map((store, idx) => {
-                  const kp = keypointBadge(keypointMap.get(store.id));
-                  const emp = employeeBadge(employeeMap.get(store.id));
-                  const ins = inspectionBadge(inspectionMap.get(store.id));
-                  const conf = confirmationBadge(confirmationMap.get(store.id));
-                  return (
-                    <tr key={store.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">{store.store_code}</td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <Link
-                          href={`/haccp/admin/stores/${store.id}${detailParams}`}
-                          className="font-medium text-blue-700 hover:text-blue-900 hover:underline"
-                        >
-                          {store.name}
-                        </Link>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">{store.area_name ?? "-"}</td>
-                      <td className="px-4 py-3">
-                        <Badge label={kp.label} className={kp.className} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge label={emp.label} className={emp.className} sub={emp.sub} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge label={ins.label} className={ins.className} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge label={conf.label} className={conf.className} sub={conf.sub} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <p className="mt-3 text-xs text-slate-400">
-            ※従業員衛生の「記録なし」は、勤怠システムと未連携のため店舗からの回答が0件であることのみを示します。従業員ごとの未回答を断定するものではありません。
-          </p>
-
-          {totalPages > 1 && (
-            <nav className="mt-5 flex flex-wrap items-center justify-center gap-1.5" aria-label="ページ">
-              <Link
-                href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(Math.max(1, page - 1)) })}`}
-                aria-disabled={page === 1}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
-                  page === 1
-                    ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
-                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
+          <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label htmlFor="companyId" className="mb-1 block text-xs font-medium text-slate-600">
+                会社
+              </label>
+              <select id="companyId" name="companyId" defaultValue={filters.companyId ?? ""} className={INPUT_CLASS}>
+                <option value="">すべて</option>
+                {companyOptions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="blockId" className="mb-1 block text-xs font-medium text-slate-600">
+                ブロック
+              </label>
+              <select id="blockId" name="blockId" defaultValue={filters.blockId ?? ""} className={INPUT_CLASS}>
+                <option value="">すべて</option>
+                {blockOptions.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="areaId" className="mb-1 block text-xs font-medium text-slate-600">
+                エリア
+              </label>
+              <select id="areaId" name="areaId" defaultValue={filters.areaId ?? ""} className={INPUT_CLASS}>
+                <option value="">すべて</option>
+                {areaOptions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="storeCode" className="mb-1 block text-xs font-medium text-slate-600">
+                店舗コード
+              </label>
+              <input id="storeCode" name="storeCode" type="text" defaultValue={filters.storeCode ?? ""} placeholder="部分一致" className={INPUT_CLASS} />
+            </div>
+            <div>
+              <label htmlFor="storeName" className="mb-1 block text-xs font-medium text-slate-600">
+                店舗名
+              </label>
+              <input id="storeName" name="storeName" type="text" defaultValue={filters.storeName ?? ""} placeholder="部分一致" className={INPUT_CLASS} />
+            </div>
+            <div>
+              <label htmlFor="date" className="mb-1 block text-xs font-medium text-slate-600">
+                対象日(重要ポイント・従業員衛生)
+              </label>
+              <input id="date" name="date" type="date" defaultValue={targetDate} className={INPUT_CLASS} />
+            </div>
+            <div>
+              <label htmlFor="month" className="mb-1 block text-xs font-medium text-slate-600">
+                対象月(食品衛生自主点検)
+              </label>
+              <input id="month" name="month" type="month" defaultValue={monthValue} className={INPUT_CLASS} />
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                type="submit"
+                className="rounded-full bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-700"
               >
-                前へ
+                絞り込む
+              </button>
+              <Link
+                href="/haccp/admin/stores"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                クリア
               </Link>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            </div>
+          </div>
+        </form>
+
+        {totalCount === 0 ? (
+          <EmptyState message="該当する店舗がありません。" />
+        ) : (
+          <>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm text-slate-500">
+                該当店舗 {totalCount}件中 {(page - 1) * PAGE_SIZE + 1}〜
+                {Math.min(page * PAGE_SIZE, totalCount)}件を表示
+              </p>
+              <p className="text-xs text-slate-400">{page} / {totalPages} ページ</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full min-w-[880px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
+                    <th className="whitespace-nowrap px-4 py-3">店舗コード</th>
+                    <th className="whitespace-nowrap px-4 py-3">店舗名</th>
+                    <th className="whitespace-nowrap px-4 py-3">エリア</th>
+                    <th className="whitespace-nowrap px-4 py-3">重要ポイント</th>
+                    <th className="whitespace-nowrap px-4 py-3">従業員衛生</th>
+                    <th className="whitespace-nowrap px-4 py-3">食品衛生自主点検</th>
+                    <th className="whitespace-nowrap px-4 py-3">責任者確認</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pageStores.map((store, idx) => {
+                    const kp = keypointBadge(keypointMap.get(store.id));
+                    const emp = employeeBadge(employeeMap.get(store.id));
+                    const ins = inspectionBadge(inspectionMap.get(store.id));
+                    const conf = confirmationBadge(confirmationMap.get(store.id));
+                    return (
+                      <tr key={store.id} className={`transition-colors hover:bg-teal-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{store.store_code}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm">
+                          <Link
+                            href={`/haccp/admin/stores/${store.id}${detailParams}`}
+                            className="font-medium text-teal-700 hover:text-teal-900 hover:underline"
+                          >
+                            {store.name}
+                          </Link>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{store.area_name ?? "-"}</td>
+                        <td className="px-4 py-3">
+                          <Badge label={kp.label} className={kp.className} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge label={emp.label} className={emp.className} sub={emp.sub} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge label={ins.label} className={ins.className} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge label={conf.label} className={conf.className} sub={conf.sub} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-3 text-xs text-slate-400">
+              ※従業員衛生の「記録なし」は、勤怠システムと未連携のため店舗からの回答が0件であることのみを示します。従業員ごとの未回答を断定するものではありません。
+            </p>
+
+            {totalPages > 1 && (
+              <nav className="mt-5 flex flex-wrap items-center justify-center gap-1.5" aria-label="ページ">
                 <Link
-                  key={p}
-                  href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(p) })}`}
-                  aria-current={p === page ? "page" : undefined}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
-                    p === page
-                      ? "border-blue-800 bg-blue-800 text-white"
+                  href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(Math.max(1, page - 1)) })}`}
+                  aria-disabled={page === 1}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all ${
+                    page === 1
+                      ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
                       : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {p}
+                  前へ
                 </Link>
-              ))}
-              <Link
-                href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(Math.min(totalPages, page + 1)) })}`}
-                aria-disabled={page === totalPages}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm transition-colors ${
-                  page === totalPages
-                    ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
-                    : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                次へ
-              </Link>
-            </nav>
-          )}
-        </>
-      )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <Link
+                    key={p}
+                    href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(p) })}`}
+                    aria-current={p === page ? "page" : undefined}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all ${
+                      p === page
+                        ? "border-teal-600 bg-teal-600 text-white"
+                        : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {p}
+                  </Link>
+                ))}
+                <Link
+                  href={`/haccp/admin/stores${buildQuery({ ...currentParams, page: String(Math.min(totalPages, page + 1)) })}`}
+                  aria-disabled={page === totalPages}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all ${
+                    page === totalPages
+                      ? "pointer-events-none border-slate-200 bg-slate-50 text-slate-300"
+                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  次へ
+                </Link>
+              </nav>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

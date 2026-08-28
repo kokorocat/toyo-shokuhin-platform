@@ -12,7 +12,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { SubmitButton } from "@/components/SubmitButton";
 
-// actions.ts の ALLOWED_TRANSITIONS と同一内容(表示用の複製)。
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   new: ["in_production", "cancelled"],
   in_production: ["preparing_shipment", "cancelled"],
@@ -39,7 +38,7 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${
+      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${
         STATUS_BADGE_CLASS[status] ?? "bg-slate-100 text-slate-500"
       }`}
     >
@@ -53,10 +52,11 @@ function formatDateTime(iso: string): string {
 }
 
 function formatYen(amount: number): string {
-  return `${amount.toLocaleString()}円`;
+  return `¥${amount.toLocaleString()}`;
 }
 
-// --- データ形状(埋め込みselect文字列に対する型はローカルで明示する。他のadmin画面と同様の方針) ---
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
 type OrderLineRow = {
   id: string;
@@ -140,7 +140,6 @@ export default async function OrderDetailPage({
       .order("created_at", { ascending: true }),
   ]);
 
-  // RLSスコープ外、または存在しないIDはnotFoundとして扱う(URL直指定での範囲外取得を防止)
   if (!orderRaw) notFound();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -167,107 +166,65 @@ export default async function OrderDetailPage({
       />
 
       {success && (
-        <div className="mb-5">
+        <div className="mb-4">
           <Banner variant="success">更新しました。</Banner>
         </div>
       )}
       {error && (
-        <div className="mb-5">
+        <div className="mb-4">
           <Banner variant="error">{error}</Banner>
         </div>
       )}
 
       {/* 受注情報 */}
-      <div className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+      <div className="mb-5 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-bold text-slate-900">受注情報</h2>
           <StatusBadge status={order.status} />
         </div>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-2 px-5 py-5 text-sm text-slate-700 sm:grid-cols-2">
-          <p>
-            <span className="font-medium text-slate-500">会社：</span>
-            {order.companies?.name ?? "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">店舗：</span>
-            {order.stores ? `${order.stores.name}（${order.stores.store_code}）` : "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">合計金額：</span>
-            <span className="font-bold text-slate-900">{formatYen(order.total_amount)}</span>
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">送料：</span>
-            {formatYen(order.shipping_fee)}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">納品希望日：</span>
-            {order.delivery_date ?? "指定なし"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">配送方法：</span>
-            {order.shipping_method ?? "-"}
-          </p>
-          <p className="sm:col-span-2">
-            <span className="font-medium text-slate-500">配送先住所：</span>
-            {order.shipping_address ?? "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">追跡番号：</span>
-            {order.tracking_number ?? "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">請求：</span>
-            {order.billed ? "請求済み" : "未請求"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">出荷日：</span>
-            {order.shipped_on ?? "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">配達完了日：</span>
-            {order.delivered_on ?? "-"}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">注文日時：</span>
-            {formatDateTime(order.created_at)}
-          </p>
-          <p>
-            <span className="font-medium text-slate-500">最終更新：</span>
-            {formatDateTime(order.updated_at)}
-          </p>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-1.5 px-4 py-4 text-sm text-slate-700 sm:grid-cols-2">
+          <p><span className="font-medium text-slate-500">会社：</span>{order.companies?.name ?? "-"}</p>
+          <p><span className="font-medium text-slate-500">店舗：</span>{order.stores ? `${order.stores.name}（${order.stores.store_code}）` : "-"}</p>
+          <p><span className="font-medium text-slate-500">合計金額：</span><span className="font-bold text-red-600">{formatYen(order.total_amount)}</span></p>
+          <p><span className="font-medium text-slate-500">送料：</span>{formatYen(order.shipping_fee)}</p>
+          <p><span className="font-medium text-slate-500">納品希望日：</span>{order.delivery_date ?? "指定なし"}</p>
+          <p><span className="font-medium text-slate-500">配送方法：</span>{order.shipping_method ?? "-"}</p>
+          <p className="sm:col-span-2"><span className="font-medium text-slate-500">配送先住所：</span>{order.shipping_address ?? "-"}</p>
+          <p><span className="font-medium text-slate-500">追跡番号：</span>{order.tracking_number ?? "-"}</p>
+          <p><span className="font-medium text-slate-500">請求：</span>{order.billed ? "請求済み" : "未請求"}</p>
+          <p><span className="font-medium text-slate-500">出荷日：</span>{order.shipped_on ?? "-"}</p>
+          <p><span className="font-medium text-slate-500">配達完了日：</span>{order.delivered_on ?? "-"}</p>
+          <p><span className="font-medium text-slate-500">注文日時：</span>{formatDateTime(order.created_at)}</p>
+          <p><span className="font-medium text-slate-500">最終更新：</span>{formatDateTime(order.updated_at)}</p>
           {order.status === "cancelled" && order.cancel_reason && (
-            <p className="text-red-700 sm:col-span-2">
-              <span className="font-medium">キャンセル理由：</span>
-              {order.cancel_reason}
-            </p>
+            <p className="text-red-700 sm:col-span-2"><span className="font-medium">キャンセル理由：</span>{order.cancel_reason}</p>
           )}
-          <p className="sm:col-span-2">
-            <span className="font-medium text-slate-500">備考：</span>
-            {order.memo || "-"}
-          </p>
+          <p className="sm:col-span-2"><span className="font-medium text-slate-500">備考：</span>{order.memo || "-"}</p>
         </div>
       </div>
 
       {/* 明細 */}
-      <section className="mb-6">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          注文明細（{order.order_lines.length}件）
-        </h2>
+      <section className="mb-5">
+        <div className="mb-2 flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            注文明細（{order.order_lines.length}件）
+          </h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         {order.order_lines.length === 0 ? (
           <EmptyState message="明細がありません。" />
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full min-w-[880px] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
-                  <th className="whitespace-nowrap px-4 py-3">商品名</th>
-                  <th className="whitespace-nowrap px-4 py-3">商品タイプ</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right">単価</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right">ロット数</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right">数量</th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right">小計</th>
-                  <th className="px-4 py-3">詳細</th>
+                <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="whitespace-nowrap px-3 py-2.5">商品名</th>
+                  <th className="whitespace-nowrap px-3 py-2.5">商品タイプ</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">単価</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">ロット数</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">数量</th>
+                  <th className="whitespace-nowrap px-3 py-2.5 text-right">小計</th>
+                  <th className="px-3 py-2.5">詳細</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -278,24 +235,24 @@ export default async function OrderDetailPage({
                       )
                     : [];
                   return (
-                    <tr key={line.id} className={idx % 2 === 1 ? "bg-slate-50/50" : undefined}>
-                      <td className="px-4 py-3 font-medium text-slate-800">{line.product_name_snapshot}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                    <tr key={line.id} className={idx % 2 === 1 ? "bg-slate-50/60" : undefined}>
+                      <td className="px-3 py-2.5 font-medium text-slate-800">{line.product_name_snapshot}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">
                         {PRODUCT_TYPE_LABELS[line.product_type_snapshot] ?? line.product_type_snapshot}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-600">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">
                         {formatYen(line.unit_price_snapshot)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-600">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">
                         {line.lot_size_snapshot}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-slate-600">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600">
                         {line.quantity}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums font-semibold text-slate-900">
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums font-bold text-slate-900">
                         {formatYen(line.subtotal)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-3 py-2.5 text-xs text-slate-500">
                         {detailEntries.length === 0 && !line.memo ? (
                           "-"
                         ) : (
@@ -319,34 +276,34 @@ export default async function OrderDetailPage({
       </section>
 
       {/* ステータス更新 */}
-      <section className="mb-6">
+      <section className="mb-5">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
+          <div className="border-b border-slate-100 px-4 py-3">
             <h2 className="text-sm font-bold text-slate-900">ステータス更新</h2>
           </div>
-          <div className="px-5 py-5">
+          <div className="px-4 py-4">
             {allowedNext.length === 0 ? (
               <p className="text-sm text-slate-500">
                 現在のステータス（{STATUS_LABELS[order.status] ?? order.status}）はこれ以上変更できません。
               </p>
             ) : (
-              <form action={updateOrderStatus} className="space-y-5">
+              <form action={updateOrderStatus} className="space-y-4">
                 <input type="hidden" name="order_id" value={order.id} />
 
                 <div>
                   <p className="mb-2 text-sm font-medium text-slate-700">次のステータス</p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="flex flex-wrap gap-2">
                     {allowedNext.map((s) => (
                       <label
                         key={s}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm text-slate-700 transition-colors has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:font-semibold has-[:checked]:text-blue-700"
+                        className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 transition-colors has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:font-bold has-[:checked]:text-blue-700"
                       >
                         <input
                           type="radio"
                           name="next_status"
                           value={s}
                           required
-                          className="h-4 w-4 accent-blue-800"
+                          className="h-3.5 w-3.5 accent-blue-600"
                         />
                         {STATUS_LABELS[s]}
                       </label>
@@ -355,88 +312,50 @@ export default async function OrderDetailPage({
                 </div>
 
                 {(showPreparingFields || showShippedFields || showCancelledFields) && (
-                  <div className="space-y-4 border-t border-slate-100 pt-4">
-                    <p className="text-xs text-slate-400">
+                  <div className="space-y-3 border-t border-slate-100 pt-3">
+                    <p className="text-[11px] text-slate-400">
                       ※以下は選択したステータスに応じて使用されます。
                     </p>
 
                     {showPreparingFields && (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
-                          <label
-                            htmlFor="shipping_method"
-                            className="mb-1.5 block text-xs font-medium text-slate-600"
-                          >
+                          <label htmlFor="shipping_method" className="mb-1 block text-xs font-medium text-slate-600">
                             配送方法（「出荷準備中」の場合）
                           </label>
-                          <input
-                            id="shipping_method"
-                            name="shipping_method"
-                            type="text"
-                            placeholder="例: 宅配便"
-                            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          />
+                          <input id="shipping_method" name="shipping_method" type="text" placeholder="例: 宅配便" className={INPUT_CLASS} />
                         </div>
                         <div>
-                          <label
-                            htmlFor="shipping_fee"
-                            className="mb-1.5 block text-xs font-medium text-slate-600"
-                          >
+                          <label htmlFor="shipping_fee" className="mb-1 block text-xs font-medium text-slate-600">
                             送料（「出荷準備中」の場合）
                           </label>
-                          <input
-                            id="shipping_fee"
-                            name="shipping_fee"
-                            type="number"
-                            min={0}
-                            step={1}
-                            placeholder="円"
-                            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          />
+                          <input id="shipping_fee" name="shipping_fee" type="number" min={0} step={1} placeholder="円" className={INPUT_CLASS} />
                         </div>
                       </div>
                     )}
 
                     {showShippedFields && (
                       <div>
-                        <label
-                          htmlFor="tracking_number"
-                          className="mb-1.5 block text-xs font-medium text-slate-600"
-                        >
+                        <label htmlFor="tracking_number" className="mb-1 block text-xs font-medium text-slate-600">
                           追跡番号（「郵送完了」の場合）
                         </label>
-                        <input
-                          id="tracking_number"
-                          name="tracking_number"
-                          type="text"
-                          placeholder="配送業者の追跡番号"
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        />
+                        <input id="tracking_number" name="tracking_number" type="text" placeholder="配送業者の追跡番号" className={INPUT_CLASS} />
                       </div>
                     )}
 
                     {showCancelledFields && (
                       <div>
-                        <label
-                          htmlFor="cancel_reason"
-                          className="mb-1.5 block text-xs font-medium text-slate-600"
-                        >
+                        <label htmlFor="cancel_reason" className="mb-1 block text-xs font-medium text-slate-600">
                           キャンセル理由（「キャンセル」の場合は必須）
                         </label>
-                        <textarea
-                          id="cancel_reason"
-                          name="cancel_reason"
-                          rows={2}
-                          placeholder="キャンセル理由を入力してください"
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        />
+                        <textarea id="cancel_reason" name="cancel_reason" rows={2} placeholder="キャンセル理由を入力してください" className={INPUT_CLASS} />
                       </div>
                     )}
                   </div>
                 )}
 
                 <SubmitButton
-                  className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+                  className="rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
                   pendingText="更新中..."
                 >
                   ステータスを更新
@@ -447,15 +366,18 @@ export default async function OrderDetailPage({
         </div>
       </section>
 
-      {/* ステータス変更履歴 — ステップ進行表示 */}
+      {/* ステータス変更履歴 */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          ステータス変更履歴
-        </h2>
+        <div className="mb-2 flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            ステータス変更履歴
+          </h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         {histories.length === 0 ? (
           <EmptyState message="変更履歴はありません。" />
         ) : (
-          <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
             <div className="flex items-start overflow-x-auto pb-2">
               {histories.map((h, idx) => {
                 const isLast = idx === histories.length - 1;
@@ -464,36 +386,36 @@ export default async function OrderDetailPage({
                   <div key={h.id} className="flex items-start">
                     <div className="flex flex-col items-center">
                       <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
                           isCancelled
                             ? "bg-red-100 text-red-600"
                             : "bg-green-100 text-green-600"
                         }`}
                       >
                         {isCancelled ? (
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                           </svg>
                         ) : (
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         )}
                       </div>
-                      <div className="mt-2 min-w-[100px] text-center">
-                        <p className="text-xs font-bold text-slate-800">
+                      <div className="mt-1.5 min-w-[90px] text-center">
+                        <p className="text-[11px] font-bold text-slate-800">
                           {STATUS_LABELS[h.to_status] ?? h.to_status}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[10px] text-slate-400">
                           {formatDateTime(h.created_at)}
                         </p>
                         {h.note && (
-                          <p className="mt-1 text-[11px] text-slate-500">{h.note}</p>
+                          <p className="mt-0.5 text-[10px] text-slate-500">{h.note}</p>
                         )}
                       </div>
                     </div>
                     {!isLast && (
-                      <div className="mt-4 h-px w-8 shrink-0 bg-slate-300 sm:w-12" />
+                      <div className="mt-3.5 h-px w-6 shrink-0 bg-slate-300 sm:w-10" />
                     )}
                   </div>
                 );

@@ -198,9 +198,40 @@ export default async function HrEmployeeDetailPage({
         subtitle={headerSubtitleParts.length > 0 ? headerSubtitleParts.join(" / ") : undefined}
       />
 
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">社員番号</p>
+          <p className="mt-1 text-base font-bold text-slate-900">
+            {primaryEmployment?.employees?.employee_code ?? "未設定"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">雇用履歴</p>
+          <p className="mt-1 text-base font-bold text-slate-900">{employments.length}件</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">在籍状態</p>
+          <div className="mt-1">
+            <Badge
+              label={primaryEmployment ? (primaryEmployment.retired_on ? "退職" : "在籍") : "未登録"}
+              className={primaryEmployment && !primaryEmployment.retired_on ? GREEN : SLATE}
+            />
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">会社</p>
+          <p className="mt-1 truncate text-sm font-bold text-slate-900">
+            {primaryEmployment?.employees?.companies?.name ?? "未設定"}
+          </p>
+        </div>
+      </div>
+
       {/* 基本情報 */}
       <section className="mb-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">基本情報</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">基本情報</h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
@@ -225,7 +256,10 @@ export default async function HrEmployeeDetailPage({
 
       {/* 雇用履歴(再入社等により複数件になり得るため、入社日が新しい順に1件ずつブロック表示) */}
       <section className="mb-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">雇用履歴</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">雇用履歴</h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         {employments.length === 0 ? (
           <EmptyState message="雇用履歴が登録されていません。" />
         ) : (
@@ -280,7 +314,10 @@ export default async function HrEmployeeDetailPage({
 
       {/* 住所(発効日付き履歴。最新を現在の住所として強調し、過去の行は履歴として一覧表示) */}
       <section className="mb-8">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">住所</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">住所</h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         {!currentAddress ? (
           <EmptyState message="住所が登録されていません。" />
         ) : (
@@ -327,7 +364,7 @@ export default async function HrEmployeeDetailPage({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {pastAddresses.map((a, idx) => (
-                        <tr key={a.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                        <tr key={a.id} className={`transition-colors hover:bg-blue-50/50 ${idx % 2 === 1 ? "bg-slate-50/60" : ""}`}>
                           <td className="whitespace-nowrap px-4 py-2 text-slate-600">
                             {formatDate(a.effective_from)} 〜 {a.effective_to ? formatDate(a.effective_to) : ""}
                           </td>
@@ -347,7 +384,10 @@ export default async function HrEmployeeDetailPage({
 
       {/* 所属・異動履歴(雇用履歴ごとに現在の所属+過去の異動履歴を表示) */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">所属・異動履歴</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">所属・異動履歴</h2>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
         {employments.length === 0 ? (
           <EmptyState message="所属・異動履歴が登録されていません。" />
         ) : (

@@ -4,7 +4,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
-import { PageHeader } from "@/components/PageHeader";
 import { isMasterAdminRole, isSuperAdminRole } from "./guard";
 
 const SLATE = "bg-slate-100 text-slate-500";
@@ -12,11 +11,11 @@ const GREEN = "bg-green-100 text-green-700";
 
 function StatCard({ label, value, badge }: { label: string; value: string; badge: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
       <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold ${badge}`}>
         {label}
       </span>
-      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900">{value}</p>
     </div>
   );
 }
@@ -25,7 +24,7 @@ function AdminNavCard({ href, title, description }: { href: string; title: strin
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-5 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50"
+      className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
     >
       <div>
         <p className="text-base font-bold text-slate-900">{title}</p>
@@ -81,13 +80,17 @@ export default async function MasterAdminDashboardPage() {
   const isSuperAdmin = isSuperAdminRole(ctx?.roleCode ?? null);
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
-      <PageHeader
-        backHref="/"
-        backLabel="ポータルTOPに戻る"
-        title="店舗・従業員マスター管理"
-        subtitle="会社・店舗・従業員・ユーザー権限の管理"
-      />
+    <div className="min-h-screen">
+      <header className="bg-slate-800 px-4 py-4 text-white shadow-md">
+        <div className="mx-auto max-w-5xl">
+          <h1 className="text-lg font-bold">店舗・従業員マスター管理</h1>
+          <p className="text-sm text-white/70">会社・店舗・従業員・ユーザー権限の管理</p>
+        </div>
+      </header>
+      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mb-4">
+        <Link href="/" className="text-sm text-blue-600 hover:underline">← ポータルTOPに戻る</Link>
+      </div>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
@@ -101,7 +104,11 @@ export default async function MasterAdminDashboardPage() {
         </div>
       </section>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mt-8 mb-3 flex items-center gap-2">
+        <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">管理メニュー</h2>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {isSuperAdmin ? (
           <AdminNavCard
             href="/master/companies"
@@ -126,6 +133,7 @@ export default async function MasterAdminDashboardPage() {
           title="ユーザー・権限管理"
           description="アカウントの発行、ロール・アクセス範囲の付与/取り消しを行います"
         />
+      </div>
       </div>
     </div>
   );

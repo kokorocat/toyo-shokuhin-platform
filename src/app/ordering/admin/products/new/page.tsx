@@ -10,11 +10,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 
-const SELECT_CLASS =
-  "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
-const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-slate-600";
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+const LABEL_CLASS = "mb-1 block text-xs font-medium text-slate-600";
 
-// 商品タイプはactions.ts側のPRODUCT_TYPESと同じ7種で固定。日本語ラベルのみここで持つ。
 const PRODUCT_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "normal_pop", label: "通常POP" },
   { value: "price_input_pop", label: "価格入POP" },
@@ -41,9 +40,6 @@ type SealSizeOption = {
   note: string | null;
 };
 
-// 大分類→中分類→小分類の階層をインデント付きの1階層セレクトに展開する。parent_idチェーンで
-// 再帰するためlevelの値に依存しない(商品編集画面と同一ロジック)。非表示カテゴリも選択肢として
-// 残す(季節限定等で意図的に非表示にしたカテゴリへ商品を割り当てたいケースがあるため)。
 function flattenCategories(categories: CategoryRow[]): { id: string; label: string }[] {
   const byParent = new Map<string | null, CategoryRow[]>();
   for (const c of categories) {
@@ -111,27 +107,23 @@ export default async function NewProductPage({
       <PageHeader backHref="/ordering/admin/products" backLabel="商品一覧に戻る" title="商品を追加" />
 
       {sp.error && (
-        <Banner variant="error" className="mb-6">
+        <Banner variant="error" className="mb-5">
           {sp.error}
         </Banner>
       )}
 
       <form action={createProduct} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
+        <div className="border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-bold text-slate-900">商品情報</h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3.5 px-4 py-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="category_id" className={LABEL_CLASS}>
-              カテゴリ
-            </label>
-            <select id="category_id" name="category_id" defaultValue="" className={SELECT_CLASS}>
+            <label htmlFor="category_id" className={LABEL_CLASS}>カテゴリ</label>
+            <select id="category_id" name="category_id" defaultValue="" className={INPUT_CLASS}>
               <option value="">未分類</option>
               {categoryOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
           </div>
@@ -140,14 +132,10 @@ export default async function NewProductPage({
             <label htmlFor="product_type" className={LABEL_CLASS}>
               商品タイプ <span className="text-red-600">*</span>
             </label>
-            <select id="product_type" name="product_type" required defaultValue="" className={SELECT_CLASS}>
-              <option value="" disabled>
-                選択してください
-              </option>
+            <select id="product_type" name="product_type" required defaultValue="" className={INPUT_CLASS}>
+              <option value="" disabled>選択してください</option>
               {PRODUCT_TYPE_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
+                <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
           </div>
@@ -156,88 +144,49 @@ export default async function NewProductPage({
             <label htmlFor="name" className={LABEL_CLASS}>
               商品名 <span className="text-red-600">*</span>
             </label>
-            <input id="name" name="name" type="text" required maxLength={200} className={SELECT_CLASS} />
+            <input id="name" name="name" type="text" required maxLength={200} className={INPUT_CLASS} />
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="description" className={LABEL_CLASS}>
-              説明
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              className={`${SELECT_CLASS} resize-y`}
-            />
+            <label htmlFor="description" className={LABEL_CLASS}>説明</label>
+            <textarea id="description" name="description" rows={3} className={`${INPUT_CLASS} resize-y`} />
           </div>
 
           <div>
             <label htmlFor="unit_price" className={LABEL_CLASS}>
               単価(円) <span className="text-red-600">*</span>
             </label>
-            <input
-              id="unit_price"
-              name="unit_price"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
-              required
-              className={SELECT_CLASS}
-            />
+            <input id="unit_price" name="unit_price" type="number" inputMode="numeric" min={0} step={1} required className={INPUT_CLASS} />
           </div>
 
           <div>
             <label htmlFor="lot_size" className={LABEL_CLASS}>
               ロット数 <span className="text-red-600">*</span>
             </label>
-            <input
-              id="lot_size"
-              name="lot_size"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              defaultValue={1}
-              required
-              className={SELECT_CLASS}
-            />
+            <input id="lot_size" name="lot_size" type="number" inputMode="numeric" min={1} step={1} defaultValue={1} required className={INPUT_CLASS} />
           </div>
 
           <div>
-            <label htmlFor="seal_size_id" className={LABEL_CLASS}>
-              シールサイズ
-            </label>
-            <select id="seal_size_id" name="seal_size_id" defaultValue="" className={SELECT_CLASS}>
+            <label htmlFor="seal_size_id" className={LABEL_CLASS}>シールサイズ</label>
+            <select id="seal_size_id" name="seal_size_id" defaultValue="" className={INPUT_CLASS}>
               <option value="">未選択(通常シール以外は不要)</option>
               {sealSizeOptions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {sealSizeLabel(s)}
-                </option>
+                <option key={s.id} value={s.id}>{sealSizeLabel(s)}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="recommend_badge" className={LABEL_CLASS}>
-              おすすめバッジ文言
-            </label>
-            <input
-              id="recommend_badge"
-              name="recommend_badge"
-              type="text"
-              placeholder="例: おすすめ / 季節限定"
-              maxLength={50}
-              className={SELECT_CLASS}
-            />
+            <label htmlFor="recommend_badge" className={LABEL_CLASS}>おすすめバッジ文言</label>
+            <input id="recommend_badge" name="recommend_badge" type="text" placeholder="例: おすすめ / 季節限定" maxLength={50} className={INPUT_CLASS} />
           </div>
 
-          <div className="flex items-center gap-2 pt-6 sm:col-span-2">
+          <div className="flex items-center gap-2 pt-4 sm:col-span-2">
             <input
               id="is_recommended"
               name="is_recommended"
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-blue-800 focus:ring-2 focus:ring-blue-500/40"
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/40"
             />
             <label htmlFor="is_recommended" className="text-sm text-slate-700">
               おすすめ商品として表示する
@@ -245,15 +194,15 @@ export default async function NewProductPage({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
           <Link
             href="/ordering/admin/products"
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
           >
             キャンセル
           </Link>
           <SubmitButton
-            className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 active:bg-blue-950"
+            className="rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
             pendingText="登録中..."
           >
             登録する
