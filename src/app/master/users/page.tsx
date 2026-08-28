@@ -20,6 +20,7 @@ const ROLE_LABELS: Record<string, string> = {
   company_admin: "会社管理者",
   super_admin: "全権限管理者",
   system_maintenance: "システム保守",
+  auditor: "監査担当（閲覧のみ）",
 };
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
@@ -29,12 +30,14 @@ const ROLE_BADGE_CLASS: Record<string, string> = {
   company_admin: "bg-green-100 text-green-700",
   super_admin: "bg-red-100 text-red-700",
   system_maintenance: "bg-slate-200 text-slate-700",
+  auditor: "bg-purple-100 text-purple-700",
 };
 
 // company_admin(super_admin以外)が付与できるのはこの3つのみ
-// (grant_user_access_scope RPC自身の権限上限チェックと同じ境界)。
+// (grant_user_access_scope RPC自身の権限上限チェックと同じ境界)。auditorはcompany_adminと同じ
+// company_idのみのスコープ形状だが、権限上限チェックでsuper_admin限定にしているためここには含めない。
 const NON_SUPER_GRANTABLE_ROLES = ["store_user", "store_manager", "area_admin"];
-const ALL_ROLES = ["store_user", "store_manager", "area_admin", "company_admin", "super_admin", "system_maintenance"];
+const ALL_ROLES = ["store_user", "store_manager", "area_admin", "company_admin", "auditor", "super_admin", "system_maintenance"];
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
@@ -144,11 +147,11 @@ export default async function MasterUsersPage({
           </div>
           <div className="sm:col-span-2">
             <p className="mb-2 text-xs font-medium text-slate-500">
-              ロールに応じて、いずれか1つだけ選択してください(会社管理者→会社 / エリア管理者→エリア / 店舗利用者・店舗責任者→店舗 / 全権限管理者→いずれも選択不要)
+              ロールに応じて、いずれか1つだけ選択してください(会社管理者・監査担当→会社 / エリア管理者→エリア / 店舗利用者・店舗責任者→店舗 / 全権限管理者→いずれも選択不要)
             </p>
           </div>
           <div>
-            <label htmlFor="company_id" className={LABEL_CLASS}>会社（会社管理者用）</label>
+            <label htmlFor="company_id" className={LABEL_CLASS}>会社（会社管理者・監査担当用）</label>
             <select id="company_id" name="company_id" defaultValue="" className={INPUT_CLASS}>
               <option value="">選択しない</option>
               {companyOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
