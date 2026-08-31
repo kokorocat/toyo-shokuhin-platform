@@ -47,6 +47,8 @@ export default async function PortalHomePage() {
   const masterHref = isMasterAdminRole(ctx.roleCode) ? "/master" : null;
   const masterDisabled = !masterSys || masterSys.status !== "active" || !masterHref;
 
+  const noticesHref = !ctx.store && isMasterAdminRole(ctx.roleCode) ? "/notices/admin" : "/notices";
+
   return (
     <div className="min-h-screen">
       {/* GAS-style gradient header band */}
@@ -85,7 +87,7 @@ export default async function PortalHomePage() {
 
         {/* Notices / Manuals — GAS-style teal gradient card */}
         <Link
-          href="/notices"
+          href={noticesHref}
           className="group relative mb-4 flex items-center justify-between overflow-hidden rounded-xl bg-gradient-to-r from-slate-700 to-slate-600 px-5 py-4 text-white shadow-md transition-shadow hover:shadow-lg"
         >
           <div className="flex items-center gap-3">
