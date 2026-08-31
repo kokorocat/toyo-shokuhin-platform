@@ -4,6 +4,7 @@ import { isRecipeAdminRole, isRecipeApprovalRole } from "./admin/guard";
 const TABS: { label: string; href: string; role: "all" | "admin" | "approval" }[] = [
   { label: "レシピ一覧", href: "/recipe", role: "all" },
   { label: "新規レシピ申請", href: "/recipe/admin/submit", role: "admin" },
+  { label: "申請履歴", href: "/recipe/admin/history", role: "admin" },
   { label: "承認待ち一覧", href: "/recipe/admin/approvals", role: "approval" },
   { label: "承認履歴", href: "/recipe/admin/approvals/history", role: "approval" },
   { label: "承認済みレシピアップロード", href: "/recipe/admin/upload", role: "admin" },

@@ -17,7 +17,18 @@ const FILE_TYPE_LABELS: Record<string, string> = {
 
 const FILE_TYPE_ORDER = ["work_instruction", "container", "pop", "seal_label", "video", "other"];
 
-const SIGNED_URL_TTL_SECONDS = 60 * 10;
+// Office Online Viewerのfetchが完了するまでの余裕を見て、他のsigned URL(10分)より長めに取る。
+const SIGNED_URL_TTL_SECONDS = 60 * 30;
+
+// レシピ原本(Excel)をアプリ内でプレビューする(仕様書RV-20「左約80%メインプレビュー」相当)。
+// 独自のシート描画・ズームエンジンを新規に作る時間が無いため、Microsoft純正のOffice Online
+// Viewerへ署名付きURLを渡して埋め込む方式を採用(社内向けにOffice365を利用しているクライアント
+// 環境と親和性が高く、シートタブ切替もビューア自身のUIでそのまま利用できる)。
+// 注意: プレビュー時、原本ファイルの内容がMicrosoftのサーバーを経由する。この点はクライアントに
+// 説明済みで、了承のうえで採用している。
+function officeViewerUrl(fileUrl: string): string {
+  return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+}
 
 export default async function RecipeDetailPage({
   params,
@@ -87,108 +98,125 @@ export default async function RecipeDetailPage({
   return (
     <div className="min-h-screen bg-slate-50">
       <RecipeHeader />
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-6">
         <RecipeTabs roleCode={ctx.roleCode ?? null} activeHref="/recipe" />
 
-        <div className="mx-auto max-w-3xl">
-          <Link
-            href="/recipe"
-            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-            </svg>
-            レシピ一覧に戻る
-          </Link>
+        <Link
+          href="/recipe"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
+          レシピ一覧に戻る
+        </Link>
 
-          <div className="mb-6">
-            <p className="text-xs text-slate-400">{recipe.recipe_code}</p>
-            <h1 className="text-xl font-bold text-slate-900">{recipe.name}</h1>
-            {recipe.category && <p className="mt-1 text-sm text-slate-500">{recipe.category}</p>}
-          </div>
+        <div className="mb-6">
+          <p className="text-xs text-slate-400">{recipe.recipe_code}</p>
+          <h1 className="text-xl font-bold text-slate-900">{recipe.name}</h1>
+          {recipe.category && <p className="mt-1 text-sm text-slate-500">{recipe.category}</p>}
+        </div>
 
-          <div className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="text-sm font-bold text-slate-900">レシピ原本</h2>
-            </div>
-            <div className="p-5">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* メインプレビュー(PC約80%) */}
+          <div className="min-w-0 lg:w-[78%]">
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+                <h2 className="text-sm font-bold text-slate-900">レシピ原本</h2>
+                {originalUrl && (
+                  <div className="flex gap-2">
+                    <a
+                      href={officeViewerUrl(originalUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    >
+                      全画面で見る
+                    </a>
+                    <a
+                      href={originalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                    >
+                      原本ファイルを開く
+                    </a>
+                  </div>
+                )}
+              </div>
               {originalUrl ? (
-                <a
-                  href={originalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                  レシピ原本を開く
-                </a>
+                <iframe
+                  src={officeViewerUrl(originalUrl)}
+                  title={recipe.name}
+                  className="h-[75vh] w-full rounded-b-xl"
+                />
               ) : (
-                <p className="text-sm text-slate-400">登録されていません。</p>
+                <div className="px-5 py-14 text-center">
+                  <p className="text-sm text-slate-400">登録されていません。</p>
+                </div>
               )}
             </div>
           </div>
 
-          <section className="mb-6">
-            <h2 className="mb-3 text-sm font-bold text-slate-900">関連資料</h2>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {FILE_TYPE_ORDER.map((type) => {
-                const items = filesByType.get(type) ?? [];
-                return (
-                  <div key={type} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                    <p className="mb-1.5 text-xs font-semibold text-slate-600">{FILE_TYPE_LABELS[type]}</p>
-                    {items.length === 0 ? (
-                      <p className="text-xs text-slate-400">登録されていません</p>
-                    ) : (
-                      <ul className="space-y-1">
-                        {items.map((f) => {
-                          const url = signedFileUrls.get(f.id);
-                          return (
-                            <li key={f.id}>
-                              {url ? (
-                                <a
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-block rounded-lg px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-slate-100"
-                                >
-                                  開く →
-                                </a>
-                              ) : (
-                                <span className="text-xs text-slate-400">読み込みエラー</span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+          {/* 関連コンテンツ(PC約20%) */}
+          <div className="min-w-0 space-y-6 lg:w-[22%]">
+            <section>
+              <h2 className="mb-3 text-sm font-bold text-slate-900">関連資料</h2>
+              <div className="space-y-2">
+                {FILE_TYPE_ORDER.map((type) => {
+                  const items = filesByType.get(type) ?? [];
+                  return (
+                    <div key={type} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                      <p className="mb-1.5 text-xs font-semibold text-slate-600">{FILE_TYPE_LABELS[type]}</p>
+                      {items.length === 0 ? (
+                        <p className="text-xs text-slate-400">登録されていません</p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {items.map((f) => {
+                            const url = signedFileUrls.get(f.id);
+                            return (
+                              <li key={f.id}>
+                                {url ? (
+                                  <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block rounded-lg px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-slate-100"
+                                  >
+                                    開く →
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400">読み込みエラー</span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-          <section>
-            <h2 className="mb-3 text-sm font-bold text-slate-900">関連商品</h2>
-            {!relatedProducts || relatedProducts.length === 0 ? (
-              <EmptyState message="関連商品が登録されていません。" />
-            ) : (
-              <ul className="space-y-2">
-                {relatedProducts.map((p) => (
-                  <li
-                    key={p.id}
-                    className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
-                  >
-                    <p className="text-sm font-medium text-slate-800">{p.product_name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {[p.product_code, p.spec, p.supplier].filter(Boolean).join(" / ")}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+            <section>
+              <h2 className="mb-3 text-sm font-bold text-slate-900">関連商品</h2>
+              {!relatedProducts || relatedProducts.length === 0 ? (
+                <EmptyState message="関連商品が登録されていません。" />
+              ) : (
+                <ul className="space-y-2">
+                  {relatedProducts.map((p) => (
+                    <li key={p.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                      <p className="text-sm font-medium text-slate-800">{p.product_name}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {[p.product_code, p.spec, p.supplier].filter(Boolean).join(" / ")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </div>
