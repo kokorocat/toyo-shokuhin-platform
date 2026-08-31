@@ -167,6 +167,16 @@ export default async function OrderingAdminDashboardPage() {
           title="商品管理"
           description="販促物の追加・編集・公開/非表示の切り替えを行います"
         />
+        <AdminNavCard
+          href="/ordering/admin/billing"
+          title="請求書発行"
+          description="店舗ごとの未請求金額を確認し、請求書を発行します"
+        />
+        <AdminNavCard
+          href="/ordering/admin/bulk-order"
+          title="複数店舗一斉発注"
+          description="複数の店舗をまとめて選択し、同一内容で一括発注します"
+        />
       </div>
     </div>
   );

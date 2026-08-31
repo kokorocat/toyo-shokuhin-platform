@@ -1320,6 +1320,7 @@ export type Database = {
           delivered_on: string | null
           delivery_date: string | null
           id: string
+          invoice_id: string | null
           memo: string | null
           order_number: string
           ordered_by: string
@@ -1342,6 +1343,7 @@ export type Database = {
           delivered_on?: string | null
           delivery_date?: string | null
           id?: string
+          invoice_id?: string | null
           memo?: string | null
           order_number: string
           ordered_by: string
@@ -1364,6 +1366,7 @@ export type Database = {
           delivered_on?: string | null
           delivery_date?: string | null
           id?: string
+          invoice_id?: string | null
           memo?: string | null
           order_number?: string
           ordered_by?: string
@@ -1393,10 +1396,90 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          company_id: string
+          id: string
+          invoice_number: string
+          issued_at: string
+          issued_by: string
+          period_end: string
+          period_start: string
+          period_type: string
+          status: string
+          store_id: string
+          subtotal: number
+          superseded_by: string | null
+          tax_amount: number
+          total_amount: number
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          invoice_number: string
+          issued_at?: string
+          issued_by: string
+          period_end: string
+          period_start: string
+          period_type: string
+          status?: string
+          store_id: string
+          subtotal: number
+          superseded_by?: string | null
+          tax_amount: number
+          total_amount: number
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          invoice_number?: string
+          issued_at?: string
+          issued_by?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          status?: string
+          store_id?: string
+          subtotal?: number
+          superseded_by?: string | null
+          tax_amount?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -2302,6 +2385,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      issue_invoice: {
+        Args: {
+          p_company_id: string
+          p_store_id: string
+          p_period_type: string
+          p_period_start: string
+          p_period_end: string
+        }
+        Returns: string
+      }
       link_recipe_current_version: {
         Args: { p_recipe_id: string; p_version_id: string }
         Returns: undefined

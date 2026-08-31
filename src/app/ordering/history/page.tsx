@@ -28,12 +28,20 @@ export default async function OrderingHistoryPage({
   }
 
   const supabase = await createClient();
-  const { data: orders } = await supabase
-    .from("orders")
-    .select("id, order_number, status, total_amount, delivery_date, created_at, order_lines(id)")
-    .eq("store_id", ctx.store.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const [{ data: orders }, { data: invoices }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id, order_number, status, total_amount, delivery_date, created_at, order_lines(id)")
+      .eq("store_id", ctx.store.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("invoices")
+      .select("id, invoice_number, period_start, period_end, total_amount, status, issued_at")
+      .eq("store_id", ctx.store.id)
+      .order("issued_at", { ascending: false })
+      .limit(20),
+  ]);
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
@@ -93,6 +101,37 @@ export default async function OrderingHistoryPage({
             </tbody>
           </table>
         </div>
+      )}
+
+      <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-slate-400">請求書</h2>
+      {!invoices || invoices.length === 0 ? (
+        <EmptyState message="発行済みの請求書がありません。" />
+      ) : (
+        <ul className="space-y-2">
+          {invoices.map((inv) => (
+            <li
+              key={inv.id}
+              className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 shadow-sm ${
+                inv.status === "superseded" ? "border-slate-200 bg-slate-50 opacity-60" : "border-slate-200 bg-white"
+              }`}
+            >
+              <div>
+                <p className="text-sm font-medium text-slate-800">{inv.invoice_number}</p>
+                <p className="text-xs text-slate-400">
+                  {inv.period_start} 〜 {inv.period_end}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {inv.status === "superseded" && (
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">無効</span>
+                )}
+                <span className="text-sm font-bold tabular-nums text-slate-900">
+                  ¥{inv.total_amount.toLocaleString("ja-JP")}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
