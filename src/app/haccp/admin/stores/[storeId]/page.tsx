@@ -154,6 +154,7 @@ type InspectionRow = {
   area_manager_name: string | null;
   area_hygiene_officer_name: string | null;
   improvement_reason: string | null;
+  improvement_action: string | null;
   self_evaluation: string | null;
   special_notes: string | null;
   business_license_expiry_date: string | null;
@@ -264,7 +265,7 @@ export default async function HaccpAdminStoreDetailPage({
     supabase
       .from("haccp_inspections")
       .select(
-        "id, version, created_at, submitted_on, overall_evaluation, implementer_name, store_manager_name, hygiene_officer_name, area_manager_name, area_hygiene_officer_name, improvement_reason, self_evaluation, special_notes, business_license_expiry_date, user_profiles(display_name), haccp_inspection_items(question_code,answer,reason,action_taken)"
+        "id, version, created_at, submitted_on, overall_evaluation, implementer_name, store_manager_name, hygiene_officer_name, area_manager_name, area_hygiene_officer_name, improvement_reason, improvement_action, self_evaluation, special_notes, business_license_expiry_date, user_profiles(display_name), haccp_inspection_items(question_code,answer,reason,action_taken)"
       )
       .eq("store_id", storeId)
       .eq("target_month", targetMonth)
@@ -680,10 +681,20 @@ export default async function HaccpAdminStoreDetailPage({
                     </tbody>
                   </table>
                 </div>
-                {latestInspection.improvement_reason && (
+                {(latestInspection.improvement_reason || latestInspection.improvement_action) && (
                   <Banner variant="warning" className="mt-4">
-                    <p className="mb-1 font-medium">改善が必要な項目の詳細</p>
-                    <p>{latestInspection.improvement_reason}</p>
+                    {latestInspection.improvement_reason && (
+                      <>
+                        <p className="mb-1 font-medium">理由</p>
+                        <p className="mb-2">{latestInspection.improvement_reason}</p>
+                      </>
+                    )}
+                    {latestInspection.improvement_action && (
+                      <>
+                        <p className="mb-1 font-medium">対応内容</p>
+                        <p>{latestInspection.improvement_action}</p>
+                      </>
+                    )}
                   </Banner>
                 )}
                 {latestInspection.self_evaluation && (

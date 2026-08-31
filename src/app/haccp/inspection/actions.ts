@@ -21,6 +21,7 @@ export async function recordInspection(formData: FormData) {
   const areaHygieneOfficerName = String(formData.get("area_hygiene_officer_name") ?? "").trim();
   const implementerName = String(formData.get("implementer_name") ?? "").trim();
   const improvementReason = String(formData.get("improvement_reason") ?? "").trim();
+  const improvementAction = String(formData.get("improvement_action") ?? "").trim();
   const selfEvaluation = String(formData.get("self_evaluation") ?? "");
   const specialNotes = String(formData.get("special_notes") ?? "").trim();
   const businessLicenseExpiryDate = String(formData.get("business_license_expiry_date") ?? "").trim();
@@ -58,6 +59,12 @@ export async function recordInspection(formData: FormData) {
     );
   }
 
+  if (overallEvaluation === "needs_improvement" && !improvementAction) {
+    redirect(
+      `/haccp/inspection?error=${encodeURIComponent("要改善の項目があります。対応内容を入力してください")}`
+    );
+  }
+
   const todayStr = todayInTokyo();
   const targetMonth = `${todayStr.slice(0, 7)}-01`;
 
@@ -86,6 +93,7 @@ export async function recordInspection(formData: FormData) {
       implementer_name: implementerName,
       overall_evaluation: overallEvaluation,
       improvement_reason: improvementReason || null,
+      improvement_action: improvementAction || null,
       self_evaluation: selfEvaluation,
       special_notes: specialNotes || null,
       business_license_expiry_date: businessLicenseExpiryDate || null,

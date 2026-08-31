@@ -140,15 +140,32 @@ export default async function KioskInspectionPage({
             <div className="border-b border-slate-200 bg-orange-50 px-5 py-3">
               <h2 className="text-base font-bold text-orange-800">改善が必要な場合の詳細</h2>
               <p className="mt-0.5 text-xs text-orange-600">
-                「否」を選択した項目について、具体的な改善内容を入力してください。
+                「否」を選択した項目について、理由・対応内容をそれぞれ入力してください。
               </p>
             </div>
-            <div className="px-5 py-5">
-              <textarea
-                name="improvement_reason"
-                rows={4}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
+            <div className="space-y-4 px-5 py-5">
+              <div>
+                <label htmlFor="improvement_reason" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  理由
+                </label>
+                <textarea
+                  id="improvement_reason"
+                  name="improvement_reason"
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+              <div>
+                <label htmlFor="improvement_action" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  対応内容
+                </label>
+                <textarea
+                  id="improvement_action"
+                  name="improvement_action"
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
             </div>
           </div>
 

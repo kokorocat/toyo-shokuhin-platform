@@ -459,6 +459,7 @@ export type Database = {
           hygiene_officer_name: string | null
           id: string
           implementer_name: string
+          improvement_action: string | null
           improvement_reason: string | null
           overall_evaluation: string
           recorded_by: string | null
@@ -480,6 +481,7 @@ export type Database = {
           hygiene_officer_name?: string | null
           id?: string
           implementer_name: string
+          improvement_action?: string | null
           improvement_reason?: string | null
           overall_evaluation: string
           recorded_by?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           hygiene_officer_name?: string | null
           id?: string
           implementer_name?: string
+          improvement_action?: string | null
           improvement_reason?: string | null
           overall_evaluation?: string
           recorded_by?: string | null
@@ -2359,6 +2362,7 @@ export type Database = {
           p_area_manager_name?: string | null
           p_area_hygiene_officer_name?: string | null
           p_improvement_reason?: string | null
+          p_improvement_action?: string | null
           p_special_notes?: string | null
           p_business_license_expiry_date?: string | null
         }

@@ -93,14 +93,16 @@ export default async function HaccpHistoryPage() {
           ) : (
             <ul className="space-y-2">
               {keypoints.map((k) => (
-                <li
-                  key={k.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                >
-                  <span className="text-sm font-medium text-slate-800">{k.target_date}</span>
-                  <span className="text-xs text-slate-400">
-                    v{k.version} / {new Date(k.created_at).toLocaleString("ja-JP")}
-                  </span>
+                <li key={k.id}>
+                  <Link
+                    href={`/haccp/history/keypoint/${k.id}`}
+                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50"
+                  >
+                    <span className="text-sm font-medium text-slate-800">{k.target_date}</span>
+                    <span className="text-xs text-slate-400">
+                      v{k.version} / {new Date(k.created_at).toLocaleString("ja-JP")}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -121,16 +123,18 @@ export default async function HaccpHistoryPage() {
           ) : (
             <ul className="space-y-2">
               {employeeResponses.map((e) => (
-                <li
-                  key={e.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                >
-                  <span className="text-sm font-medium text-slate-800">
-                    {e.target_date} /{" "}
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {(e.employees as any)?.full_name ?? e.manual_name ?? "-"}
-                  </span>
-                  <span className="text-xs text-slate-400">v{e.version}</span>
+                <li key={e.id}>
+                  <Link
+                    href={`/haccp/history/employee/${e.id}`}
+                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/50"
+                  >
+                    <span className="text-sm font-medium text-slate-800">
+                      {e.target_date} /{" "}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {(e.employees as any)?.full_name ?? e.manual_name ?? "-"}
+                    </span>
+                    <span className="text-xs text-slate-400">v{e.version}</span>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -151,27 +155,29 @@ export default async function HaccpHistoryPage() {
           ) : (
             <ul className="space-y-2">
               {inspections.map((i) => (
-                <li
-                  key={i.id}
-                  className={`flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm ${
-                    i.overall_evaluation === "needs_improvement"
-                      ? "border-red-200 bg-red-50"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  <div>
-                    <span className="text-sm font-medium text-slate-800">{i.target_month.slice(0, 7)}</span>
-                    <p className="text-xs text-slate-400">提出: {i.submitted_on}</p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+                <li key={i.id}>
+                  <Link
+                    href={`/haccp/history/inspection/${i.id}`}
+                    className={`flex items-center justify-between rounded-xl border px-4 py-3 shadow-sm transition-colors hover:brightness-95 ${
                       i.overall_evaluation === "needs_improvement"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
+                        ? "border-red-200 bg-red-50"
+                        : "border-slate-200 bg-white"
                     }`}
                   >
-                    {i.overall_evaluation === "needs_improvement" ? "要改善" : "良好"}
-                  </span>
+                    <div>
+                      <span className="text-sm font-medium text-slate-800">{i.target_month.slice(0, 7)}</span>
+                      <p className="text-xs text-slate-400">提出: {i.submitted_on}</p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${
+                        i.overall_evaluation === "needs_improvement"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {i.overall_evaluation === "needs_improvement" ? "要改善" : "良好"}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

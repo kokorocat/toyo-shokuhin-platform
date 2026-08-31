@@ -23,6 +23,7 @@ export async function kioskSubmitInspection(formData: FormData) {
     p_area_manager_name: String(formData.get("area_manager_name") ?? "").trim() || null,
     p_area_hygiene_officer_name: String(formData.get("area_hygiene_officer_name") ?? "").trim() || null,
     p_improvement_reason: String(formData.get("improvement_reason") ?? "").trim() || null,
+    p_improvement_action: String(formData.get("improvement_action") ?? "").trim() || null,
     p_special_notes: String(formData.get("special_notes") ?? "").trim() || null,
     p_business_license_expiry_date: String(formData.get("business_license_expiry_date") ?? "").trim() || null,
   });
