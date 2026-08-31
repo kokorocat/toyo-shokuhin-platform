@@ -16,6 +16,7 @@ import { todayInTokyo } from "@/lib/date";
 import { KEYPOINT_ITEMS } from "@/app/haccp/keypoint/constants";
 import { INSPECTION_QUESTIONS } from "@/app/haccp/inspection/constants";
 import { regenerateKioskToken } from "./actions";
+import { confirmHalfMonth } from "@/app/haccp/actions";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -193,7 +194,14 @@ export default async function HaccpAdminStoreDetailPage({
   searchParams,
 }: {
   params: Promise<{ storeId: string }>;
-  searchParams: Promise<{ date?: string; month?: string; kioskError?: string; kioskSuccess?: string }>;
+  searchParams: Promise<{
+    date?: string;
+    month?: string;
+    kioskError?: string;
+    kioskSuccess?: string;
+    confirmError?: string;
+    confirmSuccess?: string;
+  }>;
 }) {
   const { storeId } = await params;
   const sp = await searchParams;
@@ -719,6 +727,16 @@ export default async function HaccpAdminStoreDetailPage({
             </h2>
             <div className="h-px flex-1 bg-slate-200" />
           </div>
+          {sp.confirmSuccess && (
+            <div className="mb-3">
+              <Banner variant="success">責任者確認を登録しました。</Banner>
+            </div>
+          )}
+          {sp.confirmError && (
+            <div className="mb-3">
+              <Banner variant="error">{sp.confirmError}</Banner>
+            </div>
+          )}
           {!latestConfirmation ? (
             <EmptyState message="この期間の責任者確認はまだ登録されていません。" />
           ) : (
@@ -753,6 +771,33 @@ export default async function HaccpAdminStoreDetailPage({
               </div>
             </div>
           )}
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
+              <h3 className="text-sm font-bold text-blue-800">この期間を確認する</h3>
+            </div>
+            <form action={confirmHalfMonth} className="space-y-3 px-5 py-4">
+              <input type="hidden" name="company_id" value={store.company_id} />
+              <input type="hidden" name="store_id" value={store.id} />
+              <input type="hidden" name="admin_store_id" value={store.id} />
+              <input type="hidden" name="period_start" value={period.start} />
+              <input type="hidden" name="period_end" value={period.end} />
+              <p className="text-sm text-slate-600">
+                上記の記録を確認し、問題なければ確認登録してください。既に確認済みの場合も、再登録すると新しいバージョンとして履歴に残ります。
+              </p>
+              <input
+                name="comment"
+                placeholder="コメント（任意）"
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <SubmitButton
+                className="w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+                pendingText="確認中..."
+              >
+                この期間を確認する
+              </SubmitButton>
+            </form>
+          </div>
         </section>
 
         {/* 店休日 */}

@@ -16,9 +16,16 @@ export async function confirmHalfMonth(formData: FormData) {
   const periodStart = String(formData.get("period_start") ?? "");
   const periodEnd = String(formData.get("period_end") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
+  // 管理画面(店舗別詳細)から呼ばれた場合はそちらへ戻す。任意の値をそのままredirect()に
+  // 渡さず、確認済みのstoreId自体からサーバー側で組み立てるためオープンリダイレクトにならない。
+  const fromAdmin = formData.get("admin_store_id") === storeId && storeId;
+  const returnPath = fromAdmin ? `/haccp/admin/stores/${storeId}` : "/haccp";
+  // 管理画面側はキオスクURL再発行など他の操作と結果を混同しないよう、専用のクエリキーを使う
+  const errorKey = fromAdmin ? "confirmError" : "error";
+  const successKey = fromAdmin ? "confirmSuccess" : "success";
 
   if (!companyId || !storeId || !periodStart || !periodEnd) {
-    redirect(`/haccp?error=${encodeURIComponent("期間情報が取得できませんでした")}`);
+    redirect(`${returnPath}?${errorKey}=${encodeURIComponent("期間情報が取得できませんでした")}`);
   }
 
   const { data: confirmation, error } = await supabase
@@ -40,7 +47,7 @@ export async function confirmHalfMonth(formData: FormData) {
     const message = error?.message.includes("row-level security")
       ? "責任者確認は店舗責任者以上の権限が必要です"
       : (error?.message ?? "登録に失敗しました");
-    redirect(`/haccp?error=${encodeURIComponent(message)}`);
+    redirect(`${returnPath}?${errorKey}=${encodeURIComponent(message)}`);
   }
 
   // 監査ログ(仕様書9「監査」)。ここでの失敗は登録自体をブロックしない既知のトレードオフ。
@@ -57,5 +64,6 @@ export async function confirmHalfMonth(formData: FormData) {
   }
 
   revalidatePath("/haccp");
-  redirect("/haccp");
+  revalidatePath(returnPath);
+  redirect(`${returnPath}?${successKey}=1`);
 }
