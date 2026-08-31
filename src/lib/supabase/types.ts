@@ -539,23 +539,23 @@ export type Database = {
       }
       haccp_keypoint_items: {
         Row: {
-          checked: boolean
           id: string
           item_code: string
+          judgment: string
           note: string | null
           response_id: string
         }
         Insert: {
-          checked?: boolean
           id?: string
           item_code: string
+          judgment: string
           note?: string | null
           response_id: string
         }
         Update: {
-          checked?: boolean
           id?: string
           item_code?: string
+          judgment?: string
           note?: string | null
           response_id?: string
         }
@@ -572,6 +572,7 @@ export type Database = {
       haccp_keypoint_responses: {
         Row: {
           company_id: string
+          confirmed_by_name: string | null
           created_at: string
           id: string
           recorded_by: string | null
@@ -582,6 +583,7 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          confirmed_by_name?: string | null
           created_at?: string
           id?: string
           recorded_by?: string | null
@@ -592,6 +594,7 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          confirmed_by_name?: string | null
           created_at?: string
           id?: string
           recorded_by?: string | null
@@ -2365,6 +2368,7 @@ export type Database = {
         Args: {
           p_token: string
           p_target_date: string
+          p_confirmed_by_name: string
           p_items: Json
           p_temp_value?: number | null
           p_temp_judgment?: string | null

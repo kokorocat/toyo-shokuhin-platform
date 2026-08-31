@@ -125,7 +125,7 @@ export async function computeKeypointStatus(
       .eq("status", "active"),
     supabase
       .from("haccp_keypoint_responses")
-      .select("id, store_id, version, haccp_keypoint_items(checked), haccp_temperature_labels(judgment)")
+      .select("id, store_id, version, haccp_keypoint_items(judgment), haccp_temperature_labels(judgment)")
       .in("store_id", storeIds)
       .eq("target_date", targetDate),
   ]);
@@ -152,7 +152,7 @@ export async function computeKeypointStatus(
     const items = (response.haccp_keypoint_items ?? []) as any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const labels = (response.haccp_temperature_labels ?? []) as any[];
-    const needsImprovement = items.some((i) => !i.checked) || labels.some((l) => l.judgment === "ng");
+    const needsImprovement = items.some((i) => i.judgment === "ng") || labels.some((l) => l.judgment === "ng");
     result.set(store.id, {
       status: "answered",
       needsImprovement,

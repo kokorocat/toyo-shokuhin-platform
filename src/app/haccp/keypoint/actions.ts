@@ -15,9 +15,23 @@ export async function recordKeypointCheck(formData: FormData) {
   const companyId = String(formData.get("company_id") ?? "");
   const storeId = String(formData.get("store_id") ?? "");
   const targetDate = String(formData.get("target_date") ?? "");
+  const confirmedByName = String(formData.get("confirmed_by_name") ?? "").trim();
 
-  if (!companyId || !storeId || !targetDate) {
+  if (!companyId || !storeId || !targetDate || !confirmedByName) {
     redirect(`/haccp/keypoint?error=${encodeURIComponent("必須項目が入力されていません")}`);
+  }
+
+  const itemJudgments: { code: string; judgment: string; note: string | null }[] = [];
+  for (const { code } of KEYPOINT_ITEMS) {
+    const judgment = String(formData.get(`judgment_${code}`) ?? "");
+    if (judgment !== "ok" && judgment !== "ng") {
+      redirect(`/haccp/keypoint?error=${encodeURIComponent("全ての項目に良否を入力してください")}`);
+    }
+    const note = String(formData.get(`note_${code}`) ?? "").trim() || null;
+    if (judgment === "ng" && !note) {
+      redirect(`/haccp/keypoint?error=${encodeURIComponent("否の項目には理由を入力してください")}`);
+    }
+    itemJudgments.push({ code, judgment, note });
   }
 
   // 元回答は保持し、既存の最大バージョンの次番で新版として保存する
@@ -39,6 +53,7 @@ export async function recordKeypointCheck(formData: FormData) {
       store_id: storeId,
       target_date: targetDate,
       recorded_by: user.id,
+      confirmed_by_name: confirmedByName,
       version: nextVersion,
     })
     .select("id")
@@ -50,11 +65,11 @@ export async function recordKeypointCheck(formData: FormData) {
     );
   }
 
-  const itemRows = KEYPOINT_ITEMS.map(({ code }) => ({
+  const itemRows = itemJudgments.map(({ code, judgment, note }) => ({
     response_id: response.id,
     item_code: code,
-    checked: formData.get(`checked_${code}`) === "on",
-    note: String(formData.get(`note_${code}`) ?? "").trim() || null,
+    judgment,
+    note,
   }));
 
   const { error: itemsError } = await supabase.from("haccp_keypoint_items").insert(itemRows);
@@ -68,6 +83,13 @@ export async function recordKeypointCheck(formData: FormData) {
   const temperatureNote = String(formData.get("temp_note") ?? "").trim();
   const labelJudgment = String(formData.get("label_judgment") ?? "").trim();
   const labelNote = String(formData.get("label_note") ?? "").trim();
+
+  if (temperatureJudgment === "ng" && !temperatureNote) {
+    redirect(`/haccp/keypoint?error=${encodeURIComponent("温度チェックがNGの場合は理由を入力してください")}`);
+  }
+  if (labelJudgment === "ng" && !labelNote) {
+    redirect(`/haccp/keypoint?error=${encodeURIComponent("ラベルチェックがNGの場合は理由を入力してください")}`);
+  }
 
   const labelRows: {
     response_id: string;

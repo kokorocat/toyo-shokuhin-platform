@@ -118,8 +118,9 @@ type KeypointResponseRow = {
   id: string;
   version: number;
   created_at: string;
+  confirmed_by_name: string | null;
   user_profiles: NamedActor;
-  haccp_keypoint_items: { item_code: string; checked: boolean; note: string | null }[];
+  haccp_keypoint_items: { item_code: string; judgment: string; note: string | null }[];
   haccp_temperature_labels: {
     label_type: string;
     measured_value: number | null;
@@ -239,7 +240,7 @@ export default async function HaccpAdminStoreDetailPage({
     supabase
       .from("haccp_keypoint_responses")
       .select(
-        "id, version, created_at, user_profiles(display_name), haccp_keypoint_items(item_code,checked,note), haccp_temperature_labels(label_type,measured_value,judgment,note)"
+        "id, version, created_at, confirmed_by_name, user_profiles(display_name), haccp_keypoint_items(item_code,judgment,note), haccp_temperature_labels(label_type,measured_value,judgment,note)"
       )
       .eq("store_id", storeId)
       .eq("target_date", targetDate)
@@ -425,7 +426,8 @@ export default async function HaccpAdminStoreDetailPage({
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-blue-50 px-5 py-3">
                 <h3 className="text-base font-bold text-blue-800">最新の回答内容</h3>
                 <p className="text-xs text-slate-400">
-                  v{latestKeypoint.version} ・ {latestKeypoint.user_profiles?.display_name ?? "(不明)"} ・{" "}
+                  v{latestKeypoint.version} ・確認者：{latestKeypoint.confirmed_by_name ?? "-"} ・記録者：
+                  {latestKeypoint.user_profiles?.display_name ?? "(不明)"} ・{" "}
                   {formatDateTime(latestKeypoint.created_at)} 登録
                 </p>
               </div>
@@ -433,14 +435,19 @@ export default async function HaccpAdminStoreDetailPage({
                 <ul className="mb-4 space-y-2">
                   {KEYPOINT_ITEMS.map(({ code, label }) => {
                     const item = keypointItemsByCode.get(code);
+                    const isNg = item?.judgment === "ng";
                     return (
                       <li key={code} className="flex items-center gap-3 text-sm text-slate-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            item?.checked ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                            !item
+                              ? "bg-slate-100 text-slate-500"
+                              : isNg
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {item?.checked ? "確認済" : "未確認"}
+                          {!item ? "未回答" : isNg ? "否" : "良"}
                         </span>
                         <span>{label}</span>
                         {item?.note && <span className="text-xs text-slate-400">({item.note})</span>}

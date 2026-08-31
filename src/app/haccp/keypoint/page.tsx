@@ -35,7 +35,7 @@ export default async function KeypointCheckPage({
 
   const { data: latestResponse } = await supabase
     .from("haccp_keypoint_responses")
-    .select("id, version, created_at")
+    .select("id, version, created_at, confirmed_by_name")
     .eq("store_id", ctx.store.id)
     .eq("target_date", today)
     .order("version", { ascending: false })
@@ -46,7 +46,7 @@ export default async function KeypointCheckPage({
     ? await Promise.all([
         supabase
           .from("haccp_keypoint_items")
-          .select("item_code, checked, note")
+          .select("item_code, judgment, note")
           .eq("response_id", latestResponse.id),
         supabase
           .from("haccp_temperature_labels")
@@ -95,22 +95,25 @@ export default async function KeypointCheckPage({
             ) : (
               <>
                 <p className="mb-3 text-xs text-slate-400">
-                  v{latestResponse.version} ・{" "}
+                  v{latestResponse.version} ・確認者：{latestResponse.confirmed_by_name ?? "-"} ・
                   {new Date(latestResponse.created_at).toLocaleString("ja-JP")} 登録
                 </p>
                 <ul className="mb-4 space-y-2">
                   {KEYPOINT_ITEMS.map(({ code, label }) => {
                     const item = itemsByCode.get(code);
+                    const isNg = item?.judgment === "ng";
                     return (
                       <li key={code} className="flex items-center gap-3 text-sm text-slate-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            item?.checked
-                              ? "bg-green-100 text-green-700"
-                              : "bg-slate-100 text-slate-500"
+                            !item
+                              ? "bg-slate-100 text-slate-500"
+                              : isNg
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {item?.checked ? "確認済" : "未確認"}
+                          {!item ? "未回答" : isNg ? "否" : "良"}
                         </span>
                         <span>{label}</span>
                         {item?.note && <span className="text-xs text-slate-400">({item.note})</span>}
@@ -164,30 +167,46 @@ export default async function KeypointCheckPage({
             />
           </div>
 
+          <div>
+            <label htmlFor="confirmed_by_name" className="mb-1.5 block text-sm font-medium text-slate-700">
+              確認者 <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="confirmed_by_name"
+              name="confirmed_by_name"
+              type="text"
+              required
+              placeholder="例）山田 太郎"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+
           {/* 6-item keypoints */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
               <h2 className="text-base font-bold text-blue-800">重要ポイント6項目</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                ※重要ポイントの正確な入力欄・単位・合否ルールは仕様書内で未確定のため、暫定的な構成で実装しています。
-              </p>
+              <p className="mt-1 text-xs text-slate-500">否の場合は理由の入力が必須です</p>
             </div>
             <div className="divide-y divide-slate-100">
               {KEYPOINT_ITEMS.map(({ code, label }) => (
                 <div key={code} className="px-5 py-4">
                   <p className="mb-2 text-sm font-medium text-slate-800">{label}</p>
-                  <label className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition-all has-[:checked]:border-green-500 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
-                    <input
-                      type="checkbox"
-                      name={`checked_${code}`}
-                      className="h-5 w-5 rounded border-slate-300 text-green-600 focus:ring-green-500/30"
-                    />
-                    <span>本日該当あり（重要管理点を確認済み）</span>
-                  </label>
+                  <fieldset className="mb-3">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+                        <input type="radio" name={`judgment_${code}`} value="ok" required className="sr-only" />
+                        良
+                      </label>
+                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                        <input type="radio" name={`judgment_${code}`} value="ng" required className="sr-only" />
+                        否
+                      </label>
+                    </div>
+                  </fieldset>
                   <input
                     type="text"
                     name={`note_${code}`}
-                    placeholder="メモ（任意）"
+                    placeholder="否の場合は理由を入力"
                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>

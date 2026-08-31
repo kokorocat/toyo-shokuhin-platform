@@ -1,5 +1,4 @@
-// HC-10 重要ポイント6項目の固定コードと表示ラベル
-// ※正式な項目定義は仕様書内で未確定のため、暫定値(actions.ts / page.tsx 双方で参照する単一の定義)
+// HC-10 重要ポイント6項目の固定コードと表示ラベル(actions.ts / page.tsx 双方で参照する単一の定義)
 export const KEYPOINT_ITEMS: { code: string; label: string }[] = [
   { code: "heat_room", label: "加熱(常温)" },
   { code: "heat_cold", label: "加熱(冷蔵)" },

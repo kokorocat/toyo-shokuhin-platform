@@ -73,10 +73,10 @@ export default async function KioskKeypointPage({
         <form action={kioskSubmitKeypoint}>
           <input type="hidden" name="token" value={token} />
 
-          {/* 回答日 card — matching GAS style */}
+          {/* 回答日・確認者 card — matching GAS style */}
           <div className="mb-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-3 text-base font-bold text-slate-800">回答日</h2>
-            <div>
+            <div className="mb-4">
               <label htmlFor="target_date" className="mb-1 block text-xs font-medium text-slate-500">
                 日付（必須）
               </label>
@@ -87,6 +87,19 @@ export default async function KioskKeypointPage({
                 required
                 defaultValue={today}
                 className="rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmed_by_name" className="mb-1 block text-xs font-medium text-slate-500">
+                確認者名（必須）
+              </label>
+              <input
+                id="confirmed_by_name"
+                name="confirmed_by_name"
+                type="text"
+                required
+                placeholder="例）山田 太郎"
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
@@ -107,19 +120,24 @@ export default async function KioskKeypointPage({
               <div key={code} className={`flex items-center border-b border-slate-100 px-5 py-4 last:border-0 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                 <span className="w-10 text-sm font-bold text-slate-400">{idx + 1}</span>
                 <div className="flex-1">
-                  <label className="flex items-center gap-3 text-base text-slate-700">
-                    <input
-                      type="checkbox"
-                      name={`checked_${code}`}
-                      className="h-5 w-5 rounded border-slate-300 text-green-600 focus:ring-green-500/30"
-                    />
-                    <span className="font-medium">{label}</span>
-                  </label>
+                  <p className="mb-2 font-medium text-slate-800">{label}</p>
+                  <fieldset className="mb-2">
+                    <div className="flex gap-2">
+                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+                        <input type="radio" name={`judgment_${code}`} value="ok" required className="sr-only" />
+                        良
+                      </label>
+                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                        <input type="radio" name={`judgment_${code}`} value="ng" required className="sr-only" />
+                        否
+                      </label>
+                    </div>
+                  </fieldset>
                   <input
                     type="text"
                     name={`note_${code}`}
-                    placeholder="メモ（任意）"
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                    placeholder="否の場合は理由を入力"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
