@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
-import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { AccessDenied } from "@/components/AccessDenied";
@@ -47,7 +46,8 @@ export default async function InvoiceDetailPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <PageHeader backHref="/ordering/admin/billing" backLabel="請求書一覧に戻る" title={invoice.invoice_number} />
+      <Link href="/ordering/admin/billing" className="text-sm text-blue-600 hover:underline">← 請求書一覧に戻る</Link>
+      <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">{invoice.invoice_number}</h1>
 
       {sp.success && <div className="mb-4"><Banner variant="success">再発行しました。</Banner></div>}
       {sp.error && <div className="mb-4"><Banner variant="error">{sp.error}</Banner></div>}
@@ -95,7 +95,7 @@ export default async function InvoiceDetailPage({
           <input type="hidden" name="period_start" value={invoice.period_start} />
           <input type="hidden" name="period_end" value={invoice.period_end} />
           <SubmitButton
-            className="w-full rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50"
+            className="w-full rounded-full border border-red-300 bg-white px-5 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50"
             pendingText="再発行中..."
           >
             この期間の請求書を再発行する

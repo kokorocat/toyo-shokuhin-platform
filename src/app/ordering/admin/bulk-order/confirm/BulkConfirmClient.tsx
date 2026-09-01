@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 import { Banner } from "@/components/Banner";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useCart } from "@/app/ordering/CartContext";
@@ -40,7 +40,10 @@ export function BulkConfirmClient({
   if (hydrated && (selectedStores.length === 0 || cart.items.length === 0)) {
     return (
       <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-        <PageHeader backHref="/ordering/admin/bulk-order" backLabel="カタログに戻る" title="一斉発注確認" />
+        <div className="mb-6">
+          <Link href="/ordering/admin/bulk-order" className="text-sm text-blue-600 hover:underline">← カタログに戻る</Link>
+          <h1 className="mt-2 text-lg font-bold text-slate-800">一斉発注確認</h1>
+        </div>
         <p className="text-sm text-slate-500">
           {cart.items.length === 0 ? "カートが空です。" : "発注先の店舗が選択されていません。"}商品と店舗を選択してください。
         </p>
@@ -70,7 +73,10 @@ export function BulkConfirmClient({
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 pb-32">
-      <PageHeader backHref="/ordering/admin/bulk-order" backLabel="カタログに戻る" title="一斉発注確認" />
+      <div className="mb-6">
+        <Link href="/ordering/admin/bulk-order" className="text-sm text-blue-600 hover:underline">← カタログに戻る</Link>
+        <h1 className="mt-2 text-lg font-bold text-slate-800">一斉発注確認</h1>
+      </div>
 
       {error && (
         <div className="mb-4">

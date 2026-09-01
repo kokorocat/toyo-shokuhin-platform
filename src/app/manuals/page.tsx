@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isMasterAdminRole } from "@/app/master/guard";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 
 export default async function ManualsPage() {
@@ -17,18 +16,25 @@ export default async function ManualsPage() {
     .order("updated_at", { ascending: false });
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
-      <PageHeader backHref="/" backLabel="店舗ポータルTOPに戻る" title="マニュアル一覧" />
-
-      {ctx && isMasterAdminRole(ctx.roleCode ?? null) && (
-        <div className="mb-4 text-right">
-          <Link href="/manuals/admin" className="text-sm text-blue-600 hover:underline">
-            マニュアルを管理する →
-          </Link>
+    <div className="min-h-screen">
+      <header className="bg-slate-800 px-4 py-4 text-white shadow-md">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="text-lg font-bold">マニュアル一覧</h1>
         </div>
-      )}
+      </header>
 
-      {!manuals || manuals.length === 0 ? (
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <Link href="/" className="text-sm text-blue-600 hover:underline">← ポータルTOPに戻る</Link>
+
+        {ctx && isMasterAdminRole(ctx.roleCode ?? null) && (
+          <div className="mb-4 mt-4 text-right">
+            <Link href="/manuals/admin" className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">
+              マニュアルを管理する →
+            </Link>
+          </div>
+        )}
+
+        {!manuals || manuals.length === 0 ? (
         <EmptyState message="現在閲覧できるマニュアルはありません。" />
       ) : (
         <ul className="space-y-2">
@@ -52,6 +58,7 @@ export default async function ManualsPage() {
           ))}
         </ul>
       )}
+      </div>
     </div>
   );
 }

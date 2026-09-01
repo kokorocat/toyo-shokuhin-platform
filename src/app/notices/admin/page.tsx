@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isMasterAdminRole, isSuperAdminRole } from "@/app/master/guard";
-import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { AccessDenied } from "@/components/AccessDenied";
@@ -57,16 +57,24 @@ export default async function NoticesAdminPage({
   const companyOptions = companies ?? [];
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl px-4 py-6">
-      <PageHeader backHref="/" backLabel="ポータルTOPに戻る" title="お知らせ管理" />
-
-      {sp.success && <div className="mb-4"><Banner variant="success">処理が完了しました。</Banner></div>}
-      {sp.error && <div className="mb-4"><Banner variant="error">{sp.error}</Banner></div>}
-
-      <div className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-slate-900">新規お知らせ作成</h2>
+    <div className="min-h-screen">
+      <header className="bg-gradient-to-r from-teal-700 via-teal-600 to-green-600 px-4 py-4 text-white shadow-md">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-lg font-bold">お知らせ管理</h1>
+          <p className="text-sm text-white/70">お知らせの作成・公開・管理</p>
         </div>
+      </header>
+
+      <div className="mx-auto max-w-3xl px-4 py-6">
+        <Link href="/" className="text-sm text-blue-600 hover:underline">← ポータルTOPに戻る</Link>
+
+        {sp.success && <div className="mb-4 mt-4"><Banner variant="success">処理が完了しました。</Banner></div>}
+        {sp.error && <div className="mb-4 mt-4"><Banner variant="error">{sp.error}</Banner></div>}
+
+        <div className="mb-8 mt-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-bold text-slate-900">新規お知らせ作成</h2>
+          </div>
         <form action={createNotice} className="space-y-4 px-5 py-5">
           <div>
             <label htmlFor="title" className={LABEL_CLASS}>タイトル <span className="text-red-600">*</span></label>
@@ -119,7 +127,7 @@ export default async function NoticesAdminPage({
             すぐに公開する（未選択の場合は下書き保存）
           </label>
           <SubmitButton
-            className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900"
+            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             pendingText="登録中..."
           >
             登録する
@@ -133,28 +141,32 @@ export default async function NoticesAdminPage({
       {!notices || notices.length === 0 ? (
         <EmptyState message="お知らせがまだありません。" />
       ) : (
-        <ul className="space-y-2">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 bg-teal-700 px-4 py-2.5 text-xs font-bold text-white">
+            <span>タイトル</span>
+            <span>対象</span>
+            <span>状態</span>
+            <span>操作</span>
+          </div>
           {notices.map((n) => {
             const scope = Array.isArray(n.notice_scopes) ? n.notice_scopes[0] : n.notice_scopes;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const companyName = (scope?.companies as any)?.name as string | undefined;
             return (
-              <li key={n.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${STATUS_BADGE[n.status] ?? "bg-slate-100 text-slate-500"}`}>
-                    {STATUS_LABELS[n.status] ?? n.status}
-                  </span>
-                  <span className="text-sm font-medium text-slate-800">{n.title}</span>
-                  <span className="ml-auto text-xs text-slate-400">
-                    {scope?.scope_type === "all" ? "全社" : companyName ?? "-"}
-                  </span>
-                </div>
-                <div className="mt-2 flex gap-2">
+              <div key={n.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 border-t border-slate-100 px-4 py-2.5">
+                <span className="truncate text-sm font-medium text-slate-800">{n.title}</span>
+                <span className="text-xs text-slate-500">
+                  {scope?.scope_type === "all" ? "全社" : companyName ?? "-"}
+                </span>
+                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${STATUS_BADGE[n.status] ?? "bg-slate-100 text-slate-500"}`}>
+                  {STATUS_LABELS[n.status] ?? n.status}
+                </span>
+                <div className="flex gap-2">
                   {n.status !== "published" && (
                     <form action={setNoticeStatus}>
                       <input type="hidden" name="notice_id" value={n.id} />
                       <input type="hidden" name="next_status" value="published" />
-                      <SubmitButton className="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm hover:bg-green-50">
+                      <SubmitButton className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-600">
                         公開する
                       </SubmitButton>
                     </form>
@@ -163,17 +175,18 @@ export default async function NoticesAdminPage({
                     <form action={setNoticeStatus}>
                       <input type="hidden" name="notice_id" value={n.id} />
                       <input type="hidden" name="next_status" value="unpublished" />
-                      <SubmitButton className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50">
+                      <SubmitButton className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-red-600">
                         非公開にする
                       </SubmitButton>
                     </form>
                   )}
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
+      </div>
     </div>
   );
 }

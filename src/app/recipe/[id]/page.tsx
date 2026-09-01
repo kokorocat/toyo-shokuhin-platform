@@ -17,15 +17,8 @@ const FILE_TYPE_LABELS: Record<string, string> = {
 
 const FILE_TYPE_ORDER = ["work_instruction", "container", "pop", "seal_label", "video", "other"];
 
-// Office Online Viewerのfetchが完了するまでの余裕を見て、他のsigned URL(10分)より長めに取る。
 const SIGNED_URL_TTL_SECONDS = 60 * 30;
 
-// レシピ原本(Excel)をアプリ内でプレビューする(仕様書RV-20「左約80%メインプレビュー」相当)。
-// 独自のシート描画・ズームエンジンを新規に作る時間が無いため、Microsoft純正のOffice Online
-// Viewerへ署名付きURLを渡して埋め込む方式を採用(社内向けにOffice365を利用しているクライアント
-// 環境と親和性が高く、シートタブ切替もビューア自身のUIでそのまま利用できる)。
-// 注意: プレビュー時、原本ファイルの内容がMicrosoftのサーバーを経由する。この点はクライアントに
-// 説明済みで、了承のうえで採用している。
 function officeViewerUrl(fileUrl: string): string {
   return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
 }
@@ -51,7 +44,6 @@ export default async function RecipeDetailPage({
     .eq("id", id)
     .maybeSingle();
 
-  // RLSスコープ外、または存在しないIDはnotFoundとして扱う(URL直指定での範囲外取得を防止)
   if (!recipe) notFound();
 
   const [{ data: files }, { data: relatedProducts }] = await Promise.all([
@@ -67,7 +59,6 @@ export default async function RecipeDetailPage({
       .order("display_order"),
   ]);
 
-  // 閲覧ログ(仕様書5: レシピを開いた時点で記録)。失敗しても閲覧自体はブロックしない。
   await supabase.from("recipe_view_logs").insert({ recipe_id: id, user_id: ctx.userId });
 
   const currentVersion = recipe.recipe_versions;
@@ -103,7 +94,7 @@ export default async function RecipeDetailPage({
 
         <Link
           href="/recipe"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -118,7 +109,7 @@ export default async function RecipeDetailPage({
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* メインプレビュー(PC約80%) */}
+          {/* Main preview (left ~78%) — matching GAS layout */}
           <div className="min-w-0 lg:w-[78%]">
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
@@ -129,7 +120,7 @@ export default async function RecipeDetailPage({
                       href={officeViewerUrl(originalUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-slate-700"
                     >
                       全画面で見る
                     </a>
@@ -137,7 +128,7 @@ export default async function RecipeDetailPage({
                       href={originalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
                     >
                       原本ファイルを開く
                     </a>
@@ -158,64 +149,102 @@ export default async function RecipeDetailPage({
             </div>
           </div>
 
-          {/* 関連コンテンツ(PC約20%) */}
-          <div className="min-w-0 space-y-6 lg:w-[22%]">
-            <section>
-              <h2 className="mb-3 text-sm font-bold text-slate-900">関連資料</h2>
-              <div className="space-y-2">
-                {FILE_TYPE_ORDER.map((type) => {
-                  const items = filesByType.get(type) ?? [];
-                  return (
-                    <div key={type} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                      <p className="mb-1.5 text-xs font-semibold text-slate-600">{FILE_TYPE_LABELS[type]}</p>
-                      {items.length === 0 ? (
-                        <p className="text-xs text-slate-400">登録されていません</p>
-                      ) : (
-                        <ul className="space-y-1">
-                          {items.map((f) => {
-                            const url = signedFileUrls.get(f.id);
-                            return (
-                              <li key={f.id}>
-                                {url ? (
-                                  <a
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block rounded-lg px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-slate-100"
-                                  >
-                                    開く →
-                                  </a>
-                                ) : (
-                                  <span className="text-xs text-slate-400">読み込みエラー</span>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
+          {/* Related content sidebar (right ~22%) — matching GAS layout */}
+          <div className="min-w-0 space-y-4 lg:w-[22%]">
+            {/* Related products — GAS uses amber/orange cards */}
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <h2 className="text-sm font-bold text-slate-900">関連商品</h2>
+              </div>
+              <div className="px-4 py-3">
+                {!relatedProducts || relatedProducts.length === 0 ? (
+                  <p className="text-xs text-slate-400">関連商品が登録されていません。</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {relatedProducts.map((p) => (
+                      <li key={p.id} className="rounded-lg bg-amber-50 px-3 py-2.5 text-sm">
+                        <p className="font-bold text-amber-900">{p.product_name}</p>
+                        <p className="mt-0.5 text-xs text-amber-700">
+                          {[p.product_code, p.spec, p.supplier].filter(Boolean).join(" / ")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </section>
 
-            <section>
-              <h2 className="mb-3 text-sm font-bold text-slate-900">関連商品</h2>
-              {!relatedProducts || relatedProducts.length === 0 ? (
-                <EmptyState message="関連商品が登録されていません。" />
-              ) : (
-                <ul className="space-y-2">
-                  {relatedProducts.map((p) => (
-                    <li key={p.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-sm font-medium text-slate-800">{p.product_name}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {[p.product_code, p.spec, p.supplier].filter(Boolean).join(" / ")}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            {/* Recipe files — GAS shows "レシピ・画像" with dark button + file card */}
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <h2 className="text-sm font-bold text-slate-900">レシピ・画像</h2>
+              </div>
+              <div className="px-4 py-3">
+                {originalUrl && (
+                  <a
+                    href={officeViewerUrl(originalUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mb-3 block w-full rounded-lg bg-slate-800 px-4 py-2.5 text-center text-sm font-bold text-white shadow-sm transition-colors hover:bg-slate-700"
+                  >
+                    全画面で見る
+                  </a>
+                )}
+                {originalUrl && (
+                  <div className="rounded-lg bg-slate-800 px-4 py-3 text-white">
+                    <p className="text-sm font-medium leading-snug">{recipe.name}</p>
+                    <p className="mt-0.5 text-xs text-white/60">レシピ</p>
+                  </div>
+                )}
+                {!originalUrl && (
+                  <p className="text-xs text-slate-400">ファイルが登録されていません。</p>
+                )}
+              </div>
             </section>
+
+            {/* Additional file types */}
+            {FILE_TYPE_ORDER.map((type) => {
+              const items = filesByType.get(type) ?? [];
+              return (
+                <section key={type} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    <h2 className="text-sm font-bold text-slate-900">{FILE_TYPE_LABELS[type]}</h2>
+                  </div>
+                  <div className="px-4 py-3">
+                    {items.length === 0 ? (
+                      <p className="text-xs text-slate-400">
+                        {FILE_TYPE_LABELS[type]}はありません。
+                      </p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {items.map((f) => {
+                          const url = signedFileUrls.get(f.id);
+                          return (
+                            <li key={f.id}>
+                              {url ? (
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-slate-100"
+                                >
+                                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                  </svg>
+                                  開く
+                                </a>
+                              ) : (
+                                <span className="text-xs text-slate-400">読み込みエラー</span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
       </div>

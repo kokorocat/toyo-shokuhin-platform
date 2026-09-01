@@ -4,7 +4,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isMasterAdminRole, isSuperAdminRole } from "@/app/master/guard";
-import { PageHeader } from "@/components/PageHeader";
+import Link from "next/link";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { AccessDenied } from "@/components/AccessDenied";
@@ -55,13 +55,21 @@ export default async function ManualsAdminPage({
   const companyOptions = companies ?? [];
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl px-4 py-6">
-      <PageHeader backHref="/manuals" backLabel="マニュアル一覧に戻る" title="マニュアル管理" />
+    <div className="min-h-screen">
+      <header className="bg-gradient-to-r from-teal-700 via-teal-600 to-green-600 px-4 py-4 text-white shadow-md">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-lg font-bold">マニュアル管理</h1>
+          <p className="text-sm text-white/70">マニュアルの登録・公開・管理</p>
+        </div>
+      </header>
 
-      {sp.success && <div className="mb-4"><Banner variant="success">処理が完了しました。</Banner></div>}
-      {sp.error && <div className="mb-4"><Banner variant="error">{sp.error}</Banner></div>}
+      <div className="mx-auto max-w-3xl px-4 py-6">
+        <Link href="/manuals" className="text-sm text-blue-600 hover:underline">← マニュアル一覧に戻る</Link>
 
-      <div className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+        {sp.success && <div className="mb-4 mt-4"><Banner variant="success">処理が完了しました。</Banner></div>}
+        {sp.error && <div className="mb-4 mt-4"><Banner variant="error">{sp.error}</Banner></div>}
+
+        <div className="mb-8 mt-4 rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
           <h2 className="text-sm font-bold text-slate-900">新規マニュアル登録</h2>
         </div>
@@ -102,7 +110,7 @@ export default async function ManualsAdminPage({
             />
           </div>
           <SubmitButton
-            className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900"
+            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             pendingText="アップロード中..."
           >
             登録する
@@ -110,53 +118,60 @@ export default async function ManualsAdminPage({
         </form>
       </div>
 
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-        マニュアル一覧（{(manuals ?? []).length}件）
-      </h2>
-      {!manuals || manuals.length === 0 ? (
-        <EmptyState message="マニュアルがまだありません。" />
-      ) : (
-        <ul className="space-y-2">
-          {manuals.map((m) => {
-            const scope = Array.isArray(m.manual_scopes) ? m.manual_scopes[0] : m.manual_scopes;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const companyName = (scope?.companies as any)?.name as string | undefined;
-            return (
-              <li key={m.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          マニュアル一覧（{(manuals ?? []).length}件）
+        </h2>
+        {!manuals || manuals.length === 0 ? (
+          <EmptyState message="マニュアルがまだありません。" />
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 bg-teal-700 px-4 py-2.5 text-xs font-bold text-white">
+              <span>タイトル</span>
+              <span>対象</span>
+              <span>状態</span>
+              <span>操作</span>
+            </div>
+            {manuals.map((m) => {
+              const scope = Array.isArray(m.manual_scopes) ? m.manual_scopes[0] : m.manual_scopes;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const companyName = (scope?.companies as any)?.name as string | undefined;
+              return (
+                <div key={m.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 border-t border-slate-100 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <span className="truncate text-sm font-medium text-slate-800">{m.title}</span>
+                    {m.category && <span className="ml-2 text-xs text-slate-400">（{m.category}）</span>}
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {scope?.scope_type === "all" ? "全社" : companyName ?? "-"}
+                  </span>
                   <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${STATUS_BADGE[m.status] ?? "bg-slate-100 text-slate-500"}`}>
                     {STATUS_LABELS[m.status] ?? m.status}
                   </span>
-                  <span className="text-sm font-medium text-slate-800">{m.title}</span>
-                  {m.category && <span className="text-xs text-slate-400">（{m.category}）</span>}
-                  <span className="ml-auto text-xs text-slate-400">
-                    {scope?.scope_type === "all" ? "全社" : companyName ?? "-"}
-                  </span>
+                  <div className="flex gap-2">
+                    {m.status !== "ready" ? (
+                      <form action={unpublishManual}>
+                        <input type="hidden" name="manual_id" value={m.id} />
+                        <input type="hidden" name="next_status" value="ready" />
+                        <SubmitButton className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-600">
+                          公開する
+                        </SubmitButton>
+                      </form>
+                    ) : (
+                      <form action={unpublishManual}>
+                        <input type="hidden" name="manual_id" value={m.id} />
+                        <input type="hidden" name="next_status" value="unpublished" />
+                        <SubmitButton className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-red-600">
+                          非公開にする
+                        </SubmitButton>
+                      </form>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-2 flex gap-2">
-                  {m.status !== "ready" ? (
-                    <form action={unpublishManual}>
-                      <input type="hidden" name="manual_id" value={m.id} />
-                      <input type="hidden" name="next_status" value="ready" />
-                      <SubmitButton className="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm hover:bg-green-50">
-                        公開する
-                      </SubmitButton>
-                    </form>
-                  ) : (
-                    <form action={unpublishManual}>
-                      <input type="hidden" name="manual_id" value={m.id} />
-                      <input type="hidden" name="next_status" value="unpublished" />
-                      <SubmitButton className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50">
-                        非公開にする
-                      </SubmitButton>
-                    </form>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

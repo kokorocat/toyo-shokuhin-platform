@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/PageHeader";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 30;
 
@@ -29,7 +29,10 @@ export default async function ManualViewerPage({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-6">
-      <PageHeader backHref="/manuals" backLabel="マニュアル一覧に戻る" title={manual.title} />
+      <div className="mb-4">
+        <Link href="/manuals" className="text-sm text-blue-600 hover:underline">← マニュアル一覧に戻る</Link>
+        <h1 className="mt-2 text-lg font-bold text-slate-800">{manual.title}</h1>
+      </div>
       {fileUrl ? (
         <div className="mt-4 flex-1 overflow-hidden rounded-xl border border-slate-200 shadow-sm" style={{ minHeight: "75vh" }}>
           <iframe src={fileUrl} title={manual.title} className="h-full min-h-[75vh] w-full" />

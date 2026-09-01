@@ -7,7 +7,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { AccessDenied } from "@/components/AccessDenied";
 import { ProductRow, type CatalogProduct } from "@/app/ordering/ProductRow";
@@ -83,7 +82,8 @@ export default async function BulkOrderCatalogPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 pb-28">
-      <PageHeader backHref="/ordering/admin" backLabel="受発注管理TOPに戻る" title="複数店舗一斉発注" />
+      <Link href="/ordering/admin" className="text-sm text-blue-600 hover:underline">← 受発注管理TOPに戻る</Link>
+      <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">複数店舗一斉発注</h1>
 
       <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <form className="mb-3">

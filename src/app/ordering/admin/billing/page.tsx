@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
 import { getHalfMonthPeriod } from "@/lib/haccp/admin-dashboard";
-import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { EmptyState } from "@/components/EmptyState";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -85,7 +84,8 @@ export default async function OrderingBillingPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-4 py-6">
-      <PageHeader backHref="/ordering/admin" backLabel="受発注管理TOPに戻る" title="請求書発行" />
+      <Link href="/ordering/admin" className="text-sm text-blue-600 hover:underline">← 受発注管理TOPに戻る</Link>
+      <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">請求書発行</h1>
 
       {sp.success && <div className="mb-4"><Banner variant="success">請求書を発行しました。</Banner></div>}
       {sp.error && <div className="mb-4"><Banner variant="error">{sp.error}</Banner></div>}
@@ -107,7 +107,7 @@ export default async function OrderingBillingPage({
             </select>
           </div>
           <div className="sm:col-span-2">
-            <SubmitButton className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-900">
+            <SubmitButton className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
               表示する
             </SubmitButton>
           </div>
@@ -116,7 +116,7 @@ export default async function OrderingBillingPage({
 
       {storeId && (
         <>
-          <div className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="mb-6 rounded-xl border border-slate-200 border-t-4 border-t-blue-500 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-5 py-4">
               <h2 className="text-sm font-bold text-slate-900">
                 今期（{currentPeriod.start} 〜 {currentPeriod.end}）の未請求金額
@@ -131,7 +131,7 @@ export default async function OrderingBillingPage({
                 <input type="hidden" name="period_start" value={currentPeriod.start} />
                 <input type="hidden" name="period_end" value={currentPeriod.end} />
                 <SubmitButton
-                  className="rounded-lg bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
                   pendingText="発行中..."
                 >
                   この期間の請求書を発行する
