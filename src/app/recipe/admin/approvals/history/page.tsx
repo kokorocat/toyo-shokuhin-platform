@@ -24,10 +24,10 @@ function formatDate(value: string): string {
 }
 
 function matchesBucket(item: { status: string; rejection_note: string | null }, bucket: string): boolean {
-  if (bucket === "rejected") return item.status === "draft" && Boolean(item.rejection_note);
+  if (bucket === "rejected") return item.status === "rejected";
   if (bucket === "approved") return item.status === "approved";
   if (bucket === "published") return item.status === "published";
-  return item.status !== "draft" || Boolean(item.rejection_note);
+  return item.status !== "draft";
 }
 
 const HISTORY_SELECT =
@@ -134,10 +134,18 @@ export default async function RecipeApprovalHistoryPage({
                                 ? "bg-green-100 text-green-700"
                                 : item.status === "approved"
                                   ? "bg-blue-100 text-blue-700"
-                                  : "bg-red-100 text-red-700"
+                                  : item.status === "rejected"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-amber-100 text-amber-700"
                             }`}
                           >
-                            {item.status === "published" ? "公開済み" : item.status === "approved" ? "承認済み(未公開)" : "差し戻し"}
+                            {item.status === "published"
+                              ? "公開済み"
+                              : item.status === "approved"
+                                ? "承認済み(未公開)"
+                                : item.status === "rejected"
+                                  ? "差し戻し"
+                                  : "承認待ち"}
                           </span>
                           {item.status === "approved" && (
                             <form action={approveRecipe}>

@@ -47,7 +47,17 @@ export default async function RecipeApprovalsPage({
   // 全件判定済みのバッチも、直近作成分であればそのまま折りたたみ表示で残す(判定直後に
   // 「判定済みX/X件」が確認できるようにするため)。
   const [{ data: recent }, { data: recentlyPublished }] = await Promise.all([
-    supabase.from("recipes").select(PENDING_SELECT).order("created_at", { ascending: false }).limit(200),
+    supabase
+      .from("recipes")
+      .select(PENDING_SELECT)
+      // 承認済みレシピアップロード(/recipe/admin/upload)由来の行はapplication_idを持たず
+      // 申請フローを経ていないため、この一覧(承認待ち一覧=申請バッチ単位の判定画面)には
+      // 含めない。含めてしまうと、公開済みの一括アップロード行がここに紛れ込んで表示が
+      // 煩雑になるだけでなく、limit(200)の枠を消費して直近の本当の未判定申請が
+      // 一覧から溢れてしまう(history/page.tsxの絞り込みと同じ理由)。
+      .not("application_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(200),
     supabase
       .from("recipes")
       .select("id, recipe_code, name, updated_at, companies!recipes_company_id_fkey(name)")
@@ -129,7 +139,7 @@ export default async function RecipeApprovalsPage({
                     </summary>
                     <div className="divide-y divide-slate-100 border-t border-slate-100">
                       {app.items.map((item) => {
-                        const rejected = Boolean(item.rejection_note);
+                        const rejected = item.status === "rejected";
                         return (
                           <div key={item.id} className="px-5 py-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">

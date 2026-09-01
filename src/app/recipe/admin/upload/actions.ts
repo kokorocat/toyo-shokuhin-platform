@@ -30,6 +30,7 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
   const results: FileResult[] = [];
 
   for (const file of files) {
+   try {
     // Excelファイルはファイル内の呼出No.(E3)・商品名(Q3)セルから読み取る(エリアの略称込みの値
     // のため、エリアが違えば数字が同じでも別コードとして扱える — クライアント確認済みの実運用に
     // 対応するための2026-08-27追加)。xlsx以外(pdf等)や、想定セルが読み取れないExcelファイルは、
@@ -48,14 +49,32 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
       continue;
     }
 
+    // status='rejected'の行は一意制約の対象外(20260901000003)なので重複チェックからも除外する。
     const { data: existing } = await supabase
       .from("recipes")
       .select("id")
       .eq("company_id", companyId)
       .eq("recipe_code", parsed.code)
+      .neq("status", "rejected")
       .maybeSingle();
     if (existing) {
       results.push({ fileName: file.name, status: "duplicate", detail: `呼出番号 ${parsed.code} は既に存在します` });
+      continue;
+    }
+
+    // ファイル本体のアップロードをDB行の作成より先に行う(manuals/admin/actions.tsと同じ
+    // パターン)。先にrecipes行(status='published')を作ってしまうと、アップロードが失敗した
+    // 場合に「公開済みなのに原本ファイルが無い」レシピがそのまま一覧に出てしまい、しかも
+    // 重複チェックに阻まれて同じ呼出番号での再アップロードもできなくなる。
+    const ext = file.name.split(".").pop() || "xlsx";
+    const path = `${companyId}/approved/${parsed.code}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("recipe-files").upload(path, file, {
+      contentType: file.type || undefined,
+      upsert: false,
+    });
+    if (uploadError) {
+      console.error("[recipe/admin/upload] file upload failed", file.name, uploadError);
+      results.push({ fileName: file.name, status: "error", detail: "ファイル本体の保存に失敗しました" });
       continue;
     }
 
@@ -73,22 +92,9 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
       .single();
 
     if (recipeError || !recipe) {
+      await supabase.storage.from("recipe-files").remove([path]);
       results.push({ fileName: file.name, status: "error", detail: recipeError?.message ?? "登録に失敗しました" });
       continue;
-    }
-
-    const ext = file.name.split(".").pop() || "xlsx";
-    const path = `${companyId}/approved/${parsed.code}-${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("recipe-files").upload(path, file, {
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-
-    let storagePath: string | null = null;
-    if (uploadError) {
-      console.error("[recipe/admin/upload] file upload failed", file.name, uploadError);
-    } else {
-      storagePath = path;
     }
 
     const { data: version, error: versionError } = await supabase
@@ -96,7 +102,7 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
       .insert({
         recipe_id: recipe.id,
         version_no: 1,
-        original_storage_path: storagePath,
+        original_storage_path: path,
         uploaded_by: user.id,
         published_at: new Date().toISOString(),
       })
@@ -104,6 +110,8 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
       .single();
 
     if (versionError || !version) {
+      await supabase.storage.from("recipe-files").remove([path]);
+      await supabase.from("recipes").delete().eq("id", recipe.id);
       results.push({ fileName: file.name, status: "error", detail: versionError?.message ?? "版の登録に失敗しました" });
       continue;
     }
@@ -118,10 +126,20 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
       p_version_id: version.id,
     });
     if (linkError) {
+      // current_version_idが紐付かないまま「アップロード完了」と報告すると、公開済みなのに
+      // /recipe/[id]が永久に「登録されていません」になる行が黙って残ってしまう。
       console.error("[recipe/admin/upload] linking current_version_id failed", file.name, linkError);
+      await supabase.storage.from("recipe-files").remove([path]);
+      await supabase.from("recipes").delete().eq("id", recipe.id);
+      results.push({ fileName: file.name, status: "error", detail: "版の紐付けに失敗しました" });
+      continue;
     }
 
-    results.push({ fileName: file.name, status: uploadError ? "error" : "ok", detail: uploadError ? "ファイル本体の保存に失敗しました(レシピ情報は登録済み)" : undefined });
+    results.push({ fileName: file.name, status: "ok" });
+   } catch (e) {
+    console.error("[recipe/admin/upload] unexpected error", file.name, e);
+    results.push({ fileName: file.name, status: "error", detail: "予期しないエラーが発生しました" });
+   }
   }
 
   const okCount = results.filter((r) => r.status === "ok").length;

@@ -69,6 +69,13 @@ export async function approveRecipeWithoutPublishing(formData: FormData) {
   const redirectTo = resolveRedirectTo(formData);
   if (!recipeId) redirect(redirectTo);
 
+  // 存在チェックを先に行う(存在しないid相手のUPDATEはSupabaseがerror:nullで返すため、
+  // チェック無しだと消えた/権限外の行に対する操作が黙って「成功」扱いになってしまう)。
+  const { data: recipe } = await supabase.from("recipes").select("id").eq("id", recipeId).maybeSingle();
+  if (!recipe) {
+    redirect(`${redirectTo}?error=${encodeURIComponent("対象のレシピが見つかりません")}`);
+  }
+
   // 社内的な理由でまだ公開しない「承認」。既存のapproveRecipe(status→published)とは異なり、
   // 一覧には出さないまま判定だけ完了させる。rejection_noteもapproveRecipeと同様にクリアする。
   const { error } = await supabase
@@ -79,9 +86,12 @@ export async function approveRecipeWithoutPublishing(formData: FormData) {
     redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
   }
 
+  // 公開済みだったレシピを「承認(未公開)」に差し戻す操作もあり得るため、公開一覧(/recipe)側の
+  // キャッシュも更新する。
   revalidatePath("/recipe/admin/approvals");
   revalidatePath("/recipe/admin/approvals/history");
   revalidatePath("/recipe/admin/history");
+  revalidatePath("/recipe");
   redirect(`${redirectTo}?success=1`);
 }
 
@@ -100,17 +110,39 @@ export async function rejectRecipe(formData: FormData) {
     redirect(`${redirectTo}?error=${encodeURIComponent("差し戻し理由を入力してください")}`);
   }
 
-  // 却下(差し戻し)はdraftのまま理由を記録する。物理削除はしない(仕様書の論理削除原則)。
+  // 存在チェックを先に行う(approveRecipeと同じ理由)。現在のstatus/current_version_idも
+  // 取得し、公開済みからの差し戻しならrecipe_versions.published_atもクリアする。
+  const { data: recipe } = await supabase
+    .from("recipes")
+    .select("id, status, current_version_id")
+    .eq("id", recipeId)
+    .maybeSingle();
+  if (!recipe) {
+    redirect(`${redirectTo}?error=${encodeURIComponent("対象のレシピが見つかりません")}`);
+  }
+
+  // 却下(差し戻し)は専用のstatus='rejected'で理由を記録する。物理削除はしない
+  // (仕様書の論理削除原則)。'draft'のままにすると呼出番号のunique制約に阻まれて
+  // 同じ番号での再提出が永久にブロックされるため、'rejected'は一意制約の対象外として扱う
+  // (20260901000003参照)。updated_atも明示更新する(承認系アクションと同じ理由)。
   const { error } = await supabase
     .from("recipes")
-    .update({ status: "draft", rejection_note: reason })
+    .update({ status: "rejected", rejection_note: reason, updated_at: new Date().toISOString() })
     .eq("id", recipeId);
   if (error) {
     redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
   }
 
+  if (recipe.status === "published" && recipe.current_version_id) {
+    await supabase
+      .from("recipe_versions")
+      .update({ published_at: null })
+      .eq("id", recipe.current_version_id);
+  }
+
   revalidatePath("/recipe/admin/approvals");
   revalidatePath("/recipe/admin/approvals/history");
   revalidatePath("/recipe/admin/history");
+  revalidatePath("/recipe");
   redirect(`${redirectTo}?success=1`);
 }

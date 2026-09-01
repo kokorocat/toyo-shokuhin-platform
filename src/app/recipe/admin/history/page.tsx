@@ -13,6 +13,7 @@ const STATUS_LABELS: Record<string, string> = {
   draft: "承認待ち",
   approved: "承認済み(未公開)",
   published: "公開済み",
+  rejected: "差し戻し",
 };
 
 const BUCKETS = [
@@ -27,8 +28,8 @@ function formatDate(value: string): string {
 }
 
 function matchesBucket(item: { status: string; rejection_note: string | null }, bucket: string): boolean {
-  if (bucket === "pending") return item.status === "draft" && !item.rejection_note;
-  if (bucket === "rejected") return item.status === "draft" && Boolean(item.rejection_note);
+  if (bucket === "pending") return item.status === "draft";
+  if (bucket === "rejected") return item.status === "rejected";
   if (bucket === "resolved") return item.status === "approved" || item.status === "published";
   return true;
 }
@@ -136,12 +137,12 @@ export default async function RecipeHistoryPage({
                               ? "bg-green-100 text-green-700"
                               : item.status === "approved"
                                 ? "bg-blue-100 text-blue-700"
-                                : item.rejection_note
+                                : item.status === "rejected"
                                   ? "bg-red-100 text-red-700"
                                   : "bg-amber-100 text-amber-700"
                           }`}
                         >
-                          {item.rejection_note && item.status === "draft" ? "差し戻し" : STATUS_LABELS[item.status] ?? item.status}
+                          {STATUS_LABELS[item.status] ?? item.status}
                         </span>
                       </div>
                     ))}

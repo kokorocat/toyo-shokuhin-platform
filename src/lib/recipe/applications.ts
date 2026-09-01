@@ -38,10 +38,9 @@ export type ApplicationGroup = {
   items: ApplicationRecipeItem[];
 };
 
-// 差し戻し済み(status='draft' かつ rejection_note有り)は「判定済み」として扱う
-// (承認待ち一覧のstatus='draft'絞り込みには含まれるが、既に一度判定されているため)。
+// 未判定は status='draft' のみ('rejected'は差し戻しという判定が既に下された状態)。
 export function isJudged(item: Pick<ApplicationRecipeItem, "status" | "rejection_note">): boolean {
-  return !(item.status === "draft" && !item.rejection_note);
+  return item.status !== "draft";
 }
 
 export function groupByApplication(rows: FlatRecipeRow[]): ApplicationGroup[] {
