@@ -75,6 +75,20 @@ export default async function InspectionHistoryDetailPage({
             <p>エリア長名：{inspection.area_manager_name ?? "-"}</p>
             <p>エリア衛生担当者名：{inspection.area_hygiene_officer_name ?? "-"}</p>
             <p>営業許可証有効期限：{inspection.business_license_expiry_date ?? "-"}</p>
+            {inspection.self_evaluation && (
+              <p>
+                自主評価：
+                <span
+                  className={`ml-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${
+                    inspection.self_evaluation === "needs_improvement"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {inspection.self_evaluation === "needs_improvement" ? "要改善" : "良好"}
+                </span>
+              </p>
+            )}
           </div>
           <div className="divide-y divide-slate-100 px-5 py-2">
             {INSPECTION_CATEGORIES.map((category) => (

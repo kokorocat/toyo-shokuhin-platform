@@ -63,14 +63,16 @@ export default async function OrderingBillingPage({
   }[] = [];
 
   if (storeId) {
+    // JST(+09:00)を明示しないと、DBセッション既定のUTCで日付境界が解釈され、深夜0時台の
+    // 注文が前日の期間に取りこぼされる(issue_invoice RPC側もこの前提でAsia/Tokyo変換して集計する)。
     const { data: unbilledOrders } = await supabase
       .from("orders")
       .select("total_amount")
       .eq("store_id", storeId)
       .is("invoice_id", null)
       .neq("status", "cancelled")
-      .gte("created_at", currentPeriod.start)
-      .lte("created_at", `${currentPeriod.end} 23:59:59`);
+      .gte("created_at", `${currentPeriod.start}T00:00:00+09:00`)
+      .lte("created_at", `${currentPeriod.end}T23:59:59+09:00`);
     unbilledTotal = (unbilledOrders ?? []).reduce((sum, o) => sum + o.total_amount, 0);
 
     const { data: invoices } = await supabase
@@ -123,7 +125,26 @@ export default async function OrderingBillingPage({
               </h2>
             </div>
             <div className="px-5 py-5">
-              <p className="mb-4 text-2xl font-bold tabular-nums text-slate-900">{yen(unbilledTotal)}</p>
+              {(() => {
+                const tax = Math.round(unbilledTotal * 0.1);
+                const total = unbilledTotal + tax;
+                return (
+                  <div className="mb-4 space-y-1">
+                    <div className="flex items-baseline justify-between text-sm text-slate-500">
+                      <span>小計（税抜）</span>
+                      <span className="tabular-nums">{yen(unbilledTotal)}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between text-sm text-slate-500">
+                      <span>消費税（10%）</span>
+                      <span className="tabular-nums">{yen(tax)}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between border-t border-slate-100 pt-1">
+                      <span className="text-sm font-bold text-slate-900">発行される請求額（税込）</span>
+                      <span className="text-2xl font-bold tabular-nums text-slate-900">{yen(total)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               <form action={issueInvoice} className="space-y-3">
                 <input type="hidden" name="company_id" value={companyId} />
                 <input type="hidden" name="store_id" value={storeId} />

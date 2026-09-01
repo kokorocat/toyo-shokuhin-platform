@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
-import { EmptyState } from "@/components/EmptyState";
 import { AccessDenied } from "@/components/AccessDenied";
 import { RecipeHeader, RecipeTabs } from "../RecipeShell";
 
@@ -104,7 +103,7 @@ export default async function RecipeDetailPage({
 
         <div className="mb-6">
           <p className="text-xs text-slate-400">{recipe.recipe_code}</p>
-          <h1 className="text-xl font-bold text-slate-900">{recipe.name}</h1>
+          <h1 className="text-xl font-bold text-slate-900 break-words">{recipe.name}</h1>
           {recipe.category && <p className="mt-1 text-sm text-slate-500">{recipe.category}</p>}
         </div>
 
@@ -163,8 +162,8 @@ export default async function RecipeDetailPage({
                   <ul className="space-y-2">
                     {relatedProducts.map((p) => (
                       <li key={p.id} className="rounded-lg bg-amber-50 px-3 py-2.5 text-sm">
-                        <p className="font-bold text-amber-900">{p.product_name}</p>
-                        <p className="mt-0.5 text-xs text-amber-700">
+                        <p className="font-bold text-amber-900 break-words">{p.product_name}</p>
+                        <p className="mt-0.5 text-xs text-amber-700 break-words">
                           {[p.product_code, p.spec, p.supplier].filter(Boolean).join(" / ")}
                         </p>
                       </li>
@@ -192,7 +191,7 @@ export default async function RecipeDetailPage({
                 )}
                 {originalUrl && (
                   <div className="rounded-lg bg-slate-800 px-4 py-3 text-white">
-                    <p className="text-sm font-medium leading-snug">{recipe.name}</p>
+                    <p className="text-sm font-medium leading-snug break-words">{recipe.name}</p>
                     <p className="mt-0.5 text-xs text-white/60">レシピ</p>
                   </div>
                 )}

@@ -27,24 +27,36 @@ export async function uploadManual(formData: FormData) {
     redirect(`/manuals/admin?error=${encodeURIComponent("PDFファイルのみアップロードできます")}`);
   }
 
-  const { data: manual, error: manualError } = await supabase
-    .from("manuals")
-    .insert({ title, category: category || null, status: "ready", created_by: user.id })
-    .select("id")
-    .single();
-
-  if (manualError || !manual) {
-    redirect(`/manuals/admin?error=${encodeURIComponent(manualError?.message ?? "登録に失敗しました")}`);
-  }
-
-  const path = `${manual.id}/v1-${Date.now()}.pdf`;
+  // 途中のいずれかの手順が失敗した場合、それまでに作成した行・ファイルを削除してやり直せる
+  // 状態に戻す(status='ready'なのに本文が無い、閲覧不可のまま残る、等の中途半端な状態を防ぐ)。
+  // アップロード自体はDB行を何も作る前に最初に行い、失敗時に消すものを増やさないようにする。
+  const path = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.pdf`;
   const { error: uploadError } = await supabase.storage.from("manual-files").upload(path, file!, {
     contentType: "application/pdf",
     upsert: false,
   });
-
   if (uploadError) {
     redirect(`/manuals/admin?error=${encodeURIComponent(uploadError.message)}`);
+  }
+
+  async function cleanup(manualId?: string) {
+    await supabase.storage.from("manual-files").remove([path]);
+    if (manualId) {
+      await supabase.from("manuals").delete().eq("id", manualId);
+    }
+  }
+
+  // 全ての行が揃うまではprocessing状態とし、最後にreadyへ切り替える(ページ画像化パイプラインは
+  // 今回対象外だが、途中失敗時に"公開中なのに実体が無い"状態を作らないためこの状態遷移は残す)。
+  const { data: manual, error: manualError } = await supabase
+    .from("manuals")
+    .insert({ title, category: category || null, status: "processing", created_by: user.id })
+    .select("id")
+    .single();
+
+  if (manualError || !manual) {
+    await cleanup();
+    redirect(`/manuals/admin?error=${encodeURIComponent(manualError?.message ?? "登録に失敗しました")}`);
   }
 
   const { data: version, error: versionError } = await supabase
@@ -60,14 +72,16 @@ export async function uploadManual(formData: FormData) {
     .single();
 
   if (versionError || !version) {
+    await cleanup(manual.id);
     redirect(`/manuals/admin?error=${encodeURIComponent(versionError?.message ?? "登録に失敗しました")}`);
   }
 
   const { error: linkError } = await supabase
     .from("manuals")
-    .update({ current_version_id: version.id })
+    .update({ current_version_id: version.id, status: "ready" })
     .eq("id", manual.id);
   if (linkError) {
+    await cleanup(manual.id);
     redirect(`/manuals/admin?error=${encodeURIComponent(linkError.message)}`);
   }
 
@@ -77,6 +91,7 @@ export async function uploadManual(formData: FormData) {
     company_id: scopeType === "company" ? companyId : null,
   });
   if (scopeError) {
+    await cleanup(manual.id);
     redirect(`/manuals/admin?error=${encodeURIComponent(scopeError.message)}`);
   }
 

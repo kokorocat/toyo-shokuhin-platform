@@ -28,6 +28,21 @@ export async function confirmHalfMonth(formData: FormData) {
     redirect(`${returnPath}?${errorKey}=${encodeURIComponent("期間情報が取得できませんでした")}`);
   }
 
+  // 他のHACCP記録アクションと同じく、既存の最大バージョンの次番で新版として保存する
+  // (無いとisAdminからの再確認が毎回version=1で衝突し、最新がどれか分からなくなる)。
+  const { data: existing } = await supabase
+    .from("manager_confirmations")
+    .select("version")
+    .eq("store_id", storeId)
+    .eq("period_type", "half_month")
+    .eq("period_start", periodStart)
+    .eq("period_end", periodEnd)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const nextVersion = (existing?.version ?? 0) + 1;
+
   const { data: confirmation, error } = await supabase
     .from("manager_confirmations")
     .insert({
@@ -38,6 +53,7 @@ export async function confirmHalfMonth(formData: FormData) {
       period_end: periodEnd,
       confirmed_by: user.id,
       comment: comment || null,
+      version: nextVersion,
     })
     .select("id")
     .single();

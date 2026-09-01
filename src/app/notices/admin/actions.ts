@@ -4,6 +4,16 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+// <input type="datetime-local">の値("YYYY-MM-DDTHH:mm")はタイムゾーン情報を持たないため、
+// そのままtimestamptz列へ渡すとDBセッションの既定タイムゾーン(Supabaseの既定はUTC)で解釈され、
+// 管理者が選んだ日本時間より9時間ずれて保存されてしまう。この画面は日本時間のみを扱うため、
+// +09:00を明示的に付与する。
+function toJstIso(datetimeLocal: string): string | null {
+  const trimmed = datetimeLocal.trim();
+  if (!trimmed) return null;
+  return `${trimmed}:00+09:00`;
+}
+
 export async function createNotice(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -35,8 +45,8 @@ export async function createNotice(formData: FormData) {
       body,
       importance,
       external_url: externalUrl || null,
-      display_start_at: displayStartAt || new Date().toISOString(),
-      display_end_at: displayEndAt || null,
+      display_start_at: toJstIso(displayStartAt) ?? new Date().toISOString(),
+      display_end_at: toJstIso(displayEndAt),
       status: publishNow ? "published" : "draft",
       created_by: user.id,
     })
@@ -54,7 +64,12 @@ export async function createNotice(formData: FormData) {
   });
 
   if (scopeError) {
-    redirect(`/notices/admin?error=${encodeURIComponent(scopeError.message)}`);
+    // 公開対象(notice_scopes)が無いお知らせは誰にも見えず操作もできないゴミデータになる
+    // ため、後始末せず放置しない。この時点で本文自体は既に登録済みだが、削除して
+    // やり直せる状態に戻す(管理者側にrevalidate漏れが無いよう明示的にpathも更新する)。
+    await supabase.from("portal_notices").delete().eq("id", notice.id);
+    revalidatePath("/notices/admin");
+    redirect(`/notices/admin?error=${encodeURIComponent(`公開対象の登録に失敗したため、お知らせ自体も取り消しました: ${scopeError.message}`)}`);
   }
 
   await supabase.from("audit_logs").insert({

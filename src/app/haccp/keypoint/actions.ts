@@ -34,6 +34,22 @@ export async function recordKeypointCheck(formData: FormData) {
     itemJudgments.push({ code, judgment, note });
   }
 
+  const temperatureValue = String(formData.get("temp_value") ?? "").trim();
+  const temperatureJudgment = String(formData.get("temp_judgment") ?? "").trim();
+  const temperatureNote = String(formData.get("temp_note") ?? "").trim();
+  const labelJudgment = String(formData.get("label_judgment") ?? "").trim();
+  const labelNote = String(formData.get("label_note") ?? "").trim();
+
+  // 温度・ラベルの否理由チェックも、DBへの書き込みが始まる前(この時点)で行う。
+  // 挿入後に検証すると、検証失敗時に不完全な記録(回答本体+6項目のみ、温度/ラベル欠落)が
+  // ロールバックされずそのまま残ってしまう。
+  if (temperatureJudgment === "ng" && !temperatureNote) {
+    redirect(`/haccp/keypoint?error=${encodeURIComponent("温度チェックがNGの場合は理由を入力してください")}`);
+  }
+  if (labelJudgment === "ng" && !labelNote) {
+    redirect(`/haccp/keypoint?error=${encodeURIComponent("ラベルチェックがNGの場合は理由を入力してください")}`);
+  }
+
   // 元回答は保持し、既存の最大バージョンの次番で新版として保存する
   const { data: existing } = await supabase
     .from("haccp_keypoint_responses")
@@ -76,19 +92,6 @@ export async function recordKeypointCheck(formData: FormData) {
 
   if (itemsError) {
     redirect(`/haccp/keypoint?error=${encodeURIComponent(itemsError.message)}`);
-  }
-
-  const temperatureValue = String(formData.get("temp_value") ?? "").trim();
-  const temperatureJudgment = String(formData.get("temp_judgment") ?? "").trim();
-  const temperatureNote = String(formData.get("temp_note") ?? "").trim();
-  const labelJudgment = String(formData.get("label_judgment") ?? "").trim();
-  const labelNote = String(formData.get("label_note") ?? "").trim();
-
-  if (temperatureJudgment === "ng" && !temperatureNote) {
-    redirect(`/haccp/keypoint?error=${encodeURIComponent("温度チェックがNGの場合は理由を入力してください")}`);
-  }
-  if (labelJudgment === "ng" && !labelNote) {
-    redirect(`/haccp/keypoint?error=${encodeURIComponent("ラベルチェックがNGの場合は理由を入力してください")}`);
   }
 
   const labelRows: {

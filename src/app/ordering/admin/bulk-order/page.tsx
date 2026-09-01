@@ -10,6 +10,7 @@ import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
 import { EmptyState } from "@/components/EmptyState";
 import { AccessDenied } from "@/components/AccessDenied";
 import { ProductRow, type CatalogProduct } from "@/app/ordering/ProductRow";
+import { SubmitButton } from "@/components/SubmitButton";
 import { BulkOrderBar } from "./BulkOrderBar";
 import { StoreSelector } from "./StoreSelector";
 
@@ -86,23 +87,34 @@ export default async function BulkOrderCatalogPage({
       <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">複数店舗一斉発注</h1>
 
       <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <form className="mb-3">
-          <label htmlFor="company_id" className="mb-1.5 block text-xs font-medium text-slate-600">会社</label>
-          <select
-            id="company_id"
-            name="company_id"
-            defaultValue={companyId}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            <option value="">選択してください</option>
-            {companyOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+        <form className="mb-3 flex items-end gap-2">
+          <div className="flex-1">
+            <label htmlFor="company_id" className="mb-1.5 block text-xs font-medium text-slate-600">会社</label>
+            <select
+              id="company_id"
+              name="company_id"
+              defaultValue={companyId}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="">選択してください</option>
+              {companyOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <SubmitButton className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+            切り替える
+          </SubmitButton>
         </form>
 
-        {companyId && storeOptions.length > 0 ? (
-          <StoreSelector stores={storeOptions} />
-        ) : companyId ? (
-          <p className="text-xs text-slate-400">この会社に店舗がありません。</p>
+        {companyId ? (
+          <>
+            {/* companyIdが変わるたびに選択状態をリセットするためkeyを付ける(会社をまたいだ
+                古い選択がUIに残らないように)。storeOptionsが0件でも必ずマウントし、
+                他社の古いlocalStorageの値をここで確実に除去する。 */}
+            <StoreSelector key={companyId} stores={storeOptions} />
+            {storeOptions.length === 0 && (
+              <p className="mt-2 text-xs text-slate-400">この会社に店舗がありません。</p>
+            )}
+          </>
         ) : (
           <p className="text-xs text-slate-400">会社を選択すると発注先の店舗を選べます。</p>
         )}

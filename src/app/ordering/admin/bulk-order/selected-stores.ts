@@ -21,3 +21,11 @@ export function setSelectedStoreIds(ids: string[]): void {
     // ignore storage errors (private mode, quota, etc.)
   }
 }
+
+export function clearSelectedStoreIds(): void {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore storage errors (private mode, quota, etc.)
+  }
+}

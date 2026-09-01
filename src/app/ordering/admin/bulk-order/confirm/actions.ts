@@ -14,7 +14,7 @@ export type BulkConfirmInput = {
 };
 
 export type BulkConfirmResult =
-  | { ok: true; bulkOrderId: string; orderCount: number }
+  | { ok: true; bulkOrderId: string; orderCount: number; requestedCount: number; failures: { storeId: string; error: string }[] }
   | { ok: false; error: string; partial?: { storeId: string; error: string }[] };
 
 export async function bulkConfirmOrder(input: BulkConfirmInput): Promise<BulkConfirmResult> {
@@ -73,5 +73,11 @@ export async function bulkConfirmOrder(input: BulkConfirmInput): Promise<BulkCon
     return { ok: false, error: "すべての店舗で発注に失敗しました。", partial: failures };
   }
 
-  return { ok: true, bulkOrderId: bulkOrder.id, orderCount: successCount };
+  return {
+    ok: true,
+    bulkOrderId: bulkOrder.id,
+    orderCount: successCount,
+    requestedCount: input.storeIds.length,
+    failures,
+  };
 }

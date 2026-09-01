@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Banner } from "@/components/Banner";
 import { StickyActionBar } from "@/components/StickyActionBar";
 import { useCart } from "@/app/ordering/CartContext";
-import { getSelectedStoreIds } from "../selected-stores";
+import { getSelectedStoreIds, setSelectedStoreIds as persistSelectedStoreIds, clearSelectedStoreIds } from "../selected-stores";
 import { bulkConfirmOrder } from "./actions";
 
 const INPUT_CLASS =
@@ -30,9 +30,18 @@ export function BulkConfirmClient({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    // 現在の会社の店舗一覧(allStores)に実在するIDだけを有効とする。別会社・非アクティブ店舗の
+    // 古いlocalStorageが残っていた場合はここで除外し、除外後の内容をlocalStorageへ書き戻す
+    // (画面に表示される選択店舗数と、実際に送信される内容を常に一致させるため)。
+    const stored = getSelectedStoreIds();
+    const valid = stored.filter((id) => allStores.some((s) => s.id === id));
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelectedStoreIds(getSelectedStoreIds());
+    setSelectedStoreIds(valid);
+    if (valid.length !== stored.length) {
+      persistSelectedStoreIds(valid);
+    }
     setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedStores = allStores.filter((s) => selectedStoreIds.includes(s.id));
@@ -54,9 +63,12 @@ export function BulkConfirmClient({
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
+      // 画面に表示している(=会社の現在の店舗一覧で検証済みの)店舗IDのみを送信する。
+      // localStorageの生の値をそのまま送ると、画面表示と実際の発注先がずれる可能性がある。
+      const storeIds = selectedStores.map((s) => s.id);
       const result = await bulkConfirmOrder({
         companyId,
-        storeIds: selectedStoreIds,
+        storeIds,
         deliveryDate,
         shippingAddress,
         memo,
@@ -67,6 +79,18 @@ export function BulkConfirmClient({
         return;
       }
       cart.clear();
+      clearSelectedStoreIds();
+      if (result.failures.length > 0) {
+        const failedNames = result.failures
+          .map((f) => selectedStores.find((s) => s.id === f.storeId)?.name ?? f.storeId)
+          .join("、");
+        router.push(
+          `/ordering/admin/orders?success=1&warning=${encodeURIComponent(
+            `${result.orderCount}/${result.requestedCount}店舗への発注が完了しました。失敗した店舗: ${failedNames}`
+          )}`
+        );
+        return;
+      }
       router.push("/ordering/admin/orders?success=1");
     });
   }

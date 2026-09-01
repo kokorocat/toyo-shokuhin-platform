@@ -73,41 +73,27 @@ export default async function EmployeeHistoryDetailPage({
               const answer = itemsByCode.get(item.code);
               const isBad = answer?.answer === "bad";
               return (
-                <div key={item.code} className="flex items-center gap-3 py-3 text-sm text-slate-700">
-                  <span
-                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      !answer ? "bg-slate-100 text-slate-500" : isBad ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {!answer ? "未回答" : isBad ? "否" : "良"}
-                  </span>
-                  <span>{item.label}</span>
+                <div key={item.code} className="py-3 text-sm text-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        !answer ? "bg-slate-100 text-slate-500" : isBad ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {!answer ? "未回答" : isBad ? "否" : "良"}
+                    </span>
+                    <span>{item.label}</span>
+                  </div>
+                  {isBad && (answer?.note || answer?.action_taken) && (
+                    <div className="mt-1.5 ml-1 space-y-0.5 text-xs text-slate-500">
+                      {answer?.note && <p>備考：{answer.note}</p>}
+                      {answer?.action_taken && <p>対応内容：{answer.action_taken}</p>}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-          {(() => {
-            const values = [...itemsByCode.values()];
-            const noteValue = values.find((v) => v.note)?.note;
-            const actionValue = values.find((v) => v.action_taken)?.action_taken;
-            if (!noteValue && !actionValue) return null;
-            return (
-              <div className="space-y-2 border-t border-slate-100 px-5 py-4 text-sm text-slate-700">
-                {noteValue && (
-                  <p>
-                    <span className="font-medium">備考：</span>
-                    {noteValue}
-                  </p>
-                )}
-                {actionValue && (
-                  <p>
-                    <span className="font-medium">対応内容：</span>
-                    {actionValue}
-                  </p>
-                )}
-              </div>
-            );
-          })()}
         </div>
       </div>
     </div>

@@ -73,6 +73,8 @@ export default async function OrderingAdminOrdersPage({
   }
 
   const errorMessage = first(sp.error);
+  const successFlag = first(sp.success);
+  const warningMessage = first(sp.warning);
 
   const rawStatus = first(sp.status);
   const statusFilter = rawStatus && STATUS_KEYS.includes(rawStatus) ? rawStatus : undefined;
@@ -125,6 +127,17 @@ export default async function OrderingAdminOrdersPage({
         <div className="mb-4">
           <Banner variant="error">{errorMessage}</Banner>
         </div>
+      )}
+      {warningMessage ? (
+        <div className="mb-4">
+          <Banner variant="warning">{warningMessage}</Banner>
+        </div>
+      ) : (
+        successFlag && (
+          <div className="mb-4">
+            <Banner variant="success">発注を確定しました。</Banner>
+          </div>
+        )
       )}
       {error && (
         <div className="mb-4">
