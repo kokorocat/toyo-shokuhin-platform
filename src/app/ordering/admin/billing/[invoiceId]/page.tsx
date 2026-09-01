@@ -38,11 +38,42 @@ export default async function InvoiceDetailPage({
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, order_number, created_at, total_amount")
+    .select("id, order_number, created_at, total_amount, order_lines(product_name_snapshot, quantity, unit_price_snapshot, subtotal)")
     .eq("invoice_id", invoiceId)
     .order("created_at", { ascending: true });
 
   const store = invoice.stores as unknown as { name: string; store_code: string } | null;
+  const shippingFee = 0;
+  const rawLines = (orders ?? []).flatMap(
+    (o) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (((o as any).order_lines ?? []) as { product_name_snapshot: string; quantity: number; unit_price_snapshot: number; subtotal: number }[])
+  );
+  // 商品明細は商品ごとに集計する: 「注文個数」=この商品を含んだ注文件数、「合計個数」=
+  // 期間内でのこの商品の合計数量。以前は集計せず注文明細行をそのまま並べていたため、
+  // 両列がどちらも同じ1注文分のquantityになってしまっていた。
+  const productSummaryMap = new Map<
+    string,
+    { productName: string; orderCount: number; totalQuantity: number; unitPrice: number; subtotal: number }
+  >();
+  for (const l of rawLines) {
+    const existing = productSummaryMap.get(l.product_name_snapshot);
+    if (existing) {
+      existing.orderCount += 1;
+      existing.totalQuantity += l.quantity;
+      existing.subtotal += l.subtotal;
+      existing.unitPrice = l.unit_price_snapshot;
+    } else {
+      productSummaryMap.set(l.product_name_snapshot, {
+        productName: l.product_name_snapshot,
+        orderCount: 1,
+        totalQuantity: l.quantity,
+        unitPrice: l.unit_price_snapshot,
+        subtotal: l.subtotal,
+      });
+    }
+  }
+  const productSummary = [...productSummaryMap.values()];
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
@@ -69,15 +100,17 @@ export default async function InvoiceDetailPage({
         </div>
         <div className="space-y-2 px-5 py-5 text-sm">
           <div className="flex justify-between"><span className="text-slate-500">小計</span><span className="tabular-nums">{yen(invoice.subtotal)}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">送料</span><span className="tabular-nums">{yen(shippingFee)}</span></div>
           <div className="flex justify-between"><span className="text-slate-500">消費税</span><span className="tabular-nums">{yen(invoice.tax_amount)}</span></div>
           <div className="flex justify-between border-t border-slate-100 pt-2 text-base font-bold"><span>合計</span><span className="tabular-nums">{yen(invoice.total_amount)}</span></div>
+          {/* 要確認: invoices に送料カラムが無いため 0 表示 */}
         </div>
       </div>
 
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">対象注文（{(orders ?? []).length}件）</h2>
       <ul className="mb-6 space-y-2">
         {(orders ?? []).map((o) => (
-          <li key={o.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <li key={o.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
             <div>
               <p className="text-sm font-medium text-slate-800">{o.order_number}</p>
               <p className="text-xs text-slate-400">{new Date(o.created_at).toLocaleDateString("ja-JP")}</p>
@@ -86,6 +119,32 @@ export default async function InvoiceDetailPage({
           </li>
         ))}
       </ul>
+
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">商品明細</h2>
+      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="bg-slate-50 text-xs text-slate-600">
+              <th className="px-3 py-2">商品名</th>
+              <th className="px-3 py-2">注文個数</th>
+              <th className="px-3 py-2">合計個数</th>
+              <th className="px-3 py-2">単価</th>
+              <th className="px-3 py-2">小計</th>
+            </tr>
+          </thead>
+          <tbody>
+            {productSummary.map((p) => (
+              <tr key={p.productName} className="border-t">
+                <td className="px-3 py-2">{p.productName}</td>
+                <td className="px-3 py-2">{p.orderCount}</td>
+                <td className="px-3 py-2">{p.totalQuantity}</td>
+                <td className="px-3 py-2">{yen(p.unitPrice)}</td>
+                <td className="px-3 py-2">{yen(p.subtotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {invoice.status === "issued" && (
         <form action={issueInvoice}>

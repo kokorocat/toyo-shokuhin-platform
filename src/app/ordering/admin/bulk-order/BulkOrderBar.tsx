@@ -31,7 +31,7 @@ export function BulkOrderBar({ companyId }: { companyId: string }) {
       <Link
         href={`/ordering/admin/bulk-order/confirm?company_id=${companyId}`}
         className={`rounded-full px-5 py-2 text-sm font-bold text-white shadow-sm transition-colors ${
-          storeCount === 0 ? "pointer-events-none bg-slate-300" : "bg-emerald-500 hover:bg-emerald-600"
+          storeCount === 0 ? "pointer-events-none bg-slate-300" : "bg-blue-700 hover:bg-blue-800"
         }`}
       >
         確認へ進む

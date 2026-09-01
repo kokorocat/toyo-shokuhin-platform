@@ -3,17 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { todayInTokyo } from "@/lib/date";
+import { KEYPOINT_ITEMS } from "@/app/haccp/keypoint/constants";
 import { kioskSubmitKeypoint } from "./actions";
 import Link from "next/link";
-
-const KEYPOINT_ITEMS: { code: string; label: string }[] = [
-  { code: "heat_room", label: "加熱(常温)" },
-  { code: "heat_cold", label: "加熱(冷蔵)" },
-  { code: "nonheat_room", label: "非加熱(常温)" },
-  { code: "nonheat_cold", label: "非加熱(冷蔵)" },
-  { code: "mixed_room", label: "混合(常温)加熱・非加熱" },
-  { code: "mixed_cold", label: "混合(冷蔵)加熱・非加熱" },
-];
+import { SharedKeypointNote } from "@/components/SharedKeypointNote";
 
 export default async function KioskKeypointPage({
   params,
@@ -116,32 +109,26 @@ export default async function KioskKeypointPage({
               <span className="flex-1">項目</span>
               <span className="w-28 text-center">判定</span>
             </div>
-            {KEYPOINT_ITEMS.map(({ code, label }, idx) => (
-              <div key={code} className={`flex items-center border-b border-slate-100 px-5 py-4 last:border-0 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
-                <span className="w-10 text-sm font-bold text-slate-400">{idx + 1}</span>
-                <div className="flex-1">
-                  <p className="mb-2 font-medium text-slate-800">{label}</p>
-                  <fieldset className="mb-2">
-                    <div className="flex gap-2">
-                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
-                        <input type="radio" name={`judgment_${code}`} value="ok" required className="sr-only" />
-                        良
-                      </label>
-                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
-                        <input type="radio" name={`judgment_${code}`} value="ng" required className="sr-only" />
-                        否
-                      </label>
-                    </div>
-                  </fieldset>
-                  <input
-                    type="text"
-                    name={`note_${code}`}
-                    placeholder="否の場合は理由を入力"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
-                  />
+            {KEYPOINT_ITEMS.map(({ code, label }, idx) => {
+              const circledNum = String.fromCodePoint(0x2460 + idx);
+              return (
+                <div key={code} className={`flex items-center border-b border-slate-100 px-5 py-3.5 last:border-0 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                  <span className="w-10 text-sm font-bold text-slate-400">{idx + 1}</span>
+                  <span className="flex-1 text-sm font-medium text-slate-800">{circledNum} {label}</span>
+                  <div className="flex w-28 justify-center gap-2">
+                    <label className="cursor-pointer rounded-full border-2 border-green-300 px-4 py-1.5 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+                      <input type="radio" name={`judgment_${code}`} value="ok" required className="sr-only" />
+                      良
+                    </label>
+                    <label className="cursor-pointer rounded-full border-2 border-red-300 px-4 py-1.5 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                      <input type="radio" name={`judgment_${code}`} value="ng" required className="sr-only" />
+                      否
+                    </label>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            <SharedKeypointNote />
           </div>
 
           {/* 温度・ラベルチェック */}

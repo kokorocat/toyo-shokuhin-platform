@@ -35,7 +35,7 @@ export default async function RecipeSubmitPage({
   if (!selectedCompanyId) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <RecipeHeader />
+        <RecipeHeader ctx={ctx} />
         <div className="mx-auto max-w-5xl px-4 py-6">
           <RecipeTabs roleCode={ctx?.roleCode ?? null} activeHref="/recipe/admin/submit" />
           {error && <div className="mb-5"><Banner variant="error">{error}</Banner></div>}
@@ -67,7 +67,7 @@ export default async function RecipeSubmitPage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <RecipeHeader />
+      <RecipeHeader ctx={ctx} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <RecipeTabs roleCode={ctx?.roleCode ?? null} activeHref="/recipe/admin/submit" />
 
@@ -107,6 +107,9 @@ export default async function RecipeSubmitPage({
                     <option value="" disabled>選択してください</option>
                     {submitterOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
+                  <Link href={`/recipe/admin/submitters?company_id=${selectedCompanyId}`} className="mt-2 inline-block rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-blue-700">
+                    新規担当者を追加
+                  </Link>
                 </div>
 
                 <div>
@@ -144,12 +147,23 @@ export default async function RecipeSubmitPage({
                   </p>
                 </div>
 
+                <div>
+                  <label htmlFor="comment" className={LABEL_CLASS}>コメント</label>
+                  <textarea id="comment" name="comment" rows={3} placeholder="例：新規メニュー追加、修正内容など" className={INPUT_CLASS} />
+                  {/* 要確認: comment の保存先 */}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
                 <SubmitButton
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2"
+                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                   pendingText="申請中..."
                 >
                   申請する
                 </SubmitButton>
+                <button type="button" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700">下書き保存</button>
+                <button type="reset" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700">入力クリア</button>
+                {/* 要確認: 下書き保存の保存先ロジック */}
+                </div>
               </form>
               <p className="mt-3 text-xs text-slate-400">
                 申請後は承認待ちの状態となり、管理者の承認をもってレシピ一覧に公開されます。
@@ -159,12 +173,6 @@ export default async function RecipeSubmitPage({
         )}
 
         <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-3 text-center">
-          <Link
-            href={`/recipe/admin/submitters?company_id=${selectedCompanyId}`}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            申請者名簿を編集
-          </Link>
           {isRecipeAdminRole(ctx?.roleCode ?? null) && (
             <Link
               href="/recipe/admin/history"

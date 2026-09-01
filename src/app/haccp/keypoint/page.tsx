@@ -6,6 +6,7 @@ import { recordKeypointCheck } from "./actions";
 import { KEYPOINT_ITEMS } from "./constants";
 import { Banner } from "@/components/Banner";
 import { todayInTokyo } from "@/lib/date";
+import { SharedKeypointNote } from "@/components/SharedKeypointNote";
 
 const JUDGMENT_LABELS: Record<string, string> = {
   ok: "OK",
@@ -187,30 +188,33 @@ export default async function KeypointCheckPage({
               <h2 className="text-base font-bold text-blue-800">重要ポイント6項目</h2>
               <p className="mt-1 text-xs text-slate-500">否の場合は理由の入力が必須です</p>
             </div>
+            {/* Table header */}
+            <div className="flex items-center border-b border-slate-200 bg-slate-50 px-5 py-2 text-xs font-bold text-slate-500">
+              <span className="w-10">No</span>
+              <span className="flex-1">項目</span>
+              <span className="w-28 text-center">判定</span>
+            </div>
             <div className="divide-y divide-slate-100">
-              {KEYPOINT_ITEMS.map(({ code, label }) => (
-                <div key={code} className="px-5 py-4">
-                  <p className="mb-2 text-sm font-medium text-slate-800">{label}</p>
-                  <fieldset className="mb-3">
-                    <div className="flex flex-wrap gap-2">
-                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+              {KEYPOINT_ITEMS.map(({ code, label }, idx) => {
+                const circledNum = String.fromCodePoint(0x2460 + idx);
+                return (
+                  <div key={code} className={`flex items-center px-5 py-3.5 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
+                    <span className="w-10 text-sm font-bold text-slate-400">{idx + 1}</span>
+                    <span className="flex-1 text-sm font-medium text-slate-800">{circledNum} {label}</span>
+                    <div className="flex w-28 justify-center gap-2">
+                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-4 py-1.5 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
                         <input type="radio" name={`judgment_${code}`} value="ok" required className="sr-only" />
                         良
                       </label>
-                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-4 py-1.5 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
                         <input type="radio" name={`judgment_${code}`} value="ng" required className="sr-only" />
                         否
                       </label>
                     </div>
-                  </fieldset>
-                  <input
-                    type="text"
-                    name={`note_${code}`}
-                    placeholder="否の場合は理由を入力"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-              ))}
+                  </div>
+                );
+              })}
+              <SharedKeypointNote />
             </div>
           </div>
 
@@ -240,11 +244,11 @@ export default async function KeypointCheckPage({
                     </label>
                     <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
                       <input type="radio" name="temp_judgment" value="ok" className="sr-only" />
-                      OK
+                      良
                     </label>
                     <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
                       <input type="radio" name="temp_judgment" value="ng" className="sr-only" />
-                      NG
+                      否
                     </label>
                   </div>
                 </fieldset>
@@ -270,11 +274,11 @@ export default async function KeypointCheckPage({
                     </label>
                     <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
                       <input type="radio" name="label_judgment" value="ok" className="sr-only" />
-                      OK
+                      良
                     </label>
                     <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
                       <input type="radio" name="label_judgment" value="ng" className="sr-only" />
-                      NG
+                      否
                     </label>
                   </div>
                 </fieldset>

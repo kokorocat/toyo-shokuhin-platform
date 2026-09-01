@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
-import { EmptyState } from "@/components/EmptyState";
 import { isHaccpAdminRole } from "./guard";
 import { todayInTokyo } from "@/lib/date";
 import {
@@ -18,6 +17,8 @@ import {
   summarizeConfirmation,
   type HaccpAdminFilters,
 } from "@/lib/haccp/admin-dashboard";
+import { HaccpAdminChrome, HaccpAdminTabs, HaccpKpiRow } from "./HaccpAdminChrome";
+import { EmptyState } from "@/components/EmptyState";
 
 type SearchParams = {
   companyId?: string;
@@ -27,6 +28,9 @@ type SearchParams = {
   storeName?: string;
   date?: string;
   month?: string;
+  q?: string;
+  status?: string;
+  limit?: string;
 };
 
 const INPUT_CLASS =
@@ -128,12 +132,28 @@ export default async function HaccpAdminDashboardPage({
     storeName: params.storeName || undefined,
   };
 
-  const [{ data: companies }, { data: blocks }, { data: areas }, stores] = await Promise.all([
+  const [{ data: companies }, { data: blocks }, storesRaw, { count: employeeCount }, { data: authUser }] = await Promise.all([
     supabase.from("companies").select("id, name").eq("status", "active").order("name"),
     supabase.from("blocks").select("id, name, company_id").eq("status", "active").order("name"),
-    supabase.from("areas").select("id, name, company_id, block_id").eq("status", "active").order("name"),
     getScopedStores(supabase, filters),
+    supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.auth.getUser(),
   ]);
+
+  const q = (params.q ?? "").trim();
+  const statusFilter = params.status ?? "all";
+  const limitRaw = Number(params.limit);
+  const displayLimit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 50;
+  const stores = q
+    ? storesRaw.filter(
+        (s) =>
+          s.name.includes(q) ||
+          s.store_code.includes(q) ||
+          (s.area_name ?? "").includes(q)
+      )
+    : storesRaw;
+  const companyNameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+  const blockNameById = new Map((blocks ?? []).map((b) => [b.id, b.name]));
 
   const { start: periodStart, end: periodEnd } = getHalfMonthPeriod(targetDate);
 
@@ -157,129 +177,114 @@ export default async function HaccpAdminDashboardPage({
   if (filters.storeName) filterQuery.set("storeName", filters.storeName);
   filterQuery.set("date", targetDate);
   filterQuery.set("month", monthInputValue);
+  if (q) filterQuery.set("q", q);
   const filterQueryString = filterQuery.toString();
 
-  const filteredBlocks = filters.companyId ? (blocks ?? []).filter((b) => b.company_id === filters.companyId) : (blocks ?? []);
-  const filteredAreas = (areas ?? []).filter((a) => {
-    if (filters.companyId && a.company_id !== filters.companyId) return false;
-    if (filters.blockId && a.block_id !== filters.blockId) return false;
-    return true;
-  });
-
   return (
-    <div className="min-h-screen bg-white">
-      {/* Teal gradient header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 py-4 text-white shadow-md">
-        <h1 className="text-lg font-bold">HACCP 回答状況ダッシュボード</h1>
+    <HaccpAdminChrome
+      title="HACCP管理者ダッシュボード"
+      subtitle="店舗・従業員の登録／状態変更、HACCP回答状況の確認"
+      activePath="/haccp/admin"
+    >
+      <HaccpKpiRow
+        storeCount={storesRaw.length}
+        employeeCount={employeeCount ?? "-"}
+        needsCheck={keypointSummary.needsImprovement + employeeSummary.hasIssueStores + inspectionSummary.needsImprovement}
+        loginLabel={authUser.user?.email ?? ctx?.displayName ?? "-"}
+      />
+      <HaccpAdminTabs activePath="/haccp/admin" query={filterQueryString} />
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <Link
+          href="/master/stores/new"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-bold text-white"
+        >
+          ＋ 新店舗追加
+        </Link>
+        {/* 要確認: 保存処理は /master/stores 側。ここは導線のみ。 */}
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        <Link href="/" className="text-sm text-teal-600 hover:underline">
-          ← ポータルTOPに戻る
-        </Link>
-
-        {/* Stat cards row */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold tabular-nums text-slate-900">{stores.length}</p>
-            <p className="mt-1 text-xs font-medium text-teal-600">対象店舗数</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold tabular-nums text-slate-900">{keypointSummary.answered}</p>
-            <p className="mt-1 text-xs font-medium text-green-600">重要ポイント回答済</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold tabular-nums text-slate-900">{employeeSummary.recorded}</p>
-            <p className="mt-1 text-xs font-medium text-blue-600">従業員衛生 記録あり</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold tabular-nums text-slate-900">{inspectionSummary.answered}</p>
-            <p className="mt-1 text-xs font-medium text-amber-600">自主点検 回答済</p>
-          </div>
+      <h2 className="mt-6 text-lg font-bold text-teal-800">店舗管理</h2>
+      <form method="get" className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="min-w-[16rem] flex-1">
+          <label htmlFor="q" className={LABEL_CLASS}>店舗検索</label>
+          <input id="q" name="q" type="text" defaultValue={q} placeholder="店舗コード・店舗名・エリアで検索" className={INPUT_CLASS} />
         </div>
+        <div>
+          <label htmlFor="status" className={LABEL_CLASS}>ステータス</label>
+          <select id="status" name="status" defaultValue={statusFilter} className={INPUT_CLASS}>
+            <option value="all">すべて</option>
+            <option value="active">稼働中</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="limit" className={LABEL_CLASS}>表示件数</label>
+          <select id="limit" name="limit" defaultValue={String(displayLimit)} className={INPUT_CLASS}>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <input type="hidden" name="date" value={targetDate} />
+        <input type="hidden" name="month" value={monthInputValue} />
+        <button type="submit" className="rounded-lg border border-teal-600 px-4 py-2 text-sm font-bold text-teal-700">
+          再表示
+        </button>
+      </form>
 
-        {/* Pill-shaped tab navigation */}
-        <nav className="mt-6 flex flex-wrap gap-2">
-          <span className="rounded-full bg-teal-600 px-4 py-2 text-sm font-bold text-white">
-            ダッシュボード
-          </span>
-          <Link
-            href={`/haccp/admin/stores?${filterQueryString}`}
-            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            店舗別回答状況
-          </Link>
-        </nav>
+      <div className="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
+        <table className="w-full min-w-[980px] text-left text-sm">
+          <thead>
+            <tr className="bg-teal-50 text-xs font-bold text-teal-800">
+              <th className="px-3 py-2">店舗コード</th>
+              <th className="px-3 py-2">店舗名</th>
+              <th className="px-3 py-2">会社</th>
+              <th className="px-3 py-2">ブロック</th>
+              <th className="px-3 py-2">エリア</th>
+              <th className="px-3 py-2">状態</th>
+              <th className="px-3 py-2">HACCP重要ポイント</th>
+              <th className="px-3 py-2">従業員衛生</th>
+              <th className="px-3 py-2">食品衛生自主点検</th>
+              <th className="px-3 py-2">ステータス</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stores.slice(0, displayLimit).map((store) => {
+              const detailHref = `/haccp/admin/stores/${store.id}?date=${targetDate}&month=${monthInputValue}`;
+              return (
+                <tr key={store.id} className="border-t border-teal-50">
+                  <td className="px-3 py-2">{store.store_code}</td>
+                  <td className="px-3 py-2 font-medium">{store.name}</td>
+                  <td className="px-3 py-2">{companyNameById.get(store.company_id) ?? "-"}</td>
+                  <td className="px-3 py-2">{store.block_id ? (blockNameById.get(store.block_id) ?? "-") : "-"}</td>
+                  <td className="px-3 py-2">{store.area_name ?? "-"}</td>
+                  <td className="px-3 py-2">稼働中</td>
+                  <td className="px-3 py-2">
+                    <Link href={`${detailHref}#keypoint`} className="text-teal-700 underline">開く</Link>
+                  </td>
+                  <td className="px-3 py-2">
+                    <Link href={`${detailHref}#employee`} className="text-teal-700 underline">開く</Link>
+                  </td>
+                  <td className="px-3 py-2">
+                    <Link href={`${detailHref}#inspection`} className="text-teal-700 underline">開く</Link>
+                  </td>
+                  <td className="px-3 py-2">
+                    <Link href={`/master/stores/${store.id}`} className="mr-1 rounded-md bg-teal-700 px-2 py-1 text-xs font-bold text-white">編集</Link>
+                    <span className="rounded-md border border-teal-500 px-2 py-1 text-xs font-bold text-teal-800">状態</span>
+                    {/* 要確認: 状態変更の保存ロジックは未接続 */}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Filter form */}
-        <form method="get" className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-            <h2 className="text-base font-bold text-blue-800">絞り込み条件</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label htmlFor="companyId" className={LABEL_CLASS}>会社</label>
-              <select id="companyId" name="companyId" defaultValue={filters.companyId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {(companies ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="blockId" className={LABEL_CLASS}>ブロック</label>
-              <select id="blockId" name="blockId" defaultValue={filters.blockId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {filteredBlocks.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="areaId" className={LABEL_CLASS}>エリア</label>
-              <select id="areaId" name="areaId" defaultValue={filters.areaId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {filteredAreas.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="storeCode" className={LABEL_CLASS}>店舗コード</label>
-              <input id="storeCode" name="storeCode" type="text" defaultValue={filters.storeCode ?? ""} placeholder="店舗コード" className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="storeName" className={LABEL_CLASS}>店舗名</label>
-              <input id="storeName" name="storeName" type="text" defaultValue={filters.storeName ?? ""} placeholder="店舗名" className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="date" className={LABEL_CLASS}>対象日(重要ポイント・従業員衛生)</label>
-              <input id="date" name="date" type="date" defaultValue={targetDate} className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="month" className={LABEL_CLASS}>対象月(食品衛生自主点検)</label>
-              <input id="month" name="month" type="month" defaultValue={monthInputValue} className={INPUT_CLASS} />
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-3 px-5 pb-5">
-            <Link href="/haccp/admin" className="text-xs font-medium text-slate-500 hover:text-slate-700">
-              条件をクリア
-            </Link>
-            <button
-              type="submit"
-              className="rounded-full bg-teal-600 px-5 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-700"
-            >
-              絞り込む
-            </button>
-          </div>
-        </form>
-
+      <div className="mt-6 space-y-5">
         {stores.length === 0 ? (
-          <div className="mt-6">
-            <EmptyState message="条件に一致する店舗がありません。絞り込み条件を変更してください。" />
-          </div>
+          <EmptyState message="検索条件に一致する店舗がありません。" />
         ) : (
-          <div className="mt-6 space-y-5">
+          <>
             <SummarySection
               title="重要ポイント・温度・ラベル"
               scopeLabel={`対象日: ${targetDate}`}
@@ -321,9 +326,9 @@ export default async function HaccpAdminDashboardPage({
               <StatCard label="要対応" value={confirmationSummary.needsAction} color="text-red-600" />
               <StatCard label="未確認" value={confirmationSummary.unconfirmed} color="text-amber-600" />
             </SummarySection>
-          </div>
+          </>
         )}
       </div>
-    </div>
+    </HaccpAdminChrome>
   );
 }

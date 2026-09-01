@@ -15,6 +15,7 @@ export type CatalogProduct = {
   is_recommended: boolean;
   recommend_badge: string | null;
   seal_size: { faces: number; width_mm: number; height_mm: number } | null;
+  imageUrl?: string | null;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -75,11 +76,16 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
 
   return (
     <div className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-300">
+      {product.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={product.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+      ) : (
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-300">
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18A1.5 1.5 0 0022.5 18.75V5.25A1.5 1.5 0 0021 3.75H3A1.5 1.5 0 001.5 5.25v13.5A1.5 1.5 0 003 20.25z" />
         </svg>
       </div>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -95,8 +101,8 @@ export function ProductRow({ product }: { product: CatalogProduct }) {
         </div>
         {product.description && <p className="mt-0.5 text-xs text-slate-500">{product.description}</p>}
         <div className="mt-1 flex flex-wrap items-center gap-x-3 text-xs">
-          <span className="font-bold text-red-600">
-            {product.unit_price > 0 ? `¥${product.unit_price.toLocaleString()}` : "無料"}
+          <span className="text-base font-bold text-red-600">
+            {product.unit_price > 0 ? `¥${product.unit_price.toLocaleString()} /枚` : "無料"}
           </span>
           <span className="text-slate-500">
             {product.lot_size > 1 ? `ロット ${product.lot_size}枚/回` : "1枚単位"}

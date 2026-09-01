@@ -44,7 +44,7 @@ export default async function RecipeSubmittersPage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <RecipeHeader />
+      <RecipeHeader ctx={ctx} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <RecipeTabs roleCode={ctx?.roleCode ?? null} activeHref="/recipe/admin/submitters" />
 

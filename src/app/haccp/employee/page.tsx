@@ -77,9 +77,9 @@ export default async function EmployeeCheckPage({
   const recordedToday = [...latestByIdentity.values()];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white shadow-md">
-        <h1 className="text-lg font-bold">従業員衛生チェック</h1>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
+      <div className="bg-gradient-to-r from-emerald-700 to-emerald-500 px-4 py-3 text-white">
+        <h1 className="text-lg font-bold">従業員の衛生管理点検表（毎日・従業員ごと）</h1>
         <p className="mt-0.5 text-sm text-blue-100">
           {ctx.store.name}（{ctx.store.storeCode}） / {today}
         </p>
@@ -139,8 +139,8 @@ export default async function EmployeeCheckPage({
 
         {/* Entry form */}
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-            <h2 className="text-base font-bold text-blue-800">衛生チェックを記録</h2>
+          <div className="border-b border-slate-200 bg-emerald-50 px-5 py-3">
+            <h2 className="text-base font-bold text-emerald-800">入力</h2>
           </div>
           <div className="px-5 py-5">
             <form action={recordEmployeeCheck} className="space-y-5">
@@ -163,12 +163,12 @@ export default async function EmployeeCheckPage({
 
               <div>
                 <label htmlFor="employee_id" className="mb-1.5 block text-sm font-medium text-slate-700">
-                  従業員を選択
+                  店舗の従業員リストから選択
                 </label>
                 <select
                   id="employee_id"
                   name="employee_id"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 >
                   <option value="">選択してください</option>
                   {employeeOptions.map((e) => (
@@ -179,47 +179,65 @@ export default async function EmployeeCheckPage({
                 </select>
               </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="employee_code_search" className="mb-1.5 block text-sm font-medium text-slate-700">
+                    社員コードで検索（任意・2〜6桁対応）
+                  </label>
+                  <input
+                    id="employee_code_search"
+                    name="employee_code_search"
+                    type="text"
+                    placeholder="例）24 / 000024"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="company_display" className="mb-1.5 block text-sm font-medium text-slate-700">
+                    会社名（任意・自動表示）
+                  </label>
+                  <input
+                    id="company_display"
+                    type="text"
+                    readOnly
+                    tabIndex={-1}
+                    defaultValue={ctx.company?.name ?? ""}
+                    placeholder="会社名は従業員選択時に自動表示"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label htmlFor="manual_name" className="mb-1.5 block text-sm font-medium text-slate-700">
-                  コードが不明な場合は氏名を直接入力
+                  氏名（任意・手入力しても保存可）
                 </label>
                 <input
                   id="manual_name"
                   name="manual_name"
                   type="text"
-                  placeholder="氏名を入力"
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="手入力の場合は空欄でも可"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
-              <div className="space-y-4 border-t border-slate-100 pt-4">
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <div className="flex items-center bg-emerald-100 px-4 py-2 text-xs font-bold text-emerald-800">
+                  <span className="w-10">No</span>
+                  <span className="flex-1">項目</span>
+                  <span className="w-36 text-center">判定（必須）</span>
+                </div>
                 {ITEMS.map((item, idx) => (
-                  <div key={item.code} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                    <p className="mb-2.5 flex items-center gap-2 text-sm font-medium text-slate-700">
-                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
-                        {idx + 1}
-                      </span>
-                      {item.label}
-                    </p>
-                    <div className="flex gap-3">
-                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
-                        <input
-                          type="radio"
-                          name={`answer_${item.code}`}
-                          value="good"
-                          required
-                          className="sr-only"
-                        />
+                  <div key={item.code} className="flex items-center border-t border-slate-100 px-4 py-3">
+                    <span className="w-10 text-sm font-bold text-slate-500">{String.fromCodePoint(0x2460 + idx)}</span>
+                    <span className="flex-1 text-sm text-slate-800">{item.label}</span>
+                    <div className="flex w-36 justify-center gap-2">
+                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-4 py-1.5 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
+                        <input type="radio" name={`answer_${item.code}`} value="good" required className="sr-only" />
                         良
                       </label>
-                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
-                        <input
-                          type="radio"
-                          name={`answer_${item.code}`}
-                          value="bad"
-                          required
-                          className="sr-only"
-                        />
+                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-4 py-1.5 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
+                        <input type="radio" name={`answer_${item.code}`} value="bad" required className="sr-only" />
                         否
                       </label>
                     </div>
@@ -229,7 +247,7 @@ export default async function EmployeeCheckPage({
 
               <div>
                 <label htmlFor="note" className="mb-1.5 block text-sm font-medium text-slate-700">
-                  備考（「異常」の項目がある場合は必須）
+                  備考（「否」の項目がある場合は必須）
                 </label>
                 <textarea
                   id="note"
@@ -241,7 +259,7 @@ export default async function EmployeeCheckPage({
 
               <div>
                 <label htmlFor="action_taken" className="mb-1.5 block text-sm font-medium text-slate-700">
-                  対応内容（「異常」の項目がある場合は必須）
+                  対応内容（「否」の項目がある場合は必須）
                 </label>
                 <textarea
                   id="action_taken"

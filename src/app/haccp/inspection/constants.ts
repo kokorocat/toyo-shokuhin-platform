@@ -14,9 +14,9 @@ export const INSPECTION_CATEGORIES: InspectionCategory[] = [
   },
   {
     no: "2",
-    title: "POP掲示",
+    title: "POP（注意喚起等）の掲示",
     items: [
-      { code: "q2", text: "米トレーサビリティ・表示等、法律関係の通達POPを掲示できているか" },
+      { code: "q2", text: "巡達POPなどの掲示は出来ているか" },
     ],
   },
   {

@@ -119,6 +119,7 @@ type KeypointResponseRow = {
   id: string;
   version: number;
   created_at: string;
+  target_date: string;
   confirmed_by_name: string | null;
   user_profiles: NamedActor;
   haccp_keypoint_items: { item_code: string; judgment: string; note: string | null }[];
@@ -249,11 +250,12 @@ export default async function HaccpAdminStoreDetailPage({
     supabase
       .from("haccp_keypoint_responses")
       .select(
-        "id, version, created_at, confirmed_by_name, user_profiles(display_name), haccp_keypoint_items(item_code,judgment,note), haccp_temperature_labels(label_type,measured_value,judgment,note)"
+        "id, version, created_at, target_date, confirmed_by_name, user_profiles(display_name), haccp_keypoint_items(item_code,judgment,note), haccp_temperature_labels(label_type,measured_value,judgment,note)"
       )
       .eq("store_id", storeId)
-      .eq("target_date", targetDate)
-      .order("version", { ascending: false }),
+      .order("target_date", { ascending: false })
+      .order("version", { ascending: false })
+      .limit(400),
     supabase
       .from("haccp_employee_responses")
       .select(
@@ -294,7 +296,24 @@ export default async function HaccpAdminStoreDetailPage({
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const keypointRows = (keypointRowsRaw ?? []) as any as KeypointResponseRow[];
+  let keypointRows = (keypointRowsRaw ?? []) as any as KeypointResponseRow[];
+  // 上のクエリは台帳(直近の履歴一覧)用にstore全体からlimit(400)で取得しているため、
+  // 記録が多い店舗では古いtargetDateを指定した際にその日のデータが取得ウィンドウから
+  // 漏れ、実際にはDBに記録があるのに「未記録」と誤って表示されてしまう(温度/ラベル
+  // チェック・履歴が無言で消える)。閲覧中のtargetDate分は取得ウィンドウに関わらず
+  // 必ず取得できるよう、含まれていなければ個別に取得して補う。
+  if (!keypointRows.some((r) => r.target_date === targetDate)) {
+    const { data: targetDateRowsRaw } = await supabase
+      .from("haccp_keypoint_responses")
+      .select(
+        "id, version, created_at, target_date, confirmed_by_name, user_profiles(display_name), haccp_keypoint_items(item_code,judgment,note), haccp_temperature_labels(label_type,measured_value,judgment,note)"
+      )
+      .eq("store_id", storeId)
+      .eq("target_date", targetDate)
+      .order("version", { ascending: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    keypointRows = [...((targetDateRowsRaw ?? []) as any as KeypointResponseRow[]), ...keypointRows];
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const employeeRows = (employeeRowsRaw ?? []) as any as EmployeeResponseRow[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -318,10 +337,13 @@ export default async function HaccpAdminStoreDetailPage({
 
   const backHref = `/haccp/admin/stores${buildQuery({ date: targetDate, month: monthValue })}`;
 
-  const latestKeypoint = keypointRows[0] ?? null;
-  const keypointItemsByCode = new Map(
-    (latestKeypoint?.haccp_keypoint_items ?? []).map((i) => [i.item_code, i])
-  );
+  const latestByDate = new Map<string, KeypointResponseRow>();
+  for (const row of keypointRows) {
+    if (!latestByDate.has(row.target_date)) latestByDate.set(row.target_date, row);
+  }
+  const keypointLedger = [...latestByDate.values()];
+  const keypointRowsForDate = keypointRows.filter((r) => r.target_date === targetDate);
+  const latestKeypoint = keypointRowsForDate[0] ?? null;
   const temperatureCheck = latestKeypoint?.haccp_temperature_labels.find((l) => l.label_type === "temperature");
   const labelCheck = latestKeypoint?.haccp_temperature_labels.find((l) => l.label_type === "label");
 
@@ -346,16 +368,16 @@ export default async function HaccpAdminStoreDetailPage({
   const latestConfirmation = confirmationRows[0] ?? null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       {/* Teal gradient header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 py-4 text-white shadow-md">
+      <div className="bg-gradient-to-r from-teal-700 to-teal-500 px-4 py-4 text-white">
         <h1 className="text-lg font-bold">{store.name}（{store.store_code}）</h1>
         <p className="mt-0.5 text-sm text-teal-100">
           {areaName ?? "エリア未設定"} / 対象日: {targetDate} ・ 対象月: {formatMonth(targetMonth)} ・ 責任者確認期間: {period.start} 〜 {period.end}
         </p>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-6">
         <a href={backHref} className="text-sm text-teal-600 hover:underline">
           ← 店舗一覧に戻る
         </a>
@@ -424,81 +446,84 @@ export default async function HaccpAdminStoreDetailPage({
           <div className="mb-4 flex items-center gap-2">
             <div className="h-px flex-1 bg-slate-200" />
             <h2 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-400">
-              重要ポイント・温度・ラベル（対象日: {targetDate}）
+              重要ポイント・温度・ラベル
             </h2>
             <div className="h-px flex-1 bg-slate-200" />
           </div>
-          {!latestKeypoint ? (
-            <EmptyState message="この対象日の重要ポイント・温度・ラベルの回答はありません。" />
+          {keypointLedger.length === 0 ? (
+            <EmptyState message="重要ポイント・温度・ラベルの回答はありません。" />
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-blue-50 px-5 py-3">
-                <h3 className="text-base font-bold text-blue-800">最新の回答内容</h3>
-                <p className="text-xs text-slate-400">
-                  v{latestKeypoint.version} ・確認者：{latestKeypoint.confirmed_by_name ?? "-"} ・記録者：
-                  {latestKeypoint.user_profiles?.display_name ?? "(不明)"} ・{" "}
-                  {formatDateTime(latestKeypoint.created_at)} 登録
-                </p>
-              </div>
-              <div className="px-5 py-4">
-                <ul className="mb-4 space-y-2">
-                  {KEYPOINT_ITEMS.map(({ code, label }) => {
-                    const item = keypointItemsByCode.get(code);
-                    const isNg = item?.judgment === "ng";
+            <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
+              <table className="w-full min-w-[1100px] border-collapse text-center text-sm">
+                <thead>
+                  <tr className="bg-teal-700 text-xs font-bold text-white">
+                    <th className="border border-teal-600 px-2 py-2">日付</th>
+                    {KEYPOINT_ITEMS.map((item) => (
+                      <th key={item.code} className="border border-teal-600 px-2 py-2">
+                        {item.label}
+                      </th>
+                    ))}
+                    <th className="border border-teal-600 px-2 py-2">確認者名</th>
+                    <th className="border border-teal-600 px-2 py-2">特記事項</th>
+                    <th className="border border-teal-600 px-2 py-2">登録日時</th>
+                    <th className="border border-teal-600 px-2 py-2">半月責任者確認名</th>
+                    <th className="border border-teal-600 px-2 py-2">責任者確認日</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {keypointLedger.map((row) => {
+                    const byCode = new Map((row.haccp_keypoint_items ?? []).map((i) => [i.item_code, i]));
+                    const notes = (row.haccp_keypoint_items ?? [])
+                      .map((i) => i.note)
+                      .filter(Boolean)
+                      .join(" / ");
+                    const inPeriod = row.target_date >= period.start && row.target_date <= period.end;
                     return (
-                      <li key={code} className="flex items-center gap-3 text-sm text-slate-700">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            !item
-                              ? "bg-slate-100 text-slate-500"
-                              : isNg
-                                ? "bg-red-100 text-red-700"
-                                : "bg-green-100 text-green-700"
-                          }`}
-                        >
-                          {!item ? "未回答" : isNg ? "否" : "良"}
-                        </span>
-                        <span>{label}</span>
-                        {item?.note && <span className="text-xs text-slate-400">({item.note})</span>}
-                      </li>
+                      <tr key={row.id} className={row.target_date === targetDate ? "bg-teal-50" : "bg-white"}>
+                        <td className="border border-slate-200 px-2 py-1.5 whitespace-nowrap">{row.target_date}</td>
+                        {KEYPOINT_ITEMS.map((item) => {
+                          const judgment = byCode.get(item.code)?.judgment;
+                          return (
+                            <td key={item.code} className="border border-slate-200 px-2 py-1.5">
+                              {judgment === "ng" ? "否" : judgment === "ok" ? "良" : "-"}
+                            </td>
+                          );
+                        })}
+                        <td className="border border-slate-200 px-2 py-1.5">{row.confirmed_by_name ?? "-"}</td>
+                        <td className="border border-slate-200 px-2 py-1.5 text-left">{notes || "-"}</td>
+                        <td className="border border-slate-200 px-2 py-1.5 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
+                        <td className="border border-slate-200 px-2 py-1.5">
+                          {inPeriod ? (latestConfirmation?.user_profiles?.display_name ?? "-") : "-"}
+                        </td>
+                        <td className="border border-slate-200 px-2 py-1.5">
+                          {inPeriod ? (latestConfirmation?.confirmed_on ?? "-") : "-"}
+                        </td>
+                      </tr>
                     );
                   })}
-                </ul>
-                <div className="grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 sm:grid-cols-2">
+                </tbody>
+              </table>
+              {latestKeypoint && (
+                <div className="border-t border-teal-100 px-4 py-3 text-sm text-slate-700">
                   <p>
                     <span className="font-medium">温度チェック：</span>
-                    {temperatureCheck ? (
-                      <span className={temperatureCheck.judgment === "ng" ? "font-semibold text-red-700" : undefined}>
-                        {temperatureCheck.measured_value ?? "-"}℃ /{" "}
-                        {temperatureCheck.judgment
-                          ? (JUDGMENT_LABELS[temperatureCheck.judgment] ?? temperatureCheck.judgment)
-                          : "-"}
-                        {temperatureCheck.note ? ` (${temperatureCheck.note})` : ""}
-                      </span>
-                    ) : (
-                      "未記録"
-                    )}
+                    {temperatureCheck
+                      ? `${temperatureCheck.measured_value ?? "-"}℃ / ${temperatureCheck.judgment ? (JUDGMENT_LABELS[temperatureCheck.judgment] ?? temperatureCheck.judgment) : "-"}${temperatureCheck.note ? ` (${temperatureCheck.note})` : ""}`
+                      : "未記録"}
+                    <span className="ml-4 font-medium">ラベルチェック：</span>
+                    {labelCheck
+                      ? `${labelCheck.judgment ? (JUDGMENT_LABELS[labelCheck.judgment] ?? labelCheck.judgment) : "-"}${labelCheck.note ? ` (${labelCheck.note})` : ""}`
+                      : "未記録"}
                   </p>
-                  <p>
-                    <span className="font-medium">ラベルチェック：</span>
-                    {labelCheck ? (
-                      <span className={labelCheck.judgment === "ng" ? "font-semibold text-red-700" : undefined}>
-                        {labelCheck.judgment ? (JUDGMENT_LABELS[labelCheck.judgment] ?? labelCheck.judgment) : "-"}
-                        {labelCheck.note ? ` (${labelCheck.note})` : ""}
-                      </span>
-                    ) : (
-                      "未記録"
-                    )}
-                  </p>
+                  <HistoryList
+                    entries={keypointRowsForDate.map((r) => ({
+                      version: r.version,
+                      createdAt: r.created_at,
+                      recordedByName: r.user_profiles?.display_name ?? "(不明)",
+                    }))}
+                  />
                 </div>
-                <HistoryList
-                  entries={keypointRows.map((r) => ({
-                    version: r.version,
-                    createdAt: r.created_at,
-                    recordedByName: r.user_profiles?.display_name ?? "(不明)",
-                  }))}
-                />
-              </div>
+              )}
             </div>
           )}
         </section>

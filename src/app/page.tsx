@@ -71,7 +71,7 @@ export default async function PortalHomePage() {
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-white/70 sm:block">{ctx.displayName}</span>
             <form action={signOut}>
-              <button className="rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20">
+              <button className="rounded-lg bg-red-600 px-4 py-1.5 text-xs font-bold text-white">
                 ログアウト
               </button>
             </form>
@@ -186,8 +186,11 @@ export default async function PortalHomePage() {
           )}
         </div>
 
+        <h3 className="mt-8 mb-3 border-t border-slate-200 pt-6 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          ポータル追加メニュー（GAS版TOPには無い現行機能）
+        </h3>
         {/* Secondary links */}
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* HR */}
           {!hrDisabled && (
             <Link
@@ -234,6 +237,10 @@ export default async function PortalHomePage() {
             <svg className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
           </Link>
         </div>
+
+        <p className="mt-8 text-xs text-slate-500">
+          店舗利用は、各店舗に配布している固定URLからアクセスしてください。例：/exec?storeId=…
+        </p>
       </main>
     </div>
   );

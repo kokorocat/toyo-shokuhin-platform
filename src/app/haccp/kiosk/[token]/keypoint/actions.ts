@@ -10,17 +10,22 @@ export async function kioskSubmitKeypoint(formData: FormData) {
   const targetDate = String(formData.get("target_date") ?? "");
   const confirmedByName = String(formData.get("confirmed_by_name") ?? "").trim();
 
+  // 特記事項はGASと同じく6項目共通の1欄(shared_note)。否の項目にのみ適用し、
+  // 良の項目には記録しない(haccp/keypoint/actions.tsと同じ理由)。
+  const sharedNote = String(formData.get("shared_note") ?? "").trim() || null;
+
   const items: Record<string, { judgment: string; note: string | null }> = {};
+  let hasNg = false;
   for (const code of KEYPOINT_CODES) {
     const judgment = String(formData.get(`judgment_${code}`) ?? "");
-    const note = String(formData.get(`note_${code}`) ?? "").trim() || null;
     if (judgment !== "ok" && judgment !== "ng") {
       redirect(`/haccp/kiosk/${token}/keypoint?error=${encodeURIComponent("全ての項目に良否を入力してください")}`);
     }
-    if (judgment === "ng" && !note) {
-      redirect(`/haccp/kiosk/${token}/keypoint?error=${encodeURIComponent("否の項目には理由を入力してください")}`);
-    }
-    items[code] = { judgment, note };
+    if (judgment === "ng") hasNg = true;
+    items[code] = { judgment, note: judgment === "ng" ? sharedNote : null };
+  }
+  if (hasNg && !sharedNote) {
+    redirect(`/haccp/kiosk/${token}/keypoint?error=${encodeURIComponent("否の項目には理由を入力してください")}`);
   }
 
   const tempValueRaw = String(formData.get("temp_value") ?? "").trim();

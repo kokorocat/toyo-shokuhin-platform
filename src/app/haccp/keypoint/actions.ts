@@ -21,17 +21,23 @@ export async function recordKeypointCheck(formData: FormData) {
     redirect(`/haccp/keypoint?error=${encodeURIComponent("必須項目が入力されていません")}`);
   }
 
+  // 特記事項はGASと同じく6項目共通の1欄(shared_note)。否の項目にのみ適用し、
+  // 良の項目には記録しない(以前は同一テキストを全項目のnoteへ無条件コピーしていたため、
+  // 良の項目にも他項目の否理由がそのまま記録されてしまう不具合があった)。
+  const sharedNote = String(formData.get("shared_note") ?? "").trim() || null;
+
   const itemJudgments: { code: string; judgment: string; note: string | null }[] = [];
+  let hasNg = false;
   for (const { code } of KEYPOINT_ITEMS) {
     const judgment = String(formData.get(`judgment_${code}`) ?? "");
     if (judgment !== "ok" && judgment !== "ng") {
       redirect(`/haccp/keypoint?error=${encodeURIComponent("全ての項目に良否を入力してください")}`);
     }
-    const note = String(formData.get(`note_${code}`) ?? "").trim() || null;
-    if (judgment === "ng" && !note) {
-      redirect(`/haccp/keypoint?error=${encodeURIComponent("否の項目には理由を入力してください")}`);
-    }
-    itemJudgments.push({ code, judgment, note });
+    if (judgment === "ng") hasNg = true;
+    itemJudgments.push({ code, judgment, note: judgment === "ng" ? sharedNote : null });
+  }
+  if (hasNg && !sharedNote) {
+    redirect(`/haccp/keypoint?error=${encodeURIComponent("否の項目には理由を入力してください")}`);
   }
 
   const temperatureValue = String(formData.get("temp_value") ?? "").trim();

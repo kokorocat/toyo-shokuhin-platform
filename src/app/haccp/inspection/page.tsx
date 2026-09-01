@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { SubmitButton } from "../SubmitButton";
 import { recordInspection } from "./actions";
-import { INSPECTION_CATEGORIES } from "./constants";
 import { Banner } from "@/components/Banner";
 import { EmptyState } from "@/components/EmptyState";
 import { todayInTokyo } from "@/lib/date";
+import { InspectionHeaderFields, InspectionItemsTable, UnansweredMonthBanner, unansweredYmList } from "./InspectionUi";
 
 const EVALUATION_LABELS: Record<string, string> = {
   good: "良好",
@@ -29,9 +29,9 @@ type InspectionSummary = {
 export default async function HaccpInspectionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; ym?: string }>;
 }) {
-  const { error, success } = await searchParams;
+  const { error, success, ym } = await searchParams;
   const ctx = await getPortalContext();
 
   if (!ctx?.store) {
@@ -69,10 +69,14 @@ export default async function HaccpInspectionPage({
     .filter((r) => r.target_month !== targetMonth)
     .slice(0, 3);
 
+  const missingMonths = unansweredYmList(new Set(latestByMonth.keys()), todayStr);
+  const displayYm = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : todayStr.slice(0, 7);
+  const [displayYear, displayMonth] = displayYm.split("-");
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-slate-50">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-white shadow-md">
-        <h1 className="text-lg font-bold">食品衛生自主点検入力</h1>
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+      <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-white">
+        <h1 className="text-lg font-bold">食品衛生自主点検票（毎月1回　各店舗にて開催）</h1>
         <p className="mt-0.5 text-sm text-blue-100">
           {ctx.store.name}（{ctx.store.storeCode}） / 対象月: {formatMonth(targetMonth)}
         </p>
@@ -104,14 +108,25 @@ export default async function HaccpInspectionPage({
           </div>
         )}
 
+        <div className="mt-4">
+          <UnansweredMonthBanner months={missingMonths} hrefBase="/haccp/inspection" />
+        </div>
+
         <form action={recordInspection} className="mt-6 space-y-6">
           <input type="hidden" name="company_id" value={ctx.company?.id ?? ""} />
           <input type="hidden" name="store_id" value={ctx.store.id} />
 
+          <InspectionHeaderFields
+            year={displayYear}
+            month={String(Number(displayMonth))}
+            submittedOn={todayStr}
+            storeName={ctx.store.name}
+          />
+
           {/* Basic info */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-              <h2 className="text-base font-bold text-blue-800">基本情報</h2>
+            <div className="border-b border-orange-100 bg-orange-50 px-5 py-3">
+              <h2 className="text-base font-bold text-orange-800">基本情報</h2>
             </div>
             <div className="space-y-4 px-5 py-5">
               <div>
@@ -190,67 +205,13 @@ export default async function HaccpInspectionPage({
             </div>
           </div>
 
-          {/* 8 categories / 18 items */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2">
-              <span className="h-px flex-1 bg-slate-200" />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                点検項目（8カテゴリ・18項目）
-              </h2>
-              <span className="h-px flex-1 bg-slate-200" />
-            </div>
-            {INSPECTION_CATEGORIES.map((category) => (
-              <div key={category.no} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex items-center gap-3 border-b border-slate-200 bg-blue-50 px-5 py-3">
-                  <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                    {category.no}
-                  </span>
-                  <h3 className="text-base font-bold text-blue-800">{category.title}</h3>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {category.items.map((q) => (
-                    <fieldset key={q.code} className="px-5 py-4">
-                      <legend className="mb-3 text-sm font-medium text-slate-800">
-                        {category.items.length > 1 && (
-                          <span className="mr-1.5 text-xs font-semibold text-slate-400">
-                            {q.code.replace("q", "").replace("_", "-")}
-                          </span>
-                        )}
-                        {q.text}
-                      </legend>
-                      <div className="flex gap-3">
-                        <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
-                          <input
-                            type="radio"
-                            name={`answer_${q.code}`}
-                            value="good"
-                            required
-                            className="sr-only"
-                          />
-                          良
-                        </label>
-                        <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
-                          <input
-                            type="radio"
-                            name={`answer_${q.code}`}
-                            value="needs_improvement"
-                            required
-                            className="sr-only"
-                          />
-                          否
-                        </label>
-                      </div>
-                    </fieldset>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
+          {/* 点検項目 — GASは単一テーブル */}
+          <InspectionItemsTable />
 
           {/* Improvement details */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-              <h2 className="text-base font-bold text-blue-800">
+            <div className="border-b border-orange-100 bg-orange-50 px-5 py-3">
+              <h2 className="text-base font-bold text-orange-800">
                 改善が必要な項目がある場合の詳細
               </h2>
               <p className="mt-1 text-xs text-slate-500">
@@ -285,8 +246,8 @@ export default async function HaccpInspectionPage({
 
           {/* Self evaluation & footer fields */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-              <h2 className="text-base font-bold text-blue-800">自主評価</h2>
+            <div className="border-b border-orange-100 bg-orange-50 px-5 py-3">
+              <h2 className="text-base font-bold text-orange-800">自主評価</h2>
             </div>
             <div className="space-y-4 px-5 py-5">
               <fieldset>
@@ -340,7 +301,7 @@ export default async function HaccpInspectionPage({
           </div>
 
           <SubmitButton
-            className="w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+            className="w-full rounded-lg bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
             pendingText="送信中..."
           >
             点検結果を登録する

@@ -82,8 +82,10 @@ export default async function BulkOrderCatalogPage({
   }));
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 pb-28">
-      <Link href="/ordering/admin" className="text-sm text-blue-600 hover:underline">← 受発注管理TOPに戻る</Link>
+    <div className="min-h-screen bg-slate-700/40 px-4 py-8">
+      {/* 要確認: GASは受注一覧上のモーダル。ページ遷移構造を変えるかはクライアント確認推奨。 */}
+      <div className="mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-5 pb-28">
+      <Link href="/ordering/admin/orders" className="text-sm text-blue-600 hover:underline">← 受注一覧に戻る</Link>
       <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">複数店舗一斉発注</h1>
 
       <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -167,9 +169,24 @@ export default async function BulkOrderCatalogPage({
             </div>
           )}
 
+          <div className="mt-4 rounded-lg border border-dashed border-slate-300 p-3">
+            <p className="text-xs font-bold text-slate-700">販促物（自由入力）</p>
+            <div className="mt-2 grid grid-cols-[1fr_5rem_5rem_5rem] gap-1 text-xs">
+              <input placeholder="商品名" className="rounded border border-slate-300 px-2 py-1" />
+              <input placeholder="数量" className="rounded border border-slate-300 px-2 py-1" />
+              <input placeholder="単価" className="rounded border border-slate-300 px-2 py-1" />
+              <input placeholder="小計" readOnly className="rounded border border-slate-200 bg-slate-50 px-2 py-1" />
+            </div>
+            <button type="button" className="mt-2 rounded-lg border border-blue-400 px-3 py-1 text-xs font-bold text-blue-700">
+              商品行を追加
+            </button>
+            {/* 要確認: カタログ外商品の保存ロジック */}
+          </div>
+
           <BulkOrderBar companyId={companyId} />
         </>
       )}
+      </div>
     </div>
   );
 }

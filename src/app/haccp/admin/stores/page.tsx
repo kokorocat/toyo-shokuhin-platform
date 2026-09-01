@@ -19,6 +19,7 @@ import {
 } from "@/lib/haccp/admin-dashboard";
 import { EmptyState } from "@/components/EmptyState";
 import { todayInTokyo } from "@/lib/date";
+import { HaccpAdminChrome, HaccpAdminTabs } from "@/app/haccp/admin/HaccpAdminChrome";
 
 const PAGE_SIZE = 50;
 
@@ -36,41 +37,6 @@ type SearchParams = Record<string, string | string[] | undefined>;
 function first(v: string | string[] | undefined): string | undefined {
   const value = Array.isArray(v) ? v[0] : v;
   return value && value.length > 0 ? value : undefined;
-}
-
-type CompanyOption = { id: string; name: string };
-type BlockOption = { id: string; name: string; company_id: string };
-type AreaOption = { id: string; name: string; company_id: string; block_id: string | null };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchCompanyOptions(supabase: any): Promise<CompanyOption[]> {
-  const { data } = await supabase
-    .from("companies")
-    .select("id, name")
-    .eq("status", "active")
-    .order("name");
-  return data ?? [];
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchBlockOptions(supabase: any, filters: HaccpAdminFilters): Promise<BlockOption[]> {
-  let query = supabase.from("blocks").select("id, name, company_id").eq("status", "active").order("name");
-  if (filters.companyId) query = query.eq("company_id", filters.companyId);
-  const { data } = await query;
-  return data ?? [];
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchAreaOptions(supabase: any, filters: HaccpAdminFilters): Promise<AreaOption[]> {
-  let query = supabase
-    .from("areas")
-    .select("id, name, company_id, block_id")
-    .eq("status", "active")
-    .order("name");
-  if (filters.companyId) query = query.eq("company_id", filters.companyId);
-  if (filters.blockId) query = query.eq("block_id", filters.blockId);
-  const { data } = await query;
-  return data ?? [];
 }
 
 function buildQuery(params: Record<string, string | undefined>): string {
@@ -169,14 +135,18 @@ export default async function HaccpAdminStoresPage({
     storeName: first(sp.storeName),
   };
 
+  const q = (first(sp.q) ?? "").trim();
   const supabase = await createClient();
 
-  const [stores, companyOptions, blockOptions, areaOptions] = await Promise.all([
-    getScopedStores(supabase, filters),
-    fetchCompanyOptions(supabase),
-    fetchBlockOptions(supabase, filters),
-    fetchAreaOptions(supabase, filters),
-  ]);
+  const storesAll = await getScopedStores(supabase, filters);
+  const stores = q
+    ? storesAll.filter(
+        (s) =>
+          s.name.includes(q) ||
+          s.store_code.includes(q) ||
+          (s.area_name ?? "").includes(q)
+      )
+    : storesAll;
 
   const period = getHalfMonthPeriod(targetDate);
 
@@ -201,118 +171,38 @@ export default async function HaccpAdminStoresPage({
     areaId: filters.areaId,
     storeCode: filters.storeCode,
     storeName: filters.storeName,
+    q: q || undefined,
     date: targetDate,
     month: monthValue,
   };
   const detailParams = buildQuery({ date: targetDate, month: monthValue });
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Teal gradient header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-400 px-4 py-4 text-white shadow-md">
-        <h1 className="text-lg font-bold">店舗別回答状況</h1>
-        <p className="mt-0.5 text-sm text-teal-100">
-          対象日: {targetDate} / 対象月: {monthValue} / 責任者確認期間: {period.start} 〜 {period.end}
-        </p>
-      </div>
+    <HaccpAdminChrome
+      title="HACCP管理者ダッシュボード"
+      subtitle={`対象日: ${targetDate} / 対象月: ${monthValue} / 責任者確認期間: ${period.start} 〜 ${period.end}`}
+      activePath="/haccp/admin/stores"
+    >
+      <HaccpAdminTabs activePath="/haccp/admin/stores" query={buildQuery({ date: targetDate, month: monthValue, q }).replace(/^\?/, "")} />
 
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        {/* Pill-shaped tab navigation */}
-        <nav className="mb-6 flex flex-wrap gap-2">
-          <Link
-            href="/haccp/admin"
-            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            ダッシュボード
-          </Link>
-          <span className="rounded-full bg-teal-600 px-4 py-2 text-sm font-bold text-white">
-            店舗別回答状況
-          </span>
-        </nav>
-
-        {/* Filter form */}
-        <form
-          method="get"
-          action="/haccp/admin/stores"
-          className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm"
-        >
-          <div className="border-b border-slate-200 bg-blue-50 px-5 py-3">
-            <h2 className="text-base font-bold text-blue-800">絞り込み条件</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label htmlFor="companyId" className="mb-1 block text-xs font-medium text-slate-600">
-                会社
-              </label>
-              <select id="companyId" name="companyId" defaultValue={filters.companyId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {companyOptions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="blockId" className="mb-1 block text-xs font-medium text-slate-600">
-                ブロック
-              </label>
-              <select id="blockId" name="blockId" defaultValue={filters.blockId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {blockOptions.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="areaId" className="mb-1 block text-xs font-medium text-slate-600">
-                エリア
-              </label>
-              <select id="areaId" name="areaId" defaultValue={filters.areaId ?? ""} className={INPUT_CLASS}>
-                <option value="">すべて</option>
-                {areaOptions.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="storeCode" className="mb-1 block text-xs font-medium text-slate-600">
-                店舗コード
-              </label>
-              <input id="storeCode" name="storeCode" type="text" defaultValue={filters.storeCode ?? ""} placeholder="部分一致" className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="storeName" className="mb-1 block text-xs font-medium text-slate-600">
-                店舗名
-              </label>
-              <input id="storeName" name="storeName" type="text" defaultValue={filters.storeName ?? ""} placeholder="部分一致" className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="date" className="mb-1 block text-xs font-medium text-slate-600">
-                対象日(重要ポイント・従業員衛生)
-              </label>
-              <input id="date" name="date" type="date" defaultValue={targetDate} className={INPUT_CLASS} />
-            </div>
-            <div>
-              <label htmlFor="month" className="mb-1 block text-xs font-medium text-slate-600">
-                対象月(食品衛生自主点検)
-              </label>
-              <input id="month" name="month" type="month" defaultValue={monthValue} className={INPUT_CLASS} />
-            </div>
-            <div className="flex items-end gap-2">
-              <button
-                type="submit"
-                className="rounded-full bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-700"
-              >
-                絞り込む
-              </button>
-              <Link
-                href="/haccp/admin/stores"
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-              >
-                クリア
-              </Link>
-            </div>
-          </div>
-        </form>
+      <h2 className="mt-6 text-lg font-bold text-teal-800">HACCP回答状況</h2>
+      <form method="get" action="/haccp/admin/stores" className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="min-w-[16rem] flex-1">
+          <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">店舗検索</label>
+          <input id="q" name="q" type="text" defaultValue={q} placeholder="店舗コード・店舗名・エリアで検索" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label htmlFor="date" className="mb-1 block text-xs font-medium text-slate-600">対象日</label>
+          <input id="date" name="date" type="date" defaultValue={targetDate} className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label htmlFor="month" className="mb-1 block text-xs font-medium text-slate-600">対象月</label>
+          <input id="month" name="month" type="month" defaultValue={monthValue} className={INPUT_CLASS} />
+        </div>
+        <button type="submit" className="rounded-lg border border-teal-600 px-4 py-2 text-sm font-bold text-teal-700">
+          再表示
+        </button>
+      </form>
 
         {totalCount === 0 ? (
           <EmptyState message="該当する店舗がありません。" />
@@ -326,10 +216,10 @@ export default async function HaccpAdminStoresPage({
               <p className="text-xs text-slate-400">{page} / {totalPages} ページ</p>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
               <table className="w-full min-w-[880px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
+                  <tr className="border-b border-teal-100 bg-teal-50 text-xs font-bold text-teal-800">
                     <th className="whitespace-nowrap px-4 py-3">店舗コード</th>
                     <th className="whitespace-nowrap px-4 py-3">店舗名</th>
                     <th className="whitespace-nowrap px-4 py-3">エリア</th>
@@ -422,7 +312,6 @@ export default async function HaccpAdminStoresPage({
             )}
           </>
         )}
-      </div>
-    </div>
+    </HaccpAdminChrome>
   );
 }

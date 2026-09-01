@@ -3,6 +3,17 @@
 :root {
   --background: #f0f4f8;
   --foreground: #1a2332;
+  --color-haccp: #0f766e;
+  --color-ordering: #1d4ed8;
+  --color-recipe: #1e293b;
+  --color-portal-header-from: #0f766e;
+  --color-portal-header-to: #16a34a;
+  --color-logout: #dc2626;
+  --color-delete: #dc2626;
+  --color-edit: #1e3a8a;
+  --color-publish: #10b981;
+  --radius-control: 0.5rem;
+  --shadow-none: none;
 }
 
 @theme inline {

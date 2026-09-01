@@ -4,7 +4,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
-import { getHalfMonthPeriod } from "@/lib/haccp/admin-dashboard";
 import { Banner } from "@/components/Banner";
 import { EmptyState } from "@/components/EmptyState";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -49,9 +48,16 @@ export default async function OrderingBillingPage({
   const storeId = sp.store_id || "";
 
   const today = todayInTokyo();
-  const currentPeriod = getHalfMonthPeriod(today);
+  const [yy, mm] = today.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const lastDay = new Date(yy, mm, 0).getDate();
+  const periods = [
+    { key: "first", label: "前半", button: "1日〜15日の請求書", periodType: "half_month", start: `${yy}-${pad(mm)}-01`, end: `${yy}-${pad(mm)}-15` },
+    { key: "second", label: "後半", button: "16日〜月末の請求書", periodType: "half_month", start: `${yy}-${pad(mm)}-16`, end: `${yy}-${pad(mm)}-${pad(lastDay)}` },
+    { key: "month", label: "月間", button: "1か月分の請求書", periodType: "monthly", start: `${yy}-${pad(mm)}-01`, end: `${yy}-${pad(mm)}-${pad(lastDay)}` },
+  ] as const;
 
-  let unbilledTotal = 0;
+  let periodTotals: number[] = periods.map(() => 0);
   let pastInvoices: {
     id: string;
     invoice_number: string;
@@ -65,15 +71,21 @@ export default async function OrderingBillingPage({
   if (storeId) {
     // JST(+09:00)を明示しないと、DBセッション既定のUTCで日付境界が解釈され、深夜0時台の
     // 注文が前日の期間に取りこぼされる(issue_invoice RPC側もこの前提でAsia/Tokyo変換して集計する)。
-    const { data: unbilledOrders } = await supabase
-      .from("orders")
-      .select("total_amount")
-      .eq("store_id", storeId)
-      .is("invoice_id", null)
-      .neq("status", "cancelled")
-      .gte("created_at", `${currentPeriod.start}T00:00:00+09:00`)
-      .lte("created_at", `${currentPeriod.end}T23:59:59+09:00`);
-    unbilledTotal = (unbilledOrders ?? []).reduce((sum, o) => sum + o.total_amount, 0);
+    // 前半/後半/月間の3カードはそれぞれ期間が異なるため、カードごとに個別に未請求額を
+    // 集計する(3カードとも同じ「今期」の値を使い回すと、選んだ期間と表示金額が一致しない)。
+    periodTotals = await Promise.all(
+      periods.map(async (p) => {
+        const { data: unbilledOrders } = await supabase
+          .from("orders")
+          .select("total_amount")
+          .eq("store_id", storeId)
+          .is("invoice_id", null)
+          .neq("status", "cancelled")
+          .gte("created_at", `${p.start}T00:00:00+09:00`)
+          .lte("created_at", `${p.end}T23:59:59+09:00`);
+        return (unbilledOrders ?? []).reduce((sum, o) => sum + o.total_amount, 0);
+      })
+    );
 
     const { data: invoices } = await supabase
       .from("invoices")
@@ -118,50 +130,36 @@ export default async function OrderingBillingPage({
 
       {storeId && (
         <>
-          <div className="mb-6 rounded-xl border border-slate-200 border-t-4 border-t-blue-500 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="text-sm font-bold text-slate-900">
-                今期（{currentPeriod.start} 〜 {currentPeriod.end}）の未請求金額
-              </h2>
-            </div>
-            <div className="px-5 py-5">
-              {(() => {
-                const tax = Math.round(unbilledTotal * 0.1);
-                const total = unbilledTotal + tax;
-                return (
-                  <div className="mb-4 space-y-1">
-                    <div className="flex items-baseline justify-between text-sm text-slate-500">
-                      <span>小計（税抜）</span>
-                      <span className="tabular-nums">{yen(unbilledTotal)}</span>
-                    </div>
-                    <div className="flex items-baseline justify-between text-sm text-slate-500">
-                      <span>消費税（10%）</span>
-                      <span className="tabular-nums">{yen(tax)}</span>
-                    </div>
-                    <div className="flex items-baseline justify-between border-t border-slate-100 pt-1">
-                      <span className="text-sm font-bold text-slate-900">発行される請求額（税込）</span>
-                      <span className="text-2xl font-bold tabular-nums text-slate-900">{yen(total)}</span>
-                    </div>
+          {/* 要確認: billingフォルダのGAS画面は店舗自己サービス。admin/billingとの画面対応はクライアント確認。 */}
+          {/* 要確認: 送料は実額未接続のため0円固定。 */}
+          <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {periods.map((p, idx) => {
+              const unbilledTotal = periodTotals[idx];
+              const tax = Math.round(unbilledTotal * 0.1);
+              const shipping = 0;
+              const total = unbilledTotal + tax + shipping;
+              return (
+                <div key={p.key} className="rounded-lg border border-slate-200 border-t-4 border-t-green-600 bg-white p-4">
+                  <h2 className="text-sm font-bold text-slate-900">{p.label}（{p.start} 〜 {p.end}）</h2>
+                  <div className="mt-3 space-y-1 text-sm">
+                    <div className="flex justify-between text-slate-500"><span>小計</span><span>{yen(unbilledTotal)}</span></div>
+                    <div className="flex justify-between text-slate-500"><span>送料</span><span>{yen(shipping)}</span></div>
+                    <div className="flex justify-between text-slate-500"><span>消費税（10%）</span><span>{yen(tax)}</span></div>
+                    <div className="flex justify-between border-t pt-1 font-bold"><span>合計</span><span>{yen(total)}</span></div>
                   </div>
-                );
-              })()}
-              <form action={issueInvoice} className="space-y-3">
-                <input type="hidden" name="company_id" value={companyId} />
-                <input type="hidden" name="store_id" value={storeId} />
-                <input type="hidden" name="period_type" value="half_month" />
-                <input type="hidden" name="period_start" value={currentPeriod.start} />
-                <input type="hidden" name="period_end" value={currentPeriod.end} />
-                <SubmitButton
-                  className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  pendingText="発行中..."
-                >
-                  この期間の請求書を発行する
-                </SubmitButton>
-                <p className="text-xs text-slate-400">
-                  既にこの期間の請求書が発行済みの場合は、再発行として旧請求書を無効化し新しい請求書を発行します。
-                </p>
-              </form>
-            </div>
+                  <form action={issueInvoice} className="mt-3">
+                    <input type="hidden" name="company_id" value={companyId} />
+                    <input type="hidden" name="store_id" value={storeId} />
+                    <input type="hidden" name="period_type" value={p.periodType} />
+                    <input type="hidden" name="period_start" value={p.start} />
+                    <input type="hidden" name="period_end" value={p.end} />
+                    <SubmitButton className="w-full rounded-full bg-emerald-500 px-4 py-2 text-sm font-bold text-white" pendingText="発行中...">
+                      {p.button}
+                    </SubmitButton>
+                  </form>
+                </div>
+              );
+            })}
           </div>
 
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">発行済み請求書</h2>

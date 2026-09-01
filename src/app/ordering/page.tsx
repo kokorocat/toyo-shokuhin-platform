@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
-import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { ProductRow, type CatalogProduct } from "./ProductRow";
 import { CartBar } from "./CartBar";
+import { OrderingStoreShell } from "./OrderingStoreShell";
+import { todayInTokyo } from "@/lib/date";
 
 export default async function OrderingCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; q?: string; mid?: string }>;
 }) {
-  const { category, q } = await searchParams;
+  const { category, q, mid } = await searchParams;
   const ctx = await getPortalContext();
 
   if (!ctx?.store) {
@@ -36,12 +37,13 @@ export default async function OrderingCatalogPage({
       let query = supabase
         .from("products")
         .select(
-          "id, category_id, name, description, product_type, unit_price, lot_size, min_order_qty, is_recommended, recommend_badge, display_order, seal_sizes(faces, width_mm, height_mm)"
+          "id, category_id, name, description, product_type, unit_price, lot_size, min_order_qty, is_recommended, recommend_badge, display_order, seal_sizes(faces, width_mm, height_mm), product_images(storage_path, is_primary, display_order)"
         )
         .eq("status", "active")
         .order("display_order")
         .limit(200);
-      if (category) query = query.eq("category_id", category);
+      if (mid) query = query.eq("category_id", mid);
+      else if (category) query = query.eq("category_id", category);
       if (q) query = query.ilike("name", `%${q}%`);
       return query;
     })(),
@@ -50,56 +52,58 @@ export default async function OrderingCatalogPage({
   const { data: products } = productsQuery;
 
   const topCategories = (categories ?? []).filter((c) => c.level === 1);
-  const midCategories = category
-    ? (categories ?? []).filter((c) => c.level === 2)
-    : [];
+  const midCategories = (categories ?? []).filter((c) => c.level === 2 && (!category || c.parent_id === category));
+  const selectedCat = (categories ?? []).find((c) => c.id === (mid || category));
 
-  const catalogProducts: CatalogProduct[] = (products ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    product_type: p.product_type,
-    unit_price: p.unit_price,
-    lot_size: p.lot_size,
-    min_order_qty: p.min_order_qty,
-    is_recommended: p.is_recommended,
-    recommend_badge: p.recommend_badge,
+  const catalogProducts: CatalogProduct[] = (products ?? []).map((p) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    seal_size: (p.seal_sizes as any) ?? null,
-  }));
+    const images = ((p as any).product_images ?? []) as { storage_path: string; is_primary: boolean }[];
+    const primary = images.find((i) => i.is_primary) ?? images[0];
+    const imageUrl = primary
+      ? supabase.storage.from("product-images").getPublicUrl(primary.storage_path).data.publicUrl
+      : null;
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      product_type: p.product_type,
+      unit_price: p.unit_price,
+      lot_size: p.lot_size,
+      min_order_qty: p.min_order_qty,
+      is_recommended: p.is_recommended,
+      recommend_badge: p.recommend_badge,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      seal_size: (p.seal_sizes as any) ?? null,
+      imageUrl,
+    };
+  });
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 pb-28">
-      <PageHeader
-        backHref="/"
-        backLabel="ポータルTOPに戻る"
-        title="商品カタログ"
-        subtitle={`${ctx.store.name}（${ctx.store.storeCode}）`}
-      />
+    <OrderingStoreShell activePath="/ordering" storeLabel={ctx.store.name}>
+      <p className="mb-2 text-xs text-slate-500">カテゴリで絞り込み {selectedCat ? `選択中： ${selectedCat.name}` : ""}</p>
 
       <div className="mb-3 flex items-center gap-2">
         <form className="flex-1">
+          {category && <input type="hidden" name="category" value={category} />}
+          {mid && <input type="hidden" name="mid" value={mid} />}
           <input
             type="search"
             name="q"
             defaultValue={q}
-            placeholder="商品名で検索"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            placeholder="キーワード検索 (スペース区切りで複数ワードOK・販促物名/カテゴリ/ID)"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
           />
         </form>
-        <Link
-          href="/ordering/history"
-          className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
-        >
-          発注履歴
+        <Link href="/ordering/cart" className="shrink-0 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white">
+          カート
         </Link>
       </div>
 
       <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
         <Link
           href="/ordering"
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-            !category ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+            !category ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600"
           }`}
         >
           すべて
@@ -108,8 +112,8 @@ export default async function OrderingCatalogPage({
           <Link
             key={c.id}
             href={`/ordering?category=${c.id}`}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-              category === c.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+              category === c.id ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600"
             }`}
           >
             {c.name}
@@ -119,15 +123,33 @@ export default async function OrderingCatalogPage({
       {midCategories.length > 0 && (
         <div className="-mt-2 mb-4 flex gap-1.5 overflow-x-auto pb-1">
           {midCategories.map((c) => (
-            <span
+            <Link
               key={c.id}
-              className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500"
+              href={`/ordering?category=${c.parent_id ?? category ?? c.id}&mid=${c.id}`}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                mid === c.id ? "border-blue-600 bg-blue-50 text-blue-800" : "border-blue-300 bg-white text-blue-700"
+              }`}
             >
               {c.name}
-            </span>
+            </Link>
           ))}
         </div>
       )}
+
+      <div className="mb-3 flex flex-wrap items-end gap-3 text-sm">
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">発注日</label>
+          <input type="date" defaultValue={todayInTokyo()} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">配送先</label>
+          <select className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+            <option>{ctx.store.name} 既定配送先</option>
+          </select>
+        </div>
+        {/* 要確認: 発注日・配送先はカート確定時の既存フィールドへ渡す想定。店舗住所帳テーブルは未整備。 */}
+      </div>
+      <p className="mb-3 text-xs text-slate-500">表示対象: {catalogProducts.length}件</p>
 
       {catalogProducts.length === 0 ? (
         <EmptyState message="該当する商品がありません。" />
@@ -140,6 +162,6 @@ export default async function OrderingCatalogPage({
       )}
 
       <CartBar />
-    </div>
+    </OrderingStoreShell>
   );
 }

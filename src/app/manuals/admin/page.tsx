@@ -109,6 +109,11 @@ export default async function ManualsAdminPage({
               className={`${INPUT_CLASS} file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700`}
             />
           </div>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" name="publish_now" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+            すぐに公開する（未選択の場合は下書き保存）
+          </label>
+          {/* 要確認: チェックボックスの値に応じて status を draft/ready で切り替える処理。現行の uploadManual は常に ready。 */}
           <SubmitButton
             className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             pendingText="アップロード中..."

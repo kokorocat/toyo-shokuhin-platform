@@ -10,6 +10,7 @@ import { Banner } from "@/components/Banner";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { SubmitButton } from "@/components/SubmitButton";
+import { OrderingAdminChrome } from "@/app/ordering/admin/OrderingAdminChrome";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -78,7 +79,7 @@ export default async function OrderingAdminProductsPage({
   const products = (data ?? []) as ProductListRow[];
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
+    <OrderingAdminChrome activePath="/ordering/admin/products" displayName={ctx.displayName}>
       <PageHeader
         backHref="/ordering"
         backLabel="カタログに戻る"
@@ -189,6 +190,6 @@ export default async function OrderingAdminProductsPage({
           </table>
         </div>
       )}
-    </div>
+    </OrderingAdminChrome>
   );
 }

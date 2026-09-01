@@ -3,18 +3,24 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
-import { INSPECTION_CATEGORIES } from "@/app/haccp/inspection/constants";
 import { kioskSubmitInspection } from "./actions";
+import {
+  InspectionHeaderFields,
+  InspectionItemsTable,
+  UnansweredMonthBanner,
+  unansweredYmList,
+} from "@/app/haccp/inspection/InspectionUi";
+import { todayInTokyo } from "@/lib/date";
 
 export default async function KioskInspectionPage({
   params,
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; ym?: string }>;
 }) {
   const { token } = await params;
-  const { error, success } = await searchParams;
+  const { error, success, ym } = await searchParams;
   const supabase = await createClient();
   const { data, error: storeError } = await supabase.rpc("kiosk_get_store", { p_token: token });
 
@@ -31,6 +37,12 @@ export default async function KioskInspectionPage({
 
   const store = data?.[0];
   if (!store) notFound();
+
+  const todayStr = todayInTokyo();
+  const displayYm = ym && /^\d{4}-\d{2}$/.test(ym) ? ym : todayStr.slice(0, 7);
+  const [displayYear, displayMonth] = displayYm.split("-");
+  // 要確認: キオスクは未回答月の取得RPCが無いため、直近未選択月の見た目のみ。
+  const missingMonths = unansweredYmList(new Set(), todayStr).slice(-6);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-slate-50">
@@ -59,6 +71,15 @@ export default async function KioskInspectionPage({
 
         <form action={kioskSubmitInspection} className="mt-6 space-y-6">
           <input type="hidden" name="token" value={token} />
+
+          <UnansweredMonthBanner months={missingMonths} hrefBase={`/haccp/kiosk/${token}/inspection`} />
+
+          <InspectionHeaderFields
+            year={displayYear}
+            month={String(Number(displayMonth))}
+            submittedOn={todayStr}
+            storeName={store.store_name}
+          />
 
           {/* Basic info */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -94,46 +115,7 @@ export default async function KioskInspectionPage({
             </div>
           </div>
 
-          {/* Inspection categories */}
-          {INSPECTION_CATEGORIES.map((category) => (
-            <div key={category.no} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-200 bg-orange-50 px-5 py-3">
-                <h3 className="text-base font-bold text-orange-800">
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-600 text-xs font-bold text-white">
-                    {category.no}
-                  </span>
-                  {category.title}
-                </h3>
-              </div>
-              {/* Table header */}
-              <div className="flex items-center border-b border-slate-200 bg-slate-50 px-5 py-2 text-xs font-bold text-slate-500">
-                <span className="w-12">No</span>
-                <span className="flex-1">項目</span>
-                <span className="w-32 text-center">判定</span>
-              </div>
-              {/* Rows */}
-              <div>
-                {category.items.map((q) => (
-                  <div key={q.code} className="flex items-center border-b border-slate-100 px-5 py-4">
-                    <span className="w-12 text-sm font-bold text-slate-500">
-                      {q.code.replace("q", "").replace("_", "-")}
-                    </span>
-                    <span className="flex-1 text-sm text-slate-800">{q.text}</span>
-                    <div className="flex w-32 justify-center gap-2">
-                      <label className="cursor-pointer rounded-full border-2 border-green-300 px-5 py-2 text-sm font-bold text-green-600 transition-all has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-700">
-                        <input type="radio" name={`answer_${q.code}`} value="good" required className="sr-only" />
-                        良
-                      </label>
-                      <label className="cursor-pointer rounded-full border-2 border-red-300 px-5 py-2 text-sm font-bold text-red-500 transition-all has-[:checked]:border-red-600 has-[:checked]:bg-red-50 has-[:checked]:text-red-700">
-                        <input type="radio" name={`answer_${q.code}`} value="needs_improvement" required className="sr-only" />
-                        否
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+          <InspectionItemsTable />
 
           {/* Improvement details */}
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

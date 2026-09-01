@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { isRecipeAdminRole, isRecipeApprovalRole } from "./admin/guard";
+import type { PortalContext } from "@/lib/portal/get-portal-context";
 
 const TABS: { label: string; href: string; role: "all" | "admin" | "approval" }[] = [
   { label: "レシピ一覧", href: "/recipe", role: "all" },
@@ -17,22 +18,27 @@ function isTabVisible(role: "all" | "admin" | "approval", roleCode: string | nul
   return isRecipeApprovalRole(roleCode);
 }
 
-export function RecipeHeader() {
+export function RecipeHeader({ ctx }: { ctx: PortalContext | null }) {
+  const roleLabel = ctx?.roleCode ?? "-";
+  const groupLabel = ctx?.company?.name ?? ctx?.area?.name ?? "-";
   return (
-    <div className="bg-slate-800 px-4 py-3 text-white shadow-md">
-      <div className="mx-auto flex max-w-5xl items-center justify-between">
+    <div className="bg-slate-800 px-4 py-3 text-white">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-600 text-sm font-bold">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-600 text-sm font-bold">
             R
           </div>
           <span className="text-sm font-bold tracking-wide">レシピ閲覧システム</span>
         </div>
-        <Link
-          href="/"
-          className="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
-        >
-          ポータルTOP
-        </Link>
+        <div className="flex items-center gap-3">
+          <p className="hidden text-xs text-white/80 sm:block">権限：{roleLabel}／グループ：{groupLabel}</p>
+          <Link
+            href="/"
+            className="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-700"
+          >
+            ポータルTOP
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -53,8 +59,8 @@ export function RecipeTabs({
           href={tab.href}
           className={
             activeHref === tab.href
-              ? "rounded-full bg-slate-800 px-4 py-2 text-xs font-bold text-white"
-              : "rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              ? "rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-white"
+              : "rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
           }
         >
           {tab.label}

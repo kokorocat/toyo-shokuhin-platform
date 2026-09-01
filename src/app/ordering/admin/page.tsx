@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { PageHeader } from "@/components/PageHeader";
 import { isOrderingAdminRole } from "./guard";
+import { OrderingAdminChrome } from "./OrderingAdminChrome";
 import { todayInTokyo } from "@/lib/date";
 import {
   ORDER_STATUS_LABELS,
@@ -129,11 +130,11 @@ export default async function OrderingAdminDashboardPage() {
   );
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
+    <OrderingAdminChrome activePath="/ordering/admin" displayName={ctx?.displayName}>
       <PageHeader
         backHref="/"
         backLabel="ポータルTOPに戻る"
-        title="受発注管理ダッシュボード"
+        title="受注管理"
         subtitle={`${monthLabel}時点`}
       />
 
@@ -178,6 +179,6 @@ export default async function OrderingAdminDashboardPage() {
           description="複数の店舗をまとめて選択し、同一内容で一括発注します"
         />
       </div>
-    </div>
+    </OrderingAdminChrome>
   );
 }

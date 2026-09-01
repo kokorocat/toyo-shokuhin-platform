@@ -157,6 +157,11 @@ export function BulkConfirmClient({
         </div>
         <div className="space-y-3 px-4 py-4">
           <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">発注日時</label>
+            <input type="datetime-local" className={INPUT_CLASS} />
+            {/* 要確認: 発注日時の保存（現行はサーバー側の作成日時） */}
+          </div>
+          <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">納品日</label>
             <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={INPUT_CLASS} />
           </div>
@@ -165,7 +170,7 @@ export function BulkConfirmClient({
             <input type="text" value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} className={INPUT_CLASS} />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">注文全体備考</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">一括発注の理由・連絡事項</label>
             <textarea value={memo} onChange={(e) => setMemo(e.target.value)} rows={3} className={INPUT_CLASS} />
           </div>
         </div>
@@ -177,7 +182,7 @@ export function BulkConfirmClient({
           onClick={handleSubmit}
           disabled={isPending}
           aria-busy={isPending}
-          className={`w-full rounded-full bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-600 ${
+          className={`w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white ${
             isPending ? "cursor-wait opacity-60" : ""
           }`}
         >

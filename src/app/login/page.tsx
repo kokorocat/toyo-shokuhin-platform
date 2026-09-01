@@ -27,6 +27,11 @@ export default async function LoginPage({
 
           <form action={signIn} className="mt-6 space-y-5">
             <input type="hidden" name="redirectTo" value={params.redirectTo ?? "/"} />
+            <div className="flex rounded-lg border border-slate-200 p-1">
+              <span className="flex-1 rounded-md bg-blue-700 py-1.5 text-center text-xs font-bold text-white">取引先ログイン</span>
+              <span className="flex-1 rounded-md py-1.5 text-center text-xs font-medium text-slate-600">管理者ログイン</span>
+            </div>
+            {/* 要確認: タブ切替の実処理。参照画像のシステム名は「販促物受発注システム」。ログインID表記をメールアドレスから変えるかも要確認。 */}
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-bold text-slate-700">
                 メールアドレス
@@ -54,6 +59,26 @@ export default async function LoginPage({
                 placeholder="パスワードを入力"
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
+            </div>
+            <div className="space-y-2 text-xs text-slate-600">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="remember_id" className="h-4 w-4" />
+                ログインIDを記憶する
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="remember_password" className="h-4 w-4" />
+                パスワードも記憶する
+              </label>
+              <p className="text-[11px] text-slate-400">共有端末ではパスワードの記憶を使わないでください。</p>
+              <div>
+                <label htmlFor="keep_hours" className="mb-1 block font-medium">ログイン保持期間</label>
+                <select id="keep_hours" name="keep_hours" defaultValue="3" className="rounded-lg border border-slate-300 px-3 py-1.5">
+                  <option value="3">3時間</option>
+                  <option value="8">8時間</option>
+                  <option value="24">24時間</option>
+                </select>
+              </div>
+              {/* 要確認: 記憶・保持期間の実処理 */}
             </div>
             <button
               type="submit"

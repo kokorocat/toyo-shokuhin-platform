@@ -48,7 +48,7 @@ export default async function NoticesAdminPage({
     supabase.from("companies").select("id, name").eq("status", "active").order("name"),
     supabase
       .from("portal_notices")
-      .select("id, title, importance, status, created_at, notice_scopes(scope_type, companies(name))")
+      .select("id, title, body, importance, status, created_at, display_start_at, notice_scopes(scope_type, companies(name))")
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -67,6 +67,19 @@ export default async function NoticesAdminPage({
 
       <div className="mx-auto max-w-3xl px-4 py-6">
         <Link href="/" className="text-sm text-blue-600 hover:underline">← ポータルTOPに戻る</Link>
+        <h2 className="mt-4 text-lg font-bold text-slate-800">管理者ポータル</h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs"><p className="text-slate-500">表示名</p><p className="font-bold">{ctx?.displayName ?? "-"}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs"><p className="text-slate-500">権限</p><p className="font-bold">{ctx?.roleCode ?? "-"}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs"><p className="text-slate-500">会社ID</p><p className="font-bold">{ctx?.company?.id ?? "-"}</p></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs"><p className="text-slate-500">エリアID</p><p className="font-bold">{ctx?.area?.id ?? "-"}</p></div>
+        </div>
+        <nav className="mt-4 flex flex-wrap gap-2">
+          <span className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-bold text-white">お知らせアップロード</span>
+          <a href="#notice-list" className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">お知らせ一覧</a>
+          <Link href="/manuals/admin" className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">マニュアルアップロード</Link>
+          <Link href="/manuals/admin#list" className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700">マニュアル一覧</Link>
+        </nav>
 
         {sp.success && <div className="mb-4 mt-4"><Banner variant="success">処理が完了しました。</Banner></div>}
         {sp.error && <div className="mb-4 mt-4"><Banner variant="error">{sp.error}</Banner></div>}
@@ -84,7 +97,14 @@ export default async function NoticesAdminPage({
             <label htmlFor="body" className={LABEL_CLASS}>本文 <span className="text-red-600">*</span></label>
             <textarea id="body" name="body" required rows={5} className={INPUT_CLASS} />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="attachment" className={LABEL_CLASS}>添付資料</label>
+            <input id="attachment" name="attachment" type="file" className={INPUT_CLASS} />
+            {/* 要確認: 添付の保存処理 */}
+          </div>
+          <details className="rounded-lg border border-slate-200 p-3">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500">補助項目（重要度・公開対象）</summary>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="importance" className={LABEL_CLASS}>重要度</label>
               <select id="importance" name="importance" defaultValue="normal" className={INPUT_CLASS}>
@@ -122,6 +142,7 @@ export default async function NoticesAdminPage({
               </select>
             </div>
           </div>
+          </details>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" name="publish_now" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
             すぐに公開する（未選択の場合は下書き保存）
@@ -135,33 +156,47 @@ export default async function NoticesAdminPage({
         </form>
       </div>
 
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <h2 id="notice-list" className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
         お知らせ一覧（{(notices ?? []).length}件）
       </h2>
       {!notices || notices.length === 0 ? (
         <EmptyState message="お知らせがまだありません。" />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 bg-teal-700 px-4 py-2.5 text-xs font-bold text-white">
-            <span>タイトル</span>
-            <span>対象</span>
-            <span>状態</span>
-            <span>操作</span>
-          </div>
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead>
+              <tr className="bg-teal-700 text-xs font-bold text-white">
+                <th className="px-3 py-2">タイトル</th>
+                <th className="px-3 py-2">本文</th>
+                <th className="px-3 py-2">対象</th>
+                <th className="px-3 py-2">添付</th>
+                <th className="px-3 py-2">公開日</th>
+                <th className="px-3 py-2">状態</th>
+                <th className="px-3 py-2">操作</th>
+              </tr>
+            </thead>
+            <tbody>
           {notices.map((n) => {
             const scope = Array.isArray(n.notice_scopes) ? n.notice_scopes[0] : n.notice_scopes;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const companyName = (scope?.companies as any)?.name as string | undefined;
             return (
-              <div key={n.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 border-t border-slate-100 px-4 py-2.5">
-                <span className="truncate text-sm font-medium text-slate-800">{n.title}</span>
-                <span className="text-xs text-slate-500">
-                  {scope?.scope_type === "all" ? "全社" : companyName ?? "-"}
-                </span>
+              <tr key={n.id} className="border-t border-slate-100">
+                <td className="px-3 py-2 font-medium">{n.title}</td>
+                <td className="max-w-[12rem] truncate px-3 py-2 text-xs text-slate-600">{n.body}</td>
+                <td className="px-3 py-2 text-xs text-slate-600">{scope?.scope_type === "all" ? "全社" : companyName ?? "-"}</td>
+                <td className="px-3 py-2 text-xs text-slate-400">-</td>
+                <td className="whitespace-nowrap px-3 py-2 text-xs">{n.display_start_at?.slice(0, 10) ?? "-"}</td>
+                <td className="px-3 py-2">
                 <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold ${STATUS_BADGE[n.status] ?? "bg-slate-100 text-slate-500"}`}>
                   {STATUS_LABELS[n.status] ?? n.status}
                 </span>
-                <div className="flex gap-2">
+                </td>
+                <td className="px-3 py-2">
+                <div className="flex flex-wrap gap-1">
+                  <span className="rounded-md bg-slate-800 px-2 py-1 text-xs font-bold text-white">編集</span>
+                  <span className="rounded-md bg-red-600 px-2 py-1 text-xs font-bold text-white">削除</span>
+                  {/* 要確認: 編集・削除の実処理 */}
                   {n.status !== "published" && (
                     <form action={setNoticeStatus}>
                       <input type="hidden" name="notice_id" value={n.id} />
@@ -181,9 +216,12 @@ export default async function NoticesAdminPage({
                     </form>
                   )}
                 </div>
-              </div>
+                </td>
+              </tr>
             );
           })}
+            </tbody>
+          </table>
         </div>
       )}
       </div>

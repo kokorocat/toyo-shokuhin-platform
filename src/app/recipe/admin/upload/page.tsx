@@ -36,7 +36,7 @@ export default async function RecipeBulkUploadPage({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <RecipeHeader />
+      <RecipeHeader ctx={ctx} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <RecipeTabs roleCode={ctx?.roleCode ?? null} activeHref="/recipe/admin/upload" />
 
@@ -108,12 +108,23 @@ export default async function RecipeBulkUploadPage({
                 </p>
               </div>
 
+              <div>
+                <label htmlFor="format_rule" className={LABEL_CLASS}>自動文字整形</label>
+                <select id="format_rule" name="format_rule" className={INPUT_CLASS}>
+                  <option>枠に合わせて自動整形する</option>
+                  <option>整形しない</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
               <SubmitButton
-                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2"
+                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"
                 pendingText="アップロード中..."
               >
                 アップロードする
               </SubmitButton>
+              <button type="reset" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700">選択をクリア</button>
+              </div>
             </form>
           </div>
         </div>
