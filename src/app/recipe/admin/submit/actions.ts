@@ -129,8 +129,11 @@ export async function submitRecipe(formData: FormData) {
         continue;
       }
 
+      // 保存パスにはparsed.codeを含めない(upload/actions.tsと同じ理由 — 呼出No.に含まれる
+      // 全角英字(エリア略称)がSupabase Storageのオブジェクトキーとして拒否されるため、
+      // 実データで検証して発見した)。
       const ext = file.name.split(".").pop() || "xlsx";
-      const path = `${companyId}/submissions/${parsed.code}-${Date.now()}.${ext}`;
+      const path = `${companyId}/submissions/${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("recipe-files").upload(path, file, {
         contentType: file.type || undefined,
         upsert: false,

@@ -80,8 +80,12 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
     // パターン)。先にrecipes行(status='published')を作ってしまうと、アップロードが失敗した
     // 場合に「公開済みなのに原本ファイルが無い」レシピがそのまま一覧に出てしまい、しかも
     // 重複チェックに阻まれて同じ呼出番号での再アップロードもできなくなる。
+    // 保存パスにはparsed.codeを含めない(実データで検証した結果、呼出No.には全角英字
+    // (エリア略称、例:"Ｇ北九州MV0203")が含まれることが判明し、それをそのままオブジェクト
+    // キーに使うとSupabase Storageから"Invalid key"エラーで拒否されていた)。ランダムな
+    // UUIDのみを使うことでキーの安全性を呼出No.の内容に依存させない。
     const ext = file.name.split(".").pop() || "xlsx";
-    const path = `${companyId}/approved/${parsed.code}-${Date.now()}.${ext}`;
+    const path = `${companyId}/approved/${crypto.randomUUID()}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("recipe-files").upload(path, file, {
       contentType: file.type || undefined,
       upsert: false,
