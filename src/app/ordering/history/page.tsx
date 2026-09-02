@@ -44,7 +44,7 @@ export default async function OrderingHistoryPage({
   ]);
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6">
+    <div className="mx-auto min-h-screen max-w-2xl overflow-x-hidden px-4 py-6">
       <PageHeader
         backHref="/ordering"
         backLabel="商品カタログに戻る"
