@@ -163,7 +163,11 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
   const summaryParts = [`${okCount}件アップロード完了`];
   if (dupCount > 0) summaryParts.push(`${dupCount}件は重複のためスキップ`);
   if (errorFiles.length > 0) {
-    summaryParts.push(`${errorFiles.length}件失敗(${errorFiles.map((f) => f.fileName).join(", ")})`);
+    // 以前はファイル名のみで理由が分からず、失敗原因の切り分けに実機再現が必要だった。
+    // 管理者が原因(解析失敗/保存失敗/紐付け失敗等)を画面上で判断できるよう理由も含める。
+    summaryParts.push(
+      `${errorFiles.length}件失敗(${errorFiles.map((f) => `${f.fileName}: ${f.detail ?? "不明"}`).join(" / ")})`
+    );
   }
 
   // 監査ログ(仕様書9「監査」)。ここでの失敗は登録自体をブロックしない既知のトレードオフ。
