@@ -88,7 +88,7 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
     });
     if (uploadError) {
       console.error("[recipe/admin/upload] file upload failed", file.name, uploadError);
-      results.push({ fileName: file.name, status: "error", detail: "ファイル本体の保存に失敗しました" });
+      results.push({ fileName: file.name, status: "error", detail: `ファイル本体の保存に失敗しました: ${uploadError.message}` });
       continue;
     }
 
