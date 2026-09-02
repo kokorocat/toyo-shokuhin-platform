@@ -43,6 +43,19 @@ export async function submitRecipe(formData: FormData) {
     redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent("申請者を選択してください")}`);
   }
 
+  // エリアも同様に会社との整合性をサーバー側で確認する(upload/actions.tsと同じ理由)。
+  if (areaId) {
+    const { data: area } = await supabase
+      .from("areas")
+      .select("id")
+      .eq("id", areaId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (!area) {
+      redirect(`/recipe/admin/submit?company_id=${companyId}&error=${encodeURIComponent("選択したエリアが会社と一致しません")}`);
+    }
+  }
+
   // recipe_applicationsはUPDATE/DELETEポリシーを持たない不変のスナップショットとして設計されて
   // いる(20260827000005参照)。そのため、ここで先に作ってしまうと全件重複/全件失敗のバッチで
   // 子のrecipes行が1件も無い空の申請が消せないまま残り、承認待ち一覧・履歴のどちらにも

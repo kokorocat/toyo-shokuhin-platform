@@ -10,6 +10,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { AccessDenied } from "@/components/AccessDenied";
 import { bulkUploadApprovedRecipes } from "./actions";
 import { RecipeHeader, RecipeTabs } from "@/app/recipe/RecipeShell";
+import { CompanyAreaSelect } from "./CompanyAreaSelect";
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
@@ -63,27 +64,7 @@ export default async function RecipeBulkUploadPage({
           </div>
           <div className="px-5 py-5">
             <form action={bulkUploadApprovedRecipes} encType="multipart/form-data" className="space-y-4">
-              <div>
-                <label htmlFor="company_id" className={LABEL_CLASS}>
-                  会社 <span className="text-red-600">*</span>
-                </label>
-                <select id="company_id" name="company_id" required defaultValue="" className={INPUT_CLASS}>
-                  <option value="" disabled>選択してください</option>
-                  {(companies ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="area_id" className={LABEL_CLASS}>エリア（任意・選択したファイル全件に適用）</label>
-                <select id="area_id" name="area_id" defaultValue="" className={INPUT_CLASS}>
-                  <option value="">未選択</option>
-                  {(areas ?? []).map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
-                </select>
-              </div>
+              <CompanyAreaSelect companies={companies ?? []} areas={areas ?? []} />
 
               <div>
                 <label htmlFor="category" className={LABEL_CLASS}>カテゴリ（任意・選択したファイル全件に適用）</label>

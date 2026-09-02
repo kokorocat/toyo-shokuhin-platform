@@ -26,6 +26,20 @@ export async function bulkUploadApprovedRecipes(formData: FormData) {
   if (files.length === 0) {
     redirect(`/recipe/admin/upload?error=${encodeURIComponent("ファイルを選択してください")}`);
   }
+  // エリア選択欄が会社で絞り込まれていなかったため、実機確認で他社の同名エリアを
+  // 誤って選べてしまう状態だった(UI側は修正済みだが、クライアント側の値を信用せず
+  // サーバー側でも会社とエリアの整合性を確認する)。
+  if (areaId) {
+    const { data: area } = await supabase
+      .from("areas")
+      .select("id")
+      .eq("id", areaId)
+      .eq("company_id", companyId)
+      .maybeSingle();
+    if (!area) {
+      redirect(`/recipe/admin/upload?error=${encodeURIComponent("選択したエリアが会社と一致しません")}`);
+    }
+  }
 
   const results: FileResult[] = [];
 
