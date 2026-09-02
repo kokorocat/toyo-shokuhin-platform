@@ -33,11 +33,14 @@ body {
 }
 
 /* body(layout.tsx)はflex flex-colのため、各ページのルート要素はflexアイテムになる。
-   flexアイテムの既定min-widthはautoで、内側に幅の広い要素(min-widthを持つtable等)が
-   あるとページ全体がその分だけビューポートより幅広になり、横スクロールが発生する
-   (ordering/history等で実機/実ブラウザ確認により発見)。全ページ共通の問題のため、
+   min-width:0だけでは直らなかった(実機検証で確認済み) — 各ページの`mx-auto max-w-*`は
+   通常のblock要素同士では機能するが、flexアイテムとしてのmx-auto(auto margin)は
+   横幅をコンテンツ基準(内側の幅広いtable等)で計算してしまい、ビューポートより幅広になる。
+   width:100%を明示することでcross軸(横幅)をbody基準に固定し、この問題を解消する
+   (ordering/history等で実機/実ブラウザ確認により発見・検証済み)。全ページ共通の問題のため、
    個別ページ側ではなくここで一括して対処する。 */
 body > * {
+  width: 100%;
   min-width: 0;
 }
 
