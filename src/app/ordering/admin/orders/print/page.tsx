@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
 import { ORDER_STATUS_LABELS } from "@/lib/ordering/order-status";
+import { PrintButton } from "./PrintButton";
 
 type PrintOrder = {
   id: string;
@@ -66,10 +67,8 @@ export default async function OrderingBulkPrintPage({
     <div className="min-h-screen bg-white px-6 py-6 print:px-0">
       <div className="mb-4 border-t-4 border-orange-500 pt-3 print:border-t-0">
         <h1 className="text-xl font-bold text-orange-600">{title}</h1>
-        <button type="button" className="mt-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white print:hidden">
-          印刷 / PDF保存
-        </button>
-        {/* 要確認: window.print 連携と対象受注の抽出条件 */}
+        <PrintButton />
+        {/* 要確認: 対象受注の抽出条件(現状はstatus=preparing_shipment/shippedの直近50件) */}
       </div>
       {orders.length === 0 ? (
         <p className="text-sm text-slate-500">該当する受注がありません。</p>
