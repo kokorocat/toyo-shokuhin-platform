@@ -16,6 +16,7 @@ export async function uploadManual(formData: FormData) {
   const scopeType = String(formData.get("scope_type") ?? "company");
   const companyId = String(formData.get("company_id") ?? "").trim();
   const file = formData.get("file") as File | null;
+  const publishNow = formData.get("publish_now") === "on";
 
   if (!title || !file || file.size === 0) {
     redirect(`/manuals/admin?error=${encodeURIComponent("タイトルとPDFファイルを指定してください")}`);
@@ -76,9 +77,12 @@ export async function uploadManual(formData: FormData) {
     redirect(`/manuals/admin?error=${encodeURIComponent(versionError?.message ?? "登録に失敗しました")}`);
   }
 
+  // 「すぐに公開する」が未選択の場合は下書き扱い(unpublished)のまま残す。以前はここが常に
+  // "ready"固定で、チェックボックスの状態に関わらず即座に全社/対象会社へ公開されてしまう
+  // 実害のある不具合だった(実機検証で確認済み)。
   const { error: linkError } = await supabase
     .from("manuals")
-    .update({ current_version_id: version.id, status: "ready" })
+    .update({ current_version_id: version.id, status: publishNow ? "ready" : "unpublished" })
     .eq("id", manual.id);
   if (linkError) {
     await cleanup(manual.id);
