@@ -32,6 +32,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* body(layout.tsx)はflex flex-colのため、各ページのルート要素はflexアイテムになる。
+   flexアイテムの既定min-widthはautoで、内側に幅の広い要素(min-widthを持つtable等)が
+   あるとページ全体がその分だけビューポートより幅広になり、横スクロールが発生する
+   (ordering/history等で実機/実ブラウザ確認により発見)。全ページ共通の問題のため、
+   個別ページ側ではなくここで一括して対処する。 */
+body > * {
+  min-width: 0;
+}
+
 /* iOS zoom prevention for form elements */
 input[type="date"],
 input[type="text"],
