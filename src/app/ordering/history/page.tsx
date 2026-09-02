@@ -61,8 +61,8 @@ export default async function OrderingHistoryPage({
       {!orders || orders.length === 0 ? (
         <EmptyState message="発注履歴がありません。" />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-500">
                 <th className="whitespace-nowrap px-4 py-2.5">注文番号</th>

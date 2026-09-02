@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalContext } from "@/lib/portal/get-portal-context";
 import { isOrderingAdminRole } from "@/app/ordering/admin/guard";
+import { OrderingAdminChrome } from "@/app/ordering/admin/OrderingAdminChrome";
 import { EmptyState } from "@/components/EmptyState";
 import { AccessDenied } from "@/components/AccessDenied";
 import { ProductRow, type CatalogProduct } from "@/app/ordering/ProductRow";
@@ -82,9 +83,14 @@ export default async function BulkOrderCatalogPage({
   }));
 
   return (
-    <div className="min-h-screen bg-slate-700/40 px-4 py-8">
-      {/* 要確認: GASは受注一覧上のモーダル。ページ遷移構造を変えるかはクライアント確認推奨。 */}
-      <div className="mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-5 pb-28">
+    <OrderingAdminChrome activePath="/ordering/admin/bulk-order" displayName={ctx?.displayName}>
+      {/* 要確認: GASは受注一覧上のモーダル。ページ遷移構造を変えるかはクライアント確認推奨。
+          今回はページ本体としての遷移構造は維持しつつ(他のordering/admin配下と同じ
+          OrderingAdminChromeでヘッダー/タブを表示)、コンテンツ部分だけモーダル風の
+          オーバーレイ＋カードの見た目にする。以前はbg-slate-700/40が画面全体
+          (min-h-screen)に適用され、ヘッダー/タブ自体が消えてしまっていた。 */}
+      <div className="-mx-4 -my-5 min-h-[calc(100vh-96px)] bg-slate-700/40 px-4 py-8">
+        <div className="mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-5 pb-28 shadow-xl">
       <Link href="/ordering/admin/orders" className="text-sm text-blue-600 hover:underline">← 受注一覧に戻る</Link>
       <h1 className="mt-2 mb-6 text-lg font-bold text-slate-800">複数店舗一斉発注</h1>
 
@@ -186,7 +192,8 @@ export default async function BulkOrderCatalogPage({
           <BulkOrderBar companyId={companyId} />
         </>
       )}
+        </div>
       </div>
-    </div>
+    </OrderingAdminChrome>
   );
 }
