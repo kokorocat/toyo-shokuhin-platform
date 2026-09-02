@@ -1,5 +1,6 @@
 import { signIn } from "./actions";
 import { Banner } from "@/components/Banner";
+import { LoginTypeTabs } from "./LoginTypeTabs";
 
 export default async function LoginPage({
   searchParams,
@@ -27,11 +28,9 @@ export default async function LoginPage({
 
           <form action={signIn} className="mt-6 space-y-5">
             <input type="hidden" name="redirectTo" value={params.redirectTo ?? "/"} />
-            <div className="flex rounded-lg border border-slate-200 p-1">
-              <span className="flex-1 rounded-md bg-blue-700 py-1.5 text-center text-xs font-bold text-white">取引先ログイン</span>
-              <span className="flex-1 rounded-md py-1.5 text-center text-xs font-medium text-slate-600">管理者ログイン</span>
-            </div>
-            {/* 要確認: タブ切替の実処理。参照画像のシステム名は「販促物受発注システム」。ログインID表記をメールアドレスから変えるかも要確認。 */}
+            <LoginTypeTabs />
+            {/* 要確認: タブ切替による検証ロジック/遷移先の分岐が必要か。参照画像のシステム名は
+                「販促物受発注システム」。ログインID表記をメールアドレスから変えるかも要確認。 */}
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-bold text-slate-700">
                 メールアドレス
